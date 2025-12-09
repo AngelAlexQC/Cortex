@@ -3,17 +3,47 @@ import { join, resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
 
 /**
- * Detects the current project context to isolate memories per project.
- * Uses a combination of directory path, git repo, and package.json
- * to generate a unique, stable project identifier.
+ * Utility class for detecting and managing project context.
+ * 
+ * Provides automatic project identification using multiple strategies:
+ * 1. Git repository root detection
+ * 2. package.json location and metadata
+ * 3. Fallback to current working directory
+ * 
+ * Project IDs are stable hashes that remain consistent across sessions,
+ * enabling proper memory isolation per project.
+ * 
+ * @public
+ * @example
+ * ```typescript
+ * // Get current project ID
+ * const projectId = ProjectContext.getProjectId();
+ * console.log(projectId); // e.g., "a1b2c3d4e5f6g7h8"
+ * 
+ * // Get human-readable project name
+ * const name = ProjectContext.getProjectName();
+ * console.log(name); // e.g., "my-app" or "cortex-monorepo"
+ * 
+ * // Get project ID for specific directory
+ * const id = ProjectContext.getProjectId('/path/to/project');
+ * ```
  */
 export class ProjectContext {
   private static cache = new Map<string, string>();
 
   /**
-   * Gets a stable project ID based on the current working directory
+   * Gets a stable project ID based on the current working directory.
+   * 
+   * The ID is a 16-character hash derived from the project's root path
+   * (git root or package.json location). Results are cached for performance.
+   * 
    * @param cwd - Current working directory (defaults to process.cwd())
-   * @returns A stable hash representing the project
+   * @returns A stable hash representing the project (e.g., "a1b2c3d4e5f6g7h8")
+   * @example
+   * ```typescript
+   * const projectId = ProjectContext.getProjectId();
+   * const customId = ProjectContext.getProjectId('/home/user/my-project');
+   * ```
    */
   static getProjectId(cwd: string = process.cwd()): string {
     // Check cache first
@@ -105,7 +135,18 @@ export class ProjectContext {
   }
 
   /**
-   * Gets a human-readable project name (for UI display)
+   * Gets a human-readable project name for UI display.
+   * 
+   * Attempts to extract the name from package.json, git directory name,
+   * or falls back to the current directory name.
+   * 
+   * @param cwd - Current working directory (defaults to process.cwd())
+   * @returns Human-readable project name
+   * @example
+   * ```typescript
+   * const name = ProjectContext.getProjectName();
+   * console.log(`Working on: ${name}`);
+   * ```
    */
   static getProjectName(cwd: string = process.cwd()): string {
     // Try to get from package.json
@@ -130,7 +171,14 @@ export class ProjectContext {
   }
 
   /**
-   * Clears the cache (useful for testing)
+   * Clears the internal project ID cache.
+   * 
+   * Primarily useful for testing or when project context changes dynamically.
+   * 
+   * @example
+   * ```typescript
+   * ProjectContext.clearCache();
+   * ```
    */
   static clearCache(): void {
     this.cache.clear();

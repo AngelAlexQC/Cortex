@@ -3,29 +3,99 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { ProjectContext } from './context';
 
+/**
+ * Represents a single memory entry in the Cortex system.
+ * 
+ * @public
+ * @example
+ * ```typescript
+ * const memory: Memory = {
+ *   content: 'API endpoints use RESTful conventions',
+ *   type: 'fact',
+ *   source: 'docs/api-design.md',
+ *   tags: ['architecture', 'api'],
+ *   metadata: { author: 'team' }
+ * };
+ * ```
+ */
 export interface Memory {
+  /** Unique identifier (auto-generated) */
   id?: number;
-  projectId?: string;  // Hash of project context for isolation
+  /** Project identifier for isolation (auto-detected or manual) */
+  projectId?: string;
+  /** The actual content/description of the memory */
   content: string;
+  /** Category of memory: fact, decision, code, config, or note */
   type: 'fact' | 'decision' | 'code' | 'config' | 'note';
+  /** Origin of the memory (file path, URL, conversation, etc.) */
   source: string;
+  /** Optional tags for categorization and filtering */
   tags?: string[];
+  /** Optional arbitrary metadata as key-value pairs */
   metadata?: Record<string, any>;
+  /** ISO timestamp of creation (auto-generated) */
   createdAt?: string;
+  /** ISO timestamp of last update (auto-updated) */
   updatedAt?: string;
 }
 
+/**
+ * Configuration options for initializing a MemoryStore.
+ * 
+ * @public
+ */
 export interface MemoryStoreOptions {
+  /** Custom path for SQLite database file. Default: ~/.cortex/memories.db */
   dbPath?: string;
-  projectId?: string;  // Optional: override auto-detection
-  globalMode?: boolean;  // If true, don't filter by project
+  /** Override automatic project detection with a specific project ID */
+  projectId?: string;
+  /** Disable project isolation - access all memories globally */
+  globalMode?: boolean;
 }
 
+/**
+ * Main storage class for managing persistent memories using SQLite.
+ * 
+ * Provides CRUD operations, search capabilities, and automatic project isolation.
+ * Each MemoryStore instance is scoped to a specific project (auto-detected via git/package.json)
+ * unless globalMode is enabled.
+ * 
+ * @public
+ * @example
+ * ```typescript
+ * // Basic usage with auto-detection
+ * const store = new MemoryStore();
+ * const id = store.add({
+ *   content: 'Use Redis for caching',
+ *   type: 'decision',
+ *   source: 'architecture-meeting'
+ * });
+ * 
+ * // Custom database path
+ * const store = new MemoryStore({ dbPath: './my-memories.db' });
+ * 
+ * // Global mode (all projects)
+ * const store = new MemoryStore({ globalMode: true });
+ * ```
+ */
 export class MemoryStore {
   private db: Database;
   private projectId: string | null;
   private globalMode: boolean;
   
+  /**
+   * Creates a new MemoryStore instance.
+   * 
+   * @param options - Configuration options or legacy string path to database file
+   * @example
+   * ```typescript
+   * // Modern approach
+   * const store = new MemoryStore({ dbPath: '~/.cortex/memories.db' });
+   * 
+   * // Legacy approach (still supported)
+   * const store = new MemoryStore('~/.cortex/memories.db');
+   * ```
+   */
   constructor(options?: MemoryStoreOptions | string) {
     // Support legacy string parameter for backwards compatibility
     const opts = typeof options === 'string' ? { dbPath: options } : options || {};
@@ -76,6 +146,23 @@ export class MemoryStore {
     `);
   }
 
+  /**
+   * Adds a new memory to the store.
+   * 
+   * @param memory - Memory object without id/timestamps (auto-generated)
+   * @returns The ID of the newly created memory
+   * @example
+   * ```typescript
+   * const id = store.add({
+   *   content: 'PostgreSQL for main database',
+   *   type: 'decision',
+   *   source: 'tech-review-2025',
+   *   tags: ['database', 'architecture'],
+   *   metadata: { approvedBy: 'tech-lead' }
+   * });
+   * console.log(`Memory created with ID: ${id}`);
+   * ```
+   */
   add(memory: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>): number {
     const stmt = this.db.prepare(`
       INSERT INTO memories (project_id, content, type, source, tags, metadata)
@@ -97,6 +184,21 @@ export class MemoryStore {
     return result.id;
   }
 
+  /**
+   * Retrieves a memory by its ID.
+   * 
+   * Respects project isolation unless in globalMode.
+   * 
+   * @param id - The unique identifier of the memory
+   * @returns The memory object or null if not found
+   * @example
+   * ```typescript
+   * const memory = store.get(42);
+   * if (memory) {
+   *   console.log(memory.content);
+   * }
+   * ```
+   */
   get(id: number): Memory | null {
     let sql = 'SELECT * FROM memories WHERE id = ?';
     const params: any[] = [id];
@@ -110,6 +212,21 @@ export class MemoryStore {
     return row ? this.rowToMemory(row) : null;
   }
 
+  /**
+   * Searches memories by content using SQL LIKE pattern matching.
+   * 
+   * @param query - Search term (case-insensitive, partial match)
+   * @param options - Optional filters for type and result limit
+   * @returns Array of matching memories, ordered by creation date (newest first)
+   * @example
+   * ```typescript
+   * // Simple search
+   * const results = store.search('database');
+   * 
+   * // Search with filters
+   * const decisions = store.search('api', { type: 'decision', limit: 10 });
+   * ```
+   */
   search(query: string, options?: { type?: string; limit?: number }): Memory[] {
     let sql = 'SELECT * FROM memories WHERE content LIKE ?';
     const params: any[] = [`%${query}%`];
@@ -136,6 +253,23 @@ export class MemoryStore {
     return rows.map(row => this.rowToMemory(row));
   }
 
+  /**
+   * Lists all memories, optionally filtered by type and limited by count.
+   * 
+   * @param options - Optional filters for type and result limit
+   * @returns Array of memories, ordered by creation date (newest first)
+   * @example
+   * ```typescript
+   * // All memories
+   * const all = store.list();
+   * 
+   * // Only facts, limited to 20
+   * const facts = store.list({ type: 'fact', limit: 20 });
+   * 
+   * // All decisions
+   * const decisions = store.list({ type: 'decision' });
+   * ```
+   */
   list(options?: { type?: string; limit?: number }): Memory[] {
     let sql = 'SELECT * FROM memories';
     const params: any[] = [];
@@ -167,6 +301,18 @@ export class MemoryStore {
     return rows.map(row => this.rowToMemory(row));
   }
 
+  /**
+   * Deletes a memory by its ID.
+   * 
+   * Respects project isolation unless in globalMode.
+   * 
+   * @param id - The unique identifier of the memory to delete
+   * @returns true if deletion was successful
+   * @example
+   * ```typescript
+   * store.delete(42);
+   * ```
+   */
   delete(id: number): boolean {
     let sql = 'DELETE FROM memories WHERE id = ?';
     const params: any[] = [id];
@@ -180,6 +326,19 @@ export class MemoryStore {
     return true;
   }
 
+  /**
+   * Clears all memories from the current project.
+   * 
+   * ⚠️ DANGER: This operation cannot be undone!
+   * Respects project isolation unless in globalMode.
+   * 
+   * @returns Number of memories deleted
+   * @example
+   * ```typescript
+   * const count = store.clear();
+   * console.log(`Deleted ${count} memories`);
+   * ```
+   */
   clear(): number {
     let countSql = 'SELECT COUNT(*) as count FROM memories';
     let deleteSql = 'DELETE FROM memories';
@@ -197,6 +356,19 @@ export class MemoryStore {
     return count;
   }
 
+  /**
+   * Returns statistics about stored memories.
+   * 
+   * @returns Object containing total count, breakdown by type, and current project ID
+   * @example
+   * ```typescript
+   * const stats = store.stats();
+   * console.log(`Total: ${stats.total}`);
+   * console.log(`Facts: ${stats.byType.fact || 0}`);
+   * console.log(`Decisions: ${stats.byType.decision || 0}`);
+   * console.log(`Project: ${stats.projectId}`);
+   * ```
+   */
   stats(): { total: number; byType: Record<string, number>; projectId?: string } {
     const params: any[] = [];
     let whereClause = '';
@@ -236,14 +408,32 @@ export class MemoryStore {
   }
 
   /**
-   * Get the current project ID being used for isolation
+   * Gets the current project ID being used for isolation.
+   * 
+   * @returns The project ID hash or null if in globalMode
+   * @example
+   * ```typescript
+   * const projectId = store.getProjectId();
+   * console.log(`Current project: ${projectId}`);
+   * ```
    */
   getProjectId(): string | null {
     return this.projectId;
   }
 
   /**
-   * Get all unique project IDs in the database
+   * Gets all unique project IDs stored in the database with memory counts.
+   * 
+   * Useful for understanding which projects have memories stored.
+   * 
+   * @returns Array of objects containing projectId and count, sorted by count (descending)
+   * @example
+   * ```typescript
+   * const projects = store.getAllProjects();
+   * projects.forEach(p => {
+   *   console.log(`${p.projectId}: ${p.count} memories`);
+   * });
+   * ```
    */
   getAllProjects(): Array<{ projectId: string; count: number }> {
     const rows = this.db.query(`
@@ -260,6 +450,16 @@ export class MemoryStore {
     }));
   }
 
+  /**
+   * Closes the database connection.
+   * 
+   * Should be called when the MemoryStore is no longer needed to free resources.
+   * 
+   * @example
+   * ```typescript
+   * store.close();
+   * ```
+   */
   close() {
     this.db.close();
   }
