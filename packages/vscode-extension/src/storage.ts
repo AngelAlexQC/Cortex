@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import initSqlJs, { type Database } from 'sql.js';
+import initSqlJs, { type Database, type SqlValue } from 'sql.js';
 
 export interface Memory {
   id?: number;
@@ -100,6 +100,9 @@ export class MemoryStore {
     );
 
     const result = this.db?.exec('SELECT last_insert_rowid() as id');
+    if (!result || result.length === 0 || result[0].values.length === 0) {
+      throw new Error('Failed to get inserted memory ID');
+    }
     const id = result[0].values[0][0] as number;
 
     this.saveToFile();
@@ -110,7 +113,7 @@ export class MemoryStore {
     await this.ensureInitialized();
 
     const result = this.db?.exec('SELECT * FROM memories WHERE id = ?', [id]);
-    if (result.length === 0 || result[0].values.length === 0) {
+    if (!result || result.length === 0 || result[0].values.length === 0) {
       return null;
     }
 
@@ -136,11 +139,9 @@ export class MemoryStore {
     }
 
     const result = this.db?.exec(sql, params);
-    if (result.length === 0) return [];
+    if (!result || result.length === 0) return [];
 
-    return result[0].values.map((row: (string | number | null)[]) =>
-      this.rowToMemory(result[0].columns, row)
-    );
+    return result[0].values.map((row: SqlValue[]) => this.rowToMemory(result[0].columns, row));
   }
 
   async list(options?: { type?: string; limit?: number }): Promise<Memory[]> {
@@ -162,11 +163,9 @@ export class MemoryStore {
     }
 
     const result = this.db?.exec(sql, params);
-    if (result.length === 0) return [];
+    if (!result || result.length === 0) return [];
 
-    return result[0].values.map((row: (string | number | null)[]) =>
-      this.rowToMemory(result[0].columns, row)
-    );
+    return result[0].values.map((row: SqlValue[]) => this.rowToMemory(result[0].columns, row));
   }
 
   async delete(id: number): Promise<boolean> {
@@ -181,7 +180,7 @@ export class MemoryStore {
     await this.ensureInitialized();
 
     const result = this.db?.exec('SELECT COUNT(*) as count FROM memories');
-    const count = (result[0]?.values[0]?.[0] as number) || 0;
+    const count = (result?.[0]?.values[0]?.[0] as number) || 0;
 
     this.db?.run('DELETE FROM memories');
     this.saveToFile();
@@ -193,7 +192,7 @@ export class MemoryStore {
     await this.ensureInitialized();
 
     const totalResult = this.db?.exec('SELECT COUNT(*) as count FROM memories');
-    const total = (totalResult[0]?.values[0]?.[0] as number) || 0;
+    const total = (totalResult?.[0]?.values[0]?.[0] as number) || 0;
 
     const byTypeResult = this.db?.exec(`
       SELECT type, COUNT(*) as count 
@@ -202,8 +201,8 @@ export class MemoryStore {
     `);
 
     const byType: Record<string, number> = {};
-    if (byTypeResult.length > 0) {
-      byTypeResult[0].values.forEach((row: (string | number | null)[]) => {
+    if (byTypeResult && byTypeResult.length > 0) {
+      byTypeResult[0].values.forEach((row: SqlValue[]) => {
         byType[row[0] as string] = row[1] as number;
       });
     }
@@ -211,8 +210,8 @@ export class MemoryStore {
     return { total, byType };
   }
 
-  private rowToMemory(columns: string[], values: (string | number | null)[]): Memory {
-    const row: Record<string, string | number | null> = {};
+  private rowToMemory(columns: string[], values: SqlValue[]): Memory {
+    const row: Record<string, SqlValue> = {};
     columns.forEach((col, i) => {
       row[col] = values[i];
     });
