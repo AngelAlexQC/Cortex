@@ -1,7 +1,7 @@
-import initSqlJs, { Database } from 'sql.js';
-import { join } from 'path';
-import { homedir } from 'os';
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import initSqlJs, { type Database } from 'sql.js';
 
 export interface Memory {
   id?: number;
@@ -9,7 +9,7 @@ export interface Memory {
   type: 'fact' | 'decision' | 'code' | 'config' | 'note';
   source: string;
   tags?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -18,22 +18,22 @@ export class MemoryStore {
   private db: Database | null = null;
   private dbPath: string;
   private initPromise: Promise<void>;
-  
+
   constructor(dbPath?: string) {
     const defaultPath = join(homedir(), '.cortex', 'memories.db');
     const dir = join(homedir(), '.cortex');
-    
+
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
-    
+
     this.dbPath = dbPath || defaultPath;
     this.initPromise = this.initialize();
   }
 
   private async initialize() {
     const SQL = await initSqlJs();
-    
+
     // Load existing database or create new one
     if (existsSync(this.dbPath)) {
       const buffer = readFileSync(this.dbPath);
@@ -41,7 +41,7 @@ export class MemoryStore {
     } else {
       this.db = new SQL.Database();
     }
-    
+
     // Create schema
     this.db.run(`
       CREATE TABLE IF NOT EXISTS memories (
@@ -55,11 +55,11 @@ export class MemoryStore {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)');
     this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_source ON memories(source)');
     this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at)');
-    
+
     this.db.run(`
       CREATE TRIGGER IF NOT EXISTS update_memories_timestamp 
       AFTER UPDATE ON memories
@@ -67,7 +67,7 @@ export class MemoryStore {
         UPDATE memories SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
       END
     `);
-    
+
     this.saveToFile();
   }
 
@@ -86,8 +86,8 @@ export class MemoryStore {
 
   async add(memory: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     await this.ensureInitialized();
-    
-    this.db!.run(
+
+    this.db?.run(
       `INSERT INTO memories (content, type, source, tags, metadata)
        VALUES (?, ?, ?, ?, ?)`,
       [
@@ -95,133 +95,137 @@ export class MemoryStore {
         memory.type,
         memory.source,
         memory.tags ? JSON.stringify(memory.tags) : null,
-        memory.metadata ? JSON.stringify(memory.metadata) : null
+        memory.metadata ? JSON.stringify(memory.metadata) : null,
       ]
     );
-    
-    const result = this.db!.exec('SELECT last_insert_rowid() as id');
+
+    const result = this.db?.exec('SELECT last_insert_rowid() as id');
     const id = result[0].values[0][0] as number;
-    
+
     this.saveToFile();
     return id;
   }
 
   async get(id: number): Promise<Memory | null> {
     await this.ensureInitialized();
-    
-    const result = this.db!.exec('SELECT * FROM memories WHERE id = ?', [id]);
+
+    const result = this.db?.exec('SELECT * FROM memories WHERE id = ?', [id]);
     if (result.length === 0 || result[0].values.length === 0) {
       return null;
     }
-    
+
     return this.rowToMemory(result[0].columns, result[0].values[0]);
   }
 
   async search(query: string, options?: { type?: string; limit?: number }): Promise<Memory[]> {
     await this.ensureInitialized();
-    
+
     let sql = 'SELECT * FROM memories WHERE content LIKE ?';
-    const params: any[] = [`%${query}%`];
-    
+    const params: (number | string)[] = [`%${query}%`];
+
     if (options?.type) {
       sql += ' AND type = ?';
       params.push(options.type);
     }
-    
+
     sql += ' ORDER BY created_at DESC';
-    
+
     if (options?.limit) {
       sql += ' LIMIT ?';
       params.push(options.limit);
     }
-    
-    const result = this.db!.exec(sql, params);
+
+    const result = this.db?.exec(sql, params);
     if (result.length === 0) return [];
-    
-    return result[0].values.map((row: any[]) => this.rowToMemory(result[0].columns, row));
+
+    return result[0].values.map((row: (string | number | null)[]) =>
+      this.rowToMemory(result[0].columns, row)
+    );
   }
 
   async list(options?: { type?: string; limit?: number }): Promise<Memory[]> {
     await this.ensureInitialized();
-    
+
     let sql = 'SELECT * FROM memories';
-    const params: any[] = [];
-    
+    const params: (number | string)[] = [];
+
     if (options?.type) {
       sql += ' WHERE type = ?';
       params.push(options.type);
     }
-    
+
     sql += ' ORDER BY created_at DESC';
-    
+
     if (options?.limit) {
       sql += ' LIMIT ?';
       params.push(options.limit);
     }
-    
-    const result = this.db!.exec(sql, params);
+
+    const result = this.db?.exec(sql, params);
     if (result.length === 0) return [];
-    
-    return result[0].values.map((row: any[]) => this.rowToMemory(result[0].columns, row));
+
+    return result[0].values.map((row: (string | number | null)[]) =>
+      this.rowToMemory(result[0].columns, row)
+    );
   }
 
   async delete(id: number): Promise<boolean> {
     await this.ensureInitialized();
-    
-    this.db!.run('DELETE FROM memories WHERE id = ?', [id]);
+
+    this.db?.run('DELETE FROM memories WHERE id = ?', [id]);
     this.saveToFile();
     return true;
   }
 
   async clear(): Promise<number> {
     await this.ensureInitialized();
-    
-    const result = this.db!.exec('SELECT COUNT(*) as count FROM memories');
-    const count = result[0]?.values[0]?.[0] as number || 0;
-    
-    this.db!.run('DELETE FROM memories');
+
+    const result = this.db?.exec('SELECT COUNT(*) as count FROM memories');
+    const count = (result[0]?.values[0]?.[0] as number) || 0;
+
+    this.db?.run('DELETE FROM memories');
     this.saveToFile();
-    
+
     return count;
   }
 
   async stats(): Promise<{ total: number; byType: Record<string, number> }> {
     await this.ensureInitialized();
-    
-    const totalResult = this.db!.exec('SELECT COUNT(*) as count FROM memories');
+
+    const totalResult = this.db?.exec('SELECT COUNT(*) as count FROM memories');
     const total = (totalResult[0]?.values[0]?.[0] as number) || 0;
-    
-    const byTypeResult = this.db!.exec(`
+
+    const byTypeResult = this.db?.exec(`
       SELECT type, COUNT(*) as count 
       FROM memories 
       GROUP BY type
     `);
-    
+
     const byType: Record<string, number> = {};
     if (byTypeResult.length > 0) {
-      byTypeResult[0].values.forEach((row: any[]) => {
+      byTypeResult[0].values.forEach((row: (string | number | null)[]) => {
         byType[row[0] as string] = row[1] as number;
       });
     }
-    
+
     return { total, byType };
   }
 
-  private rowToMemory(columns: string[], values: any[]): Memory {
-    const row: any = {};
+  private rowToMemory(columns: string[], values: (string | number | null)[]): Memory {
+    const row: Record<string, string | number | null> = {};
     columns.forEach((col, i) => {
       row[col] = values[i];
     });
-    
+
     return {
-      id: row.id,
-      content: row.content,
-      type: row.type,
-      source: row.source,
-      tags: row.tags ? JSON.parse(row.tags) : undefined,
-      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
+      id: row.id as number,
+      content: row.content as string,
+      type: row.type as Memory['type'],
+      source: row.source as string,
+      tags: row.tags ? JSON.parse(row.tags as string) : undefined,
+      metadata: row.metadata ? JSON.parse(row.metadata as string) : undefined,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
     };
   }
 

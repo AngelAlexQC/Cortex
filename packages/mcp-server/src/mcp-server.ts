@@ -1,7 +1,7 @@
+import { type Memory, MemoryStore } from '@cortex/core';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { MemoryStore } from '@cortex/core';
 
 const store = new MemoryStore();
 
@@ -126,7 +126,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   ? `Found ${results.length} memories:\n\n` +
                     results
                       .map(
-                        (m: any, i: number) =>
+                        (m: Memory, i: number) =>
                           `${i + 1}. [${m.type}] ${m.content}\n   Source: ${
                             m.source
                           }\n   Created: ${m.createdAt}`
@@ -142,7 +142,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args) throw new Error('Missing arguments');
         const id = store.add({
           content: args.content as string,
-          type: args.type as any,
+          type: args.type as Memory['type'],
           source: args.source as string,
           tags: args.tags as string[] | undefined,
         });
@@ -172,7 +172,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   ? `${memories.length} memories:\n\n` +
                     memories
                       .map(
-                        (m: any, i: number) =>
+                        (m: Memory, i: number) =>
                           `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}`
                       )
                       .join('\n\n')

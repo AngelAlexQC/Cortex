@@ -65,7 +65,7 @@ try {
   const totalPackageTime = [coreResult, ...results].reduce((sum, r) => sum + r.duration, 0);
   const timeSaved = totalPackageTime - totalDuration;
 
-  console.log('\n' + '='.repeat(60));
+  console.log(`\n${'='.repeat(60)}`);
   console.log('🎉 All packages built successfully!');
   console.log(`⏱️  Total time: ${totalDuration}ms`);
   console.log(`💾 Time saved by parallelization: ~${timeSaved}ms`);

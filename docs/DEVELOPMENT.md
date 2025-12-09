@@ -70,6 +70,14 @@ bun run dev:extension  # Extension en modo watch
 
 # Type checking
 bun run typecheck
+
+# Code quality (Biome)
+bun run format         # Formatear todo el código
+bun run format:check   # Verificar formato sin modificar
+bun run lint           # Ejecutar linter
+bun run lint:fix       # Aplicar fixes automáticos del linter
+bun run check          # Formatear + lint + aplicar fixes
+bun run check:ci       # Check completo para CI (sin modificar)
 ```
 
 ### Por Paquete
@@ -288,10 +296,81 @@ bun run build
 - [ ] Backup/restore functionality
 - [ ] Settings panel en VS Code
 
+## Code Quality
+
+### Biome - Unified Linting & Formatting
+
+Cortex usa **Biome** como herramienta unificada para formateo y linting (reemplaza Prettier + ESLint).
+
+#### Configuración
+
+- **Archivo principal**: `biome.json` en la raíz
+- **Pre-commit hook**: Husky + lint-staged ejecutan Biome automáticamente
+- **VS Code**: La extensión `biomejs.biome` está recomendada
+
+#### Comandos útiles
+
+```bash
+# Formatear todo
+bun run format
+
+# Solo verificar formato
+bun run format:check
+
+# Linting
+bun run lint
+
+# Linting con fixes automáticos
+bun run lint:fix
+
+# Todo junto (format + lint + fix)
+bun run check
+
+# Check completo para CI (no modifica archivos)
+bun run check:ci
+```
+
+#### Reglas principales
+
+- **Quotes**: Single quotes (`'`)
+- **Semicolons**: Always (`;`)
+- **Line width**: 100 caracteres
+- **Indentation**: 2 espacios
+- **Trailing commas**: ES5 style
+- **TypeScript**: Preferir `node:` protocol para imports de Node.js
+
+#### Pre-commit Hook
+
+El hook de Husky ejecuta automáticamente Biome en archivos staged antes de cada commit:
+
+```bash
+# .husky/pre-commit
+bunx lint-staged
+```
+
+Configuración en `package.json`:
+```json
+{
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+    ]
+  }
+}
+```
+
+#### Warnings vs Errors
+
+- **Errors**: Bloquean el commit (p.ej. sintaxis inválida)
+- **Warnings**: No bloquean pero deben corregirse (p.ej. `any` explícitos)
+
+Los warnings de `noExplicitAny` son comunes en el proyecto y están configurados como warnings en los archivos de código fuente.
+
 ## Resources
 
 - [VS Code Extension API](https://code.visualstudio.com/api)
 - [Bun Documentation](https://bun.sh/docs)
+- [Biome Documentation](https://biomejs.dev)
 - [MCP SDK](https://github.com/modelcontextprotocol/sdk)
 - [TreeView Guide](https://code.visualstudio.com/api/extension-guides/tree-view)
 - [Webview Guide](https://code.visualstudio.com/api/extension-guides/webview)

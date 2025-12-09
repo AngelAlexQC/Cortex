@@ -1,7 +1,7 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { type Memory, MemoryStore } from '@cortex/core';
 import { Command } from 'commander';
-import { MemoryStore } from '@cortex/core';
-import { join } from 'path';
-import { homedir } from 'os';
 
 const program = new Command();
 const store = new MemoryStore();
@@ -40,7 +40,7 @@ program
   .action((query, options) => {
     const results = store.search(query, {
       type: options.type,
-      limit: parseInt(options.limit),
+      limit: parseInt(options.limit, 10),
     });
 
     if (results.length === 0) {
@@ -49,7 +49,7 @@ program
     }
 
     console.log(`\nFound ${results.length} memories:\n`);
-    results.forEach((memory: any, i: number) => {
+    results.forEach((memory: Memory, i: number) => {
       console.log(`${i + 1}. [${memory.type}] ${memory.content}`);
       console.log(`   Source: ${memory.source}`);
       console.log(`   Created: ${memory.createdAt}`);
@@ -69,7 +69,7 @@ program
   .action((options) => {
     const memories = store.list({
       type: options.type,
-      limit: parseInt(options.limit),
+      limit: parseInt(options.limit, 10),
     });
 
     if (memories.length === 0) {
@@ -78,7 +78,7 @@ program
     }
 
     console.log(`\n${memories.length} memories:\n`);
-    memories.forEach((memory: any, i: number) => {
+    memories.forEach((memory: Memory, i: number) => {
       console.log(`${i + 1}. [${memory.type}] ${memory.content}`);
       console.log(`   Source: ${memory.source}`);
       console.log('');
@@ -110,7 +110,7 @@ program
   .command('delete <id>')
   .description('Delete a memory by ID')
   .action((id) => {
-    const deleted = store.delete(parseInt(id));
+    const deleted = store.delete(parseInt(id, 10));
     if (deleted) {
       console.log(`✓ Memory ${id} deleted`);
     } else {

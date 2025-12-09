@@ -21,9 +21,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('cortex.addMemory', async () => {
       const content = await vscode.window.showInputBox({
         prompt: 'Enter memory content',
-        placeHolder: 'What do you want to remember?'
+        placeHolder: 'What do you want to remember?',
       });
-      
+
       if (!content) return;
 
       const typeOptions: vscode.QuickPickItem[] = [
@@ -31,11 +31,11 @@ export function activate(context: vscode.ExtensionContext) {
         { label: 'decision', description: 'An architectural or design decision' },
         { label: 'code', description: 'A code pattern or snippet' },
         { label: 'config', description: 'Configuration information' },
-        { label: 'note', description: 'General note or observation' }
+        { label: 'note', description: 'General note or observation' },
       ];
 
       const typeChoice = await vscode.window.showQuickPick(typeOptions, {
-        placeHolder: 'Select memory type'
+        placeHolder: 'Select memory type',
       });
 
       if (!typeChoice) return;
@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
       const source = await vscode.window.showInputBox({
         prompt: 'Enter source',
         placeHolder: 'e.g., file path, URL, conversation',
-        value: vscode.window.activeTextEditor?.document.fileName || 'manual'
+        value: vscode.window.activeTextEditor?.document.fileName || 'manual',
       });
 
       if (!source) return;
@@ -51,8 +51,8 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         const id = await store.add({
           content,
-          type: typeChoice.label as any,
-          source
+          type: typeChoice.label as Memory['type'],
+          source,
         });
         vscode.window.showInformationMessage(`Memory added (ID: ${id})`);
         treeProvider.refresh();
@@ -66,26 +66,26 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('cortex.searchMemories', async () => {
       const query = await vscode.window.showInputBox({
         prompt: 'Search memories',
-        placeHolder: 'Enter search query'
+        placeHolder: 'Enter search query',
       });
 
       if (!query) return;
 
       const results = await store.search(query, { limit: 20 });
-      
+
       if (results.length === 0) {
         vscode.window.showInformationMessage('No memories found');
         return;
       }
 
-      const items = results.map(m => ({
+      const items = results.map((m) => ({
         label: `[${m.type}] ${m.content}`,
         description: m.source,
-        memory: m
+        memory: m,
       }));
 
       const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: `Found ${results.length} memories`
+        placeHolder: `Found ${results.length} memories`,
       });
 
       if (selected) {
@@ -101,25 +101,28 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('cortex.deleteMemory', async (item: any) => {
-      if (!item?.memory?.id) return;
+    vscode.commands.registerCommand(
+      'cortex.deleteMemory',
+      async (item: { memory?: { id: number; content: string } }) => {
+        if (!item?.memory?.id) return;
 
-      const confirm = await vscode.window.showWarningMessage(
-        `Delete memory "${item.memory.content}"?`,
-        'Delete',
-        'Cancel'
-      );
+        const confirm = await vscode.window.showWarningMessage(
+          `Delete memory "${item.memory.content}"?`,
+          'Delete',
+          'Cancel'
+        );
 
-      if (confirm === 'Delete') {
-        await store.delete(item.memory.id);
-        vscode.window.showInformationMessage('Memory deleted');
-        treeProvider.refresh();
+        if (confirm === 'Delete') {
+          await store.delete(item.memory.id);
+          vscode.window.showInformationMessage('Memory deleted');
+          treeProvider.refresh();
+        }
       }
-    })
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('cortex.viewMemory', (item: any) => {
+    vscode.commands.registerCommand('cortex.viewMemory', (item: { memory?: Memory }) => {
       if (item?.memory) {
         webviewProvider.showMemory(item.memory);
       }

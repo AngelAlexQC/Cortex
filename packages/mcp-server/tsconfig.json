@@ -8,8 +8,6 @@
       "@cortex/core": ["../core/src/index.ts"]
     }
   },
-  "references": [
-    { "path": "../core" }
-  ],
+  "references": [{ "path": "../core" }],
   "include": ["src/**/*"]
 }

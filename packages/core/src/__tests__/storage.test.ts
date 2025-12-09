@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { MemoryStore, Memory } from '../storage';
-import { unlinkSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { MemoryStore } from '../storage';
 
 describe('MemoryStore', () => {
   let store: MemoryStore;
@@ -28,7 +28,7 @@ describe('MemoryStore', () => {
       const id = store.add({
         content: 'Test memory',
         type: 'fact',
-        source: 'manual'
+        source: 'manual',
       });
 
       expect(id).toBeGreaterThan(0);
@@ -40,7 +40,7 @@ describe('MemoryStore', () => {
         type: 'code',
         source: 'editor',
         tags: ['typescript', 'testing'],
-        metadata: { complexity: 'high' }
+        metadata: { complexity: 'high' },
       });
 
       const memory = store.get(id);
@@ -53,7 +53,7 @@ describe('MemoryStore', () => {
       const id = store.add({
         content: 'Project-specific memory',
         type: 'decision',
-        source: 'architecture'
+        source: 'architecture',
       });
 
       const memory = store.get(id);
@@ -66,7 +66,7 @@ describe('MemoryStore', () => {
       const id = store.add({
         content: 'Retrieve me',
         type: 'note',
-        source: 'test'
+        source: 'test',
       });
 
       const memory = store.get(id);
@@ -85,7 +85,7 @@ describe('MemoryStore', () => {
       const id = store.add({
         content: 'Project 1 memory',
         type: 'fact',
-        source: 'test'
+        source: 'test',
       });
 
       // Create store for project 2
@@ -188,7 +188,7 @@ describe('MemoryStore', () => {
       const id = store.add({
         content: 'Delete me',
         type: 'note',
-        source: 'test'
+        source: 'test',
       });
 
       const deleted = store.delete(id);
@@ -314,8 +314,8 @@ describe('MemoryStore', () => {
 
       const projects = store1.getAllProjects();
       expect(projects).toHaveLength(2);
-      expect(projects.find(p => p.projectId === 'project-1')?.count).toBe(2);
-      expect(projects.find(p => p.projectId === 'project-2')?.count).toBe(1);
+      expect(projects.find((p) => p.projectId === 'project-1')?.count).toBe(2);
+      expect(projects.find((p) => p.projectId === 'project-2')?.count).toBe(1);
 
       store1.close();
       store2.close();

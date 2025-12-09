@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { Memory, MemoryStore } from './storage';
+import type { Memory, MemoryStore } from './storage';
 
 export class MemoryWebviewProvider {
   private panel?: vscode.WebviewPanel;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    private readonly store: MemoryStore
+    readonly _store: MemoryStore
   ) {}
 
   public showMemory(memory: Memory) {
@@ -19,7 +19,7 @@ export class MemoryWebviewProvider {
         vscode.ViewColumn.Two,
         {
           enableScripts: true,
-          localResourceRoots: [this.extensionUri]
+          localResourceRoots: [this.extensionUri],
         }
       );
 
@@ -132,14 +132,18 @@ export class MemoryWebviewProvider {
     </div>
   </div>
 
-  ${memory.tags && memory.tags.length > 0 ? `
+  ${
+    memory.tags && memory.tags.length > 0
+      ? `
   <div class="section">
     <div class="section-title">Tags</div>
     <div class="tags">
-      ${memory.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
+      ${memory.tags.map((tag) => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
     </div>
   </div>
-  ` : ''}
+  `
+      : ''
+  }
 </body>
 </html>`;
   }
@@ -150,8 +154,8 @@ export class MemoryWebviewProvider {
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
-      "'": '&#039;'
+      "'": '&#039;',
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return text.replace(/[&<>"']/g, (m) => map[m]);
   }
 }
