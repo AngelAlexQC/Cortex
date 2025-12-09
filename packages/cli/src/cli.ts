@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { Command } from 'commander';
 import { MemoryStore } from '@cortex/core';
 import { join } from 'path';
@@ -7,10 +6,7 @@ import { homedir } from 'os';
 const program = new Command();
 const store = new MemoryStore();
 
-program
-  .name('cortex')
-  .description('Universal memory layer for AI coding tools')
-  .version('0.1.0');
+program.name('cortex').description('Universal memory layer for AI coding tools').version('0.1.0');
 
 // Add memory
 program
@@ -26,7 +22,7 @@ program
         content: options.content,
         type: options.type,
         source: options.source,
-        tags: options.tags ? options.tags.split(',').map((t: string) => t.trim()) : undefined
+        tags: options.tags ? options.tags.split(',').map((t: string) => t.trim()) : undefined,
       });
       console.log(`✓ Memory added (ID: ${id})`);
     } catch (error) {
@@ -44,7 +40,7 @@ program
   .action((query, options) => {
     const results = store.search(query, {
       type: options.type,
-      limit: parseInt(options.limit)
+      limit: parseInt(options.limit),
     });
 
     if (results.length === 0) {
@@ -73,7 +69,7 @@ program
   .action((options) => {
     const memories = store.list({
       type: options.type,
-      limit: parseInt(options.limit)
+      limit: parseInt(options.limit),
     });
 
     if (memories.length === 0) {
@@ -98,7 +94,7 @@ program
     console.log('\n📊 Cortex Memory Statistics\n');
     console.log(`Total memories: ${stats.total}`);
     console.log('\nBy type:');
-    
+
     if (Object.keys(stats.byType).length === 0) {
       console.log('  (none yet)');
     } else {
@@ -133,7 +129,7 @@ program
       console.log('This will delete ALL memories. Use --force to confirm.');
       process.exit(1);
     }
-    
+
     const count = store.clear();
     console.log(`✓ Cleared ${count} memories`);
   });
@@ -149,14 +145,20 @@ program
     console.log(`Version: 0.1.0`);
     console.log('\nTo use with Claude Desktop:');
     console.log('Add this to your claude_desktop_config.json:\n');
-    console.log(JSON.stringify({
-      "mcpServers": {
-        "cortex": {
-          "command": "bun",
-          "args": ["run", join(process.cwd(), "packages", "mcp-server", "dist", "mcp-server.js")]
-        }
-      }
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          mcpServers: {
+            cortex: {
+              command: 'bun',
+              args: ['run', join(process.cwd(), 'packages', 'mcp-server', 'dist', 'mcp-server.js')],
+            },
+          },
+        },
+        null,
+        2
+      )
+    );
     console.log('');
   });
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -30,21 +29,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             query: {
               type: 'string',
-              description: 'Search query to find relevant memories'
+              description: 'Search query to find relevant memories',
             },
             type: {
               type: 'string',
               enum: ['fact', 'decision', 'code', 'config', 'note'],
-              description: 'Filter by memory type (optional)'
+              description: 'Filter by memory type (optional)',
             },
             limit: {
               type: 'number',
               description: 'Maximum number of results to return (default: 10)',
-              default: 10
-            }
+              default: 10,
+            },
           },
-          required: ['query']
-        }
+          required: ['query'],
+        },
       },
       {
         name: 'cortex_add',
@@ -54,25 +53,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             content: {
               type: 'string',
-              description: 'The content/description of the memory'
+              description: 'The content/description of the memory',
             },
             type: {
               type: 'string',
               enum: ['fact', 'decision', 'code', 'config', 'note'],
-              description: 'Type of memory'
+              description: 'Type of memory',
             },
             source: {
               type: 'string',
-              description: 'Source of the memory (e.g., file path, URL, conversation)'
+              description: 'Source of the memory (e.g., file path, URL, conversation)',
             },
             tags: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Optional tags for categorization'
-            }
+              description: 'Optional tags for categorization',
+            },
           },
-          required: ['content', 'type', 'source']
-        }
+          required: ['content', 'type', 'source'],
+        },
       },
       {
         name: 'cortex_list',
@@ -83,25 +82,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             type: {
               type: 'string',
               enum: ['fact', 'decision', 'code', 'config', 'note'],
-              description: 'Filter by memory type (optional)'
+              description: 'Filter by memory type (optional)',
             },
             limit: {
               type: 'number',
               description: 'Maximum number of results (default: 20)',
-              default: 20
-            }
-          }
-        }
+              default: 20,
+            },
+          },
+        },
       },
       {
         name: 'cortex_stats',
         description: 'Get statistics about stored memories',
         inputSchema: {
           type: 'object',
-          properties: {}
-        }
-      }
-    ]
+          properties: {},
+        },
+      },
+    ],
   };
 });
 
@@ -115,21 +114,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!args) throw new Error('Missing arguments');
         const results = store.search(args.query as string, {
           type: args.type as string | undefined,
-          limit: (args.limit as number) || 10
+          limit: (args.limit as number) || 10,
         });
-        
+
         return {
           content: [
             {
               type: 'text',
-              text: results.length > 0
-                ? `Found ${results.length} memories:\n\n` + 
-                  results.map((m: any, i: number) => 
-                    `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}\n   Created: ${m.createdAt}`
-                  ).join('\n\n')
-                : 'No memories found matching your query.'
-            }
-          ]
+              text:
+                results.length > 0
+                  ? `Found ${results.length} memories:\n\n` +
+                    results
+                      .map(
+                        (m: any, i: number) =>
+                          `${i + 1}. [${m.type}] ${m.content}\n   Source: ${
+                            m.source
+                          }\n   Created: ${m.createdAt}`
+                      )
+                      .join('\n\n')
+                  : 'No memories found matching your query.',
+            },
+          ],
         };
       }
 
@@ -139,37 +144,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: args.content as string,
           type: args.type as any,
           source: args.source as string,
-          tags: args.tags as string[] | undefined
+          tags: args.tags as string[] | undefined,
         });
-        
+
         return {
           content: [
             {
               type: 'text',
-              text: `✓ Memory added successfully (ID: ${id})`
-            }
-          ]
+              text: `✓ Memory added successfully (ID: ${id})`,
+            },
+          ],
         };
       }
 
       case 'cortex_list': {
         const memories = store.list({
           type: args?.type as string | undefined,
-          limit: (args?.limit as number) || 20
+          limit: (args?.limit as number) || 20,
         });
-        
+
         return {
           content: [
             {
               type: 'text',
-              text: memories.length > 0
-                ? `${memories.length} memories:\n\n` + 
-                  memories.map((m: any, i: number) => 
-                    `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}`
-                  ).join('\n\n')
-                : 'No memories stored yet.'
-            }
-          ]
+              text:
+                memories.length > 0
+                  ? `${memories.length} memories:\n\n` +
+                    memories
+                      .map(
+                        (m: any, i: number) =>
+                          `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}`
+                      )
+                      .join('\n\n')
+                  : 'No memories stored yet.',
+            },
+          ],
         };
       }
 
@@ -178,14 +187,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const typeBreakdown = Object.entries(stats.byType)
           .map(([type, count]) => `  ${type}: ${count}`)
           .join('\n');
-        
+
         return {
           content: [
             {
               type: 'text',
-              text: `📊 Cortex Memory Statistics\n\nTotal memories: ${stats.total}\n\nBy type:\n${typeBreakdown || '  (none yet)'}`
-            }
-          ]
+              text: `📊 Cortex Memory Statistics\n\nTotal memories: ${stats.total}\n\nBy type:\n${
+                typeBreakdown || '  (none yet)'
+              }`,
+            },
+          ],
         };
       }
 
@@ -197,10 +208,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : String(error)}`
-        }
+          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+        },
       ],
-      isError: true
+      isError: true,
     };
   }
 });
