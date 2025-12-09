@@ -11,21 +11,21 @@ jobs:
   ci:
     name: ${{ matrix.task }}
     runs-on: ubuntu-latest
-    
+
     strategy:
-      fail-fast: true  # Stop all jobs on first failure
+      fail-fast: true # Stop all jobs on first failure
       matrix:
         task: [build, test, typecheck, lint]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      
+
       # Cache Bun dependencies for faster runs
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -36,15 +36,15 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
           restore-keys: |
             ${{ runner.os }}-bun-
-      
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      
+
       # Build step (runs in parallel with other tasks)
       - name: Build packages
         if: matrix.task == 'build'
         run: bun run build
-      
+
       - name: Verify build artifacts
         if: matrix.task == 'build'
         run: |
@@ -52,7 +52,7 @@ jobs:
           test -f packages/cli/dist/cli.js
           test -f packages/mcp-server/dist/mcp-server.js
           test -f packages/vscode-extension/dist/extension.js
-      
+
       # Upload build artifacts for potential reuse
       - name: Upload build artifacts
         if: matrix.task == 'build'
@@ -62,21 +62,21 @@ jobs:
           path: |
             packages/*/dist
           retention-days: 1
-      
+
       # Test step (runs in parallel)
       - name: Build for tests
         if: matrix.task == 'test'
         run: bun run build
-      
+
       - name: Run tests
         if: matrix.task == 'test'
         run: bun test
-      
+
       # Typecheck step (runs in parallel)
       - name: Type check
         if: matrix.task == 'typecheck'
         run: bun run typecheck
-      
+
       # Lint step (runs in parallel, only on changed files in PRs)
       - name: Get changed files
         if: matrix.task == 'lint' && github.event_name == 'pull_request'
@@ -90,12 +90,12 @@ jobs:
             **/*.md
             **/*.yml
             **/*.yaml
-      
+
       - name: Check formatting (all files)
         if: matrix.task == 'lint' && github.event_name != 'pull_request'
         run: bunx prettier --check "**/*.{ts,js,json,md,yml,yaml}"
         continue-on-error: true
-      
+
       - name: Check formatting (changed files only)
         if: matrix.task == 'lint' && github.event_name == 'pull_request' && steps.changed-files.outputs.any_changed == 'true'
         run: bunx prettier --check ${{ steps.changed-files.outputs.all_changed_files }}
