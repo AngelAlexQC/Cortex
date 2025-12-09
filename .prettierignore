@@ -1,0 +1,19 @@
+# Markdown
+*.md
+
+# Package lock files
+bun.lockb
+bun.lock
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+*.js
+*.js.map
+
+# Changelogs
+CHANGELOG.md
+
+# License
+LICENSE

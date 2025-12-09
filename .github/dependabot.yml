@@ -1,0 +1,56 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    
+  # Bun dependencies (main workspace)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "bun"
+    open-pull-requests-limit: 10
+    
+  # Core package
+  - package-ecosystem: "npm"
+    directory: "/packages/core"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "core"
+    
+  # CLI package
+  - package-ecosystem: "npm"
+    directory: "/packages/cli"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "cli"
+    
+  # MCP Server package
+  - package-ecosystem: "npm"
+    directory: "/packages/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "mcp-server"
+    
+  # VS Code Extension package
+  - package-ecosystem: "npm"
+    directory: "/packages/vscode-extension"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "vscode-extension"
