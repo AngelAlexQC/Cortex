@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import initSqlJs, { type Database, type SqlValue } from 'sql.js';
@@ -32,7 +33,19 @@ export class MemoryStore {
   }
 
   private async initialize() {
-    const SQL = await initSqlJs();
+    // Get the path to sql-wasm.wasm file
+    const require = createRequire(import.meta.url);
+    const sqlJsPath = require.resolve('sql.js');
+    const wasmBuffer = readFileSync(join(sqlJsPath, '..', 'dist', 'sql-wasm.wasm'));
+    // Convert Buffer to ArrayBuffer
+    const wasmBinary = wasmBuffer.buffer.slice(
+      wasmBuffer.byteOffset,
+      wasmBuffer.byteOffset + wasmBuffer.byteLength
+    );
+
+    const SQL = await initSqlJs({
+      wasmBinary,
+    });
 
     // Load existing database or create new one
     if (existsSync(this.dbPath)) {
