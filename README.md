@@ -10,9 +10,16 @@
 
 <p align="center">
   <a href="https://github.com/EcuaByte-lat/Cortex/actions/workflows/ci.yml"><img src="https://github.com/EcuaByte-lat/Cortex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/EcuaByte-lat/Cortex"><img src="https://img.shields.io/codecov/c/github/EcuaByte-lat/Cortex?logo=codecov" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/EcuaByte-lat/Cortex/releases"><img src="https://img.shields.io/github/v/release/EcuaByte-lat/Cortex?logo=github" alt="GitHub Release"></a>
+</p>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode"><img src="https://img.shields.io/visual-studio-marketplace/v/EcuaByte.cortex-vscode?label=VS%20Code&logo=visualstudiocode&color=007ACC" alt="VS Code"></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-1.0+-black?logo=bun" alt="Bun"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript" alt="TypeScript"></a>
+  <a href="https://github.com/EcuaByte-lat/Cortex/stargazers"><img src="https://img.shields.io/github/stars/EcuaByte-lat/Cortex?style=social" alt="GitHub Stars"></a>
 </p>
 
 ---

@@ -2,5 +2,7 @@
 !dist/**
 !package.json
 !LICENSE*
-!resources/**
 !README.md
+!CHANGELOG.md
+!resources/**
+!icon.png

@@ -1,22 +1,47 @@
 {
   "name": "cortex-vscode",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "displayName": "Cortex Memory",
-  "description": "Visual memory management for AI coding tools",
+  "description": "Persistent memory for AI coding assistants. Save project context that works with GitHub Copilot, Claude, Cursor, and Continue.",
   "publisher": "EcuaByte",
+  "author": {
+    "name": "EcuaByte",
+    "url": "https://github.com/EcuaByte-lat"
+  },
+  "license": "MIT",
   "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#0F0F23",
+    "theme": "dark"
+  },
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/EcuaByte-lat/Cortex"
   },
+  "bugs": {
+    "url": "https://github.com/EcuaByte-lat/Cortex/issues"
+  },
+  "homepage": "https://github.com/EcuaByte-lat/Cortex#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Other",
-    "AI",
-    "Visualization"
+    "Machine Learning",
+    "Data Science"
+  ],
+  "keywords": [
+    "ai",
+    "memory",
+    "context",
+    "copilot",
+    "claude",
+    "cursor",
+    "mcp",
+    "assistant",
+    "productivity",
+    "developer-tools"
   ],
   "activationEvents": [
     "onStartupFinished"
