@@ -52,6 +52,7 @@ jobs:
           mkdir -p /tmp/cortex-publish
           cp -r packages/vscode-extension/dist /tmp/cortex-publish/
           cp packages/vscode-extension/package.json /tmp/cortex-publish/
+          cp packages/vscode-extension/icon.png /tmp/cortex-publish/
           cp -r packages/vscode-extension/resources /tmp/cortex-publish/
           cp LICENSE /tmp/cortex-publish/
           
