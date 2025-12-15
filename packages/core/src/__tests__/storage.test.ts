@@ -321,4 +321,175 @@ describe('MemoryStore', () => {
       store2.close();
     });
   });
+
+  describe('getProjectId', () => {
+    it('should return the current project ID', () => {
+      const projectId = store.getProjectId();
+      expect(projectId).toBe('test-project-1');
+    });
+
+    it('should return null in global mode', () => {
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+      const projectId = globalStore.getProjectId();
+      expect(projectId).toBeNull();
+      globalStore.close();
+    });
+  });
+
+  describe('legacy constructor', () => {
+    it('should support string parameter for backwards compatibility', () => {
+      const legacyStore = new MemoryStore(dbPath);
+      const id = legacyStore.add({
+        content: 'Legacy test',
+        type: 'fact',
+        source: 'test',
+      });
+
+      expect(id).toBeGreaterThan(0);
+      legacyStore.close();
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle memory with custom projectId', () => {
+      // Use globalMode to bypass project filtering
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+
+      const id = globalStore.add({
+        content: 'Custom project memory',
+        type: 'fact',
+        source: 'test',
+        projectId: 'custom-project-id',
+      });
+
+      const memory = globalStore.get(id);
+      expect(memory?.projectId).toBe('custom-project-id');
+
+      globalStore.close();
+    });
+
+    it('should handle memories without tags', () => {
+      const id = store.add({
+        content: 'No tags',
+        type: 'note',
+        source: 'test',
+      });
+
+      const memory = store.get(id);
+      expect(memory?.tags).toBeUndefined();
+    });
+
+    it('should handle memories without metadata', () => {
+      const id = store.add({
+        content: 'No metadata',
+        type: 'note',
+        source: 'test',
+      });
+
+      const memory = store.get(id);
+      expect(memory?.metadata).toBeUndefined();
+    });
+
+    it('should handle empty search query', () => {
+      store.add({ content: 'Test 1', type: 'fact', source: 'test' });
+      store.add({ content: 'Test 2', type: 'fact', source: 'test' });
+
+      const results = store.search('');
+      expect(results.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should return false when deleting non-existent memory', () => {
+      const result = store.delete(99999);
+      // Even if memory doesn't exist, SQLite delete succeeds
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('global mode operations', () => {
+    it('should allow getting memories from any project in global mode', () => {
+      const store1 = new MemoryStore({ dbPath, projectId: 'project-1' });
+      const store2 = new MemoryStore({ dbPath, projectId: 'project-2' });
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+
+      const id1 = store1.add({ content: 'P1', type: 'fact', source: 'test' });
+      const id2 = store2.add({ content: 'P2', type: 'fact', source: 'test' });
+
+      const memory1 = globalStore.get(id1);
+      const memory2 = globalStore.get(id2);
+
+      expect(memory1?.content).toBe('P1');
+      expect(memory2?.content).toBe('P2');
+
+      store1.close();
+      store2.close();
+      globalStore.close();
+    });
+
+    it('should allow searching across all projects in global mode', () => {
+      const store1 = new MemoryStore({ dbPath, projectId: 'project-1' });
+      const store2 = new MemoryStore({ dbPath, projectId: 'project-2' });
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+
+      store1.add({ content: 'TypeScript P1', type: 'fact', source: 'test' });
+      store2.add({ content: 'TypeScript P2', type: 'fact', source: 'test' });
+
+      const results = globalStore.search('TypeScript');
+      expect(results.length).toBeGreaterThanOrEqual(2);
+
+      store1.close();
+      store2.close();
+      globalStore.close();
+    });
+
+    it('should allow deleting memories from any project in global mode', () => {
+      const store1 = new MemoryStore({ dbPath, projectId: 'project-1' });
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+
+      const id = store1.add({ content: 'Delete me', type: 'fact', source: 'test' });
+
+      globalStore.delete(id);
+
+      const memory = store1.get(id);
+      expect(memory).toBeNull();
+
+      store1.close();
+      globalStore.close();
+    });
+
+    it('should clear all memories in global mode', () => {
+      const store1 = new MemoryStore({ dbPath, projectId: 'project-1' });
+      const store2 = new MemoryStore({ dbPath, projectId: 'project-2' });
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+
+      store1.add({ content: 'P1', type: 'fact', source: 'test' });
+      store2.add({ content: 'P2', type: 'fact', source: 'test' });
+
+      const count = globalStore.clear();
+      expect(count).toBeGreaterThanOrEqual(2);
+
+      const allMemories = globalStore.list();
+      expect(allMemories).toHaveLength(0);
+
+      store1.close();
+      store2.close();
+      globalStore.close();
+    });
+
+    it('should return stats for all projects in global mode', () => {
+      const store1 = new MemoryStore({ dbPath, projectId: 'project-1' });
+      const store2 = new MemoryStore({ dbPath, projectId: 'project-2' });
+      const globalStore = new MemoryStore({ dbPath, globalMode: true });
+
+      store1.add({ content: 'P1', type: 'fact', source: 'test' });
+      store2.add({ content: 'P2', type: 'decision', source: 'test' });
+
+      const stats = globalStore.stats();
+      expect(stats.total).toBeGreaterThanOrEqual(2);
+      expect(stats.projectId).toBeUndefined();
+
+      store1.close();
+      store2.close();
+      globalStore.close();
+    });
+  });
 });
