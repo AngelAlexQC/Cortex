@@ -10,7 +10,7 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
   constructor(private store: MemoryStore) {}
 
   refresh(): void {
-    this._onDidChangeTreeData.fire();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
   getTreeItem(element: MemoryTreeItem): vscode.TreeItem {
