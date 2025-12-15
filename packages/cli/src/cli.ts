@@ -105,6 +105,125 @@ program
     console.log('');
   });
 
+// Get memory details
+program
+  .command('get <id>')
+  .description('Get details of a specific memory')
+  .action((id) => {
+    try {
+      const memory = store.get(parseInt(id, 10));
+      if (!memory) {
+        console.log(`Memory ${id} not found`);
+        process.exit(1);
+      }
+
+      console.log(`\n📝 Memory #${memory.id}\n`);
+      console.log(`Type: ${memory.type}`);
+      console.log(`Content: ${memory.content}`);
+      console.log(`Source: ${memory.source}`);
+      if (memory.tags && memory.tags.length > 0) {
+        console.log(`Tags: ${memory.tags.join(', ')}`);
+      }
+      if (memory.metadata) {
+        console.log(`Metadata: ${JSON.stringify(memory.metadata, null, 2)}`);
+      }
+      console.log(`Created: ${memory.createdAt}`);
+      console.log(`Updated: ${memory.updatedAt}`);
+      console.log('');
+    } catch (error) {
+      console.error('Error:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+// Edit memory
+program
+  .command('edit <id>')
+  .description('Edit an existing memory')
+  .option('-c, --content <text>', 'New memory content')
+  .option('-t, --type <type>', 'New memory type (fact|decision|code|config|note)')
+  .option('-s, --source <source>', 'New source')
+  .option('--tags <tags>', 'New comma-separated tags (replaces existing)')
+  .option('--add-tags <tags>', 'Add tags (comma-separated, keeps existing)')
+  .option('--remove-tags <tags>', 'Remove tags (comma-separated)')
+  .action((id, options) => {
+    try {
+      const memoryId = parseInt(id, 10);
+
+      // Check if memory exists
+      const existing = store.get(memoryId);
+      if (!existing) {
+        console.log(`Memory ${id} not found`);
+        process.exit(1);
+      }
+
+      // Build updates object
+      const updates: Partial<Memory> = {};
+
+      if (options.content) {
+        updates.content = options.content;
+      }
+
+      if (options.type) {
+        updates.type = options.type;
+      }
+
+      if (options.source) {
+        updates.source = options.source;
+      }
+
+      // Handle tags
+      if (options.tags) {
+        updates.tags = options.tags.split(',').map((t: string) => t.trim());
+      } else if (options.addTags || options.removeTags) {
+        const currentTags = existing.tags || [];
+        let newTags = [...currentTags];
+
+        if (options.addTags) {
+          const tagsToAdd = options.addTags.split(',').map((t: string) => t.trim());
+          newTags = [...new Set([...newTags, ...tagsToAdd])];
+        }
+
+        if (options.removeTags) {
+          const tagsToRemove = options.removeTags.split(',').map((t: string) => t.trim());
+          newTags = newTags.filter((tag) => !tagsToRemove.includes(tag));
+        }
+
+        updates.tags = newTags;
+      }
+
+      // Check if any updates were provided
+      if (Object.keys(updates).length === 0) {
+        console.log('No updates provided. Use --help to see available options.');
+        process.exit(1);
+      }
+
+      // Perform update
+      const success = store.update(memoryId, updates);
+
+      if (success) {
+        console.log(`✓ Memory ${id} updated`);
+
+        // Show updated memory
+        const updated = store.get(memoryId);
+        if (updated) {
+          console.log(`\n📝 Updated Memory:\n`);
+          console.log(`[${updated.type}] ${updated.content}`);
+          console.log(`Source: ${updated.source}`);
+          if (updated.tags && updated.tags.length > 0) {
+            console.log(`Tags: ${updated.tags.join(', ')}`);
+          }
+        }
+      } else {
+        console.log(`Failed to update memory ${id}`);
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error('Error:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 // Delete memory
 program
   .command('delete <id>')

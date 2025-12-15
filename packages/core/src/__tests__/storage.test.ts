@@ -183,6 +183,239 @@ describe('MemoryStore', () => {
     });
   });
 
+  describe('update', () => {
+    it('should update memory content', () => {
+      const id = store.add({
+        content: 'Original content',
+        type: 'fact',
+        source: 'test',
+      });
+
+      const updated = store.update(id, { content: 'Updated content' });
+      expect(updated).toBe(true);
+
+      const memory = store.get(id);
+      expect(memory?.content).toBe('Updated content');
+      expect(memory?.type).toBe('fact');
+      expect(memory?.source).toBe('test');
+    });
+
+    it('should update memory type', () => {
+      const id = store.add({
+        content: 'Test content',
+        type: 'fact',
+        source: 'test',
+      });
+
+      store.update(id, { type: 'decision' });
+
+      const memory = store.get(id);
+      expect(memory?.type).toBe('decision');
+    });
+
+    it('should update tags', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+        tags: ['old', 'tags'],
+      });
+
+      store.update(id, { tags: ['new', 'updated', 'tags'] });
+
+      const memory = store.get(id);
+      expect(memory?.tags).toEqual(['new', 'updated', 'tags']);
+    });
+
+    it('should update metadata', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+        metadata: { version: 1 },
+      });
+
+      store.update(id, { metadata: { version: 2, author: 'test' } });
+
+      const memory = store.get(id);
+      expect(memory?.metadata).toEqual({ version: 2, author: 'test' });
+    });
+
+    it('should update multiple fields at once', () => {
+      const id = store.add({
+        content: 'Original',
+        type: 'fact',
+        source: 'old-source',
+        tags: ['old'],
+      });
+
+      store.update(id, {
+        content: 'Updated',
+        type: 'decision',
+        source: 'new-source',
+        tags: ['new', 'updated'],
+        metadata: { updated: true },
+      });
+
+      const memory = store.get(id);
+      expect(memory?.content).toBe('Updated');
+      expect(memory?.type).toBe('decision');
+      expect(memory?.source).toBe('new-source');
+      expect(memory?.tags).toEqual(['new', 'updated']);
+      expect(memory?.metadata).toEqual({ updated: true });
+    });
+
+    it('should return false for non-existent memory', () => {
+      const updated = store.update(9999, { content: 'Update' });
+      expect(updated).toBe(false);
+    });
+
+    it('should return false when no updates provided', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+      });
+
+      const updated = store.update(id, {});
+      expect(updated).toBe(false);
+    });
+
+    it('should not update memories from other projects', () => {
+      const id = store.add({
+        content: 'Project 1 memory',
+        type: 'fact',
+        source: 'test',
+      });
+
+      // Create store for different project
+      const store2 = new MemoryStore({ dbPath, projectId: 'test-project-2' });
+
+      const updated = store2.update(id, { content: 'Hacked!' });
+      expect(updated).toBe(false);
+
+      // Original memory unchanged
+      const memory = store.get(id);
+      expect(memory?.content).toBe('Project 1 memory');
+
+      store2.close();
+    });
+
+    it('should update the updated_at timestamp', async () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+      });
+
+      const original = store.get(id);
+      const originalUpdatedAt = original?.updatedAt;
+
+      // Wait to ensure timestamp changes (SQLite uses second precision)
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
+      store.update(id, { content: 'Updated' });
+
+      const updated = store.get(id);
+      expect(updated?.updatedAt).not.toBe(originalUpdatedAt);
+      expect(updated?.createdAt).toBe(original?.createdAt);
+    });
+
+    it('should handle clearing tags and metadata', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+        tags: ['tag1', 'tag2'],
+        metadata: { key: 'value' },
+      });
+
+      store.update(id, { tags: [], metadata: {} });
+
+      const memory = store.get(id);
+      expect(memory?.tags).toEqual([]);
+      expect(memory?.metadata).toEqual({});
+    });
+
+    it('should throw error when updating with invalid type', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+      });
+
+      expect(() => {
+        store.update(id, { type: 'invalid-type' as any });
+      }).toThrow('Invalid memory type');
+    });
+
+    it('should throw error when updating with empty content', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+      });
+
+      expect(() => {
+        store.update(id, { content: '' });
+      }).toThrow('Memory content cannot be empty');
+    });
+
+    it('should throw error when updating with empty source', () => {
+      const id = store.add({
+        content: 'Test',
+        type: 'fact',
+        source: 'test',
+      });
+
+      expect(() => {
+        store.update(id, { source: '  ' });
+      }).toThrow('Memory source cannot be empty');
+    });
+  });
+
+  describe('validation', () => {
+    it('should throw error when adding with invalid type', () => {
+      expect(() => {
+        store.add({
+          content: 'Test',
+          type: 'invalid-type' as any,
+          source: 'test',
+        });
+      }).toThrow('Invalid memory type: "invalid-type"');
+    });
+
+    it('should throw error when adding with empty content', () => {
+      expect(() => {
+        store.add({
+          content: '',
+          type: 'fact',
+          source: 'test',
+        });
+      }).toThrow('Memory content is required and cannot be empty');
+    });
+
+    it('should throw error when adding with whitespace-only content', () => {
+      expect(() => {
+        store.add({
+          content: '   ',
+          type: 'fact',
+          source: 'test',
+        });
+      }).toThrow('Memory content is required and cannot be empty');
+    });
+
+    it('should throw error when adding with empty source', () => {
+      expect(() => {
+        store.add({
+          content: 'Test content',
+          type: 'fact',
+          source: '',
+        });
+      }).toThrow('Memory source is required and cannot be empty');
+    });
+  });
+
   describe('delete', () => {
     it('should delete a memory', () => {
       const id = store.add({

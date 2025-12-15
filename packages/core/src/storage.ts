@@ -20,6 +20,31 @@ interface DatabaseRow {
 }
 
 /**
+ * Valid memory types supported by Cortex.
+ * @public
+ */
+export const MEMORY_TYPES = ['fact', 'decision', 'code', 'config', 'note'] as const;
+
+/**
+ * Type guard to check if a string is a valid memory type.
+ * @public
+ */
+export function isValidMemoryType(type: string): type is Memory['type'] {
+  return MEMORY_TYPES.includes(type as Memory['type']);
+}
+
+/**
+ * Validates memory type and throws error if invalid.
+ * @throws {Error} If type is not valid
+ * @public
+ */
+export function validateMemoryType(type: string): asserts type is Memory['type'] {
+  if (!isValidMemoryType(type)) {
+    throw new Error(`Invalid memory type: "${type}". Must be one of: ${MEMORY_TYPES.join(', ')}`);
+  }
+}
+
+/**
  * Represents a single memory entry in the Cortex system.
  *
  * @public
@@ -156,7 +181,7 @@ export class MemoryStore {
     );
 
     this.db.run(`
-      CREATE TRIGGER IF NOT EXISTS update_memories_timestamp 
+      CREATE TRIGGER IF NOT EXISTS update_memories_timestamp
       AFTER UPDATE ON memories
       BEGIN
         UPDATE memories SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
@@ -169,6 +194,7 @@ export class MemoryStore {
    *
    * @param memory - Memory object without id/timestamps (auto-generated)
    * @returns The ID of the newly created memory
+   * @throws {Error} If memory type is invalid or required fields are missing
    * @example
    * ```typescript
    * const id = store.add({
@@ -182,6 +208,18 @@ export class MemoryStore {
    * ```
    */
   add(memory: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>): number {
+    // Validate required fields
+    if (!memory.content || memory.content.trim() === '') {
+      throw new Error('Memory content is required and cannot be empty');
+    }
+
+    if (!memory.source || memory.source.trim() === '') {
+      throw new Error('Memory source is required and cannot be empty');
+    }
+
+    // Validate type
+    validateMemoryType(memory.type);
+
     const stmt = this.db.prepare(`
       INSERT INTO memories (project_id, content, type, source, tags, metadata)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -320,6 +358,100 @@ export class MemoryStore {
   }
 
   /**
+   * Updates an existing memory.
+   *
+   * Respects project isolation unless in globalMode.
+   * The updated_at timestamp is automatically updated by database trigger.
+   *
+   * @param id - The unique identifier of the memory to update
+   * @param updates - Partial memory object with fields to update
+   * @returns true if update was successful, false if memory not found
+   * @example
+   * ```typescript
+   * // Update content only
+   * store.update(42, { content: 'Updated content' });
+   *
+   * // Update multiple fields
+   * store.update(42, {
+   *   content: 'New content',
+   *   tags: ['updated', 'revised'],
+   *   metadata: { version: 2 }
+   * });
+   * ```
+   */
+  update(id: number, updates: Partial<Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>>): boolean {
+    // Check if memory exists and belongs to current project
+    const existing = this.get(id);
+    if (!existing) {
+      return false;
+    }
+
+    // Validate updates
+    if (updates.content !== undefined && updates.content.trim() === '') {
+      throw new Error('Memory content cannot be empty');
+    }
+
+    if (updates.source !== undefined && updates.source.trim() === '') {
+      throw new Error('Memory source cannot be empty');
+    }
+
+    if (updates.type !== undefined) {
+      validateMemoryType(updates.type);
+    }
+
+    const fields: string[] = [];
+    const params: (number | string)[] = [];
+
+    if (updates.content !== undefined) {
+      fields.push('content = ?');
+      params.push(updates.content);
+    }
+
+    if (updates.type !== undefined) {
+      fields.push('type = ?');
+      params.push(updates.type);
+    }
+
+    if (updates.source !== undefined) {
+      fields.push('source = ?');
+      params.push(updates.source);
+    }
+
+    if (updates.tags !== undefined) {
+      fields.push('tags = ?');
+      params.push(updates.tags ? JSON.stringify(updates.tags) : null);
+    }
+
+    if (updates.metadata !== undefined) {
+      fields.push('metadata = ?');
+      params.push(updates.metadata ? JSON.stringify(updates.metadata) : null);
+    }
+
+    if (updates.projectId !== undefined) {
+      fields.push('project_id = ?');
+      params.push(updates.projectId);
+    }
+
+    if (fields.length === 0) {
+      return false; // No updates provided
+    }
+
+    // Add ID to params
+    params.push(id);
+
+    let sql = `UPDATE memories SET ${fields.join(', ')} WHERE id = ?`;
+
+    // Add project isolation
+    if (!this.globalMode && this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    this.db.run(sql, params);
+    return true;
+  }
+
+  /**
    * Deletes a memory by its ID.
    *
    * Respects project isolation unless in globalMode.
@@ -401,7 +533,7 @@ export class MemoryStore {
       .get(...params) as { count: number };
     const byType = this.db
       .query(`
-      SELECT type, COUNT(*) as count 
+      SELECT type, COUNT(*) as count
       FROM memories
       ${whereClause}
       GROUP BY type

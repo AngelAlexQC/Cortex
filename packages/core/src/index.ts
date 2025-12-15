@@ -30,4 +30,11 @@
  */
 
 export { clearProjectCache, getProjectId, getProjectName } from './context';
-export { Memory, MemoryStore, MemoryStoreOptions } from './storage';
+export {
+  isValidMemoryType,
+  MEMORY_TYPES,
+  Memory,
+  MemoryStore,
+  MemoryStoreOptions,
+  validateMemoryType,
+} from './storage';
