@@ -109,6 +109,26 @@ describe('ProjectContext', () => {
       expect(name).toBeTruthy();
       expect(name).not.toBe('unknown-project');
     });
+
+    it('should handle invalid JSON in package.json gracefully', () => {
+      writeFileSync(join(testDir, 'package.json'), 'invalid json {{{');
+
+      const name = getProjectName(testDir);
+      expect(name).toBeTruthy();
+      expect(name).not.toBe('unknown-project');
+    });
+
+    it('should handle package.json without name field', () => {
+      const packageJson = {
+        version: '1.0.0',
+        description: 'No name field',
+      };
+
+      writeFileSync(join(testDir, 'package.json'), JSON.stringify(packageJson));
+
+      const name = getProjectName(testDir);
+      expect(name).toBeTruthy();
+    });
   });
 
   describe('caching', () => {
