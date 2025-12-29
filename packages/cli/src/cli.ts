@@ -6,7 +6,10 @@ import { Command } from 'commander';
 const program = new Command();
 const store = new MemoryStore();
 
-program.name('cortex').description('Universal memory layer for AI coding tools').version('0.1.0');
+program
+  .name('cortex')
+  .description('🧠 Universal memory layer for AI coding tools')
+  .version('0.3.0');
 
 // Add memory
 program
@@ -16,9 +19,9 @@ program
   .requiredOption('-t, --type <type>', 'Memory type (fact|decision|code|config|note)')
   .requiredOption('-s, --source <source>', 'Source (file, url, conversation, etc)')
   .option('--tags <tags>', 'Comma-separated tags')
-  .action((options) => {
+  .action(async (options) => {
     try {
-      const id = store.add({
+      const id = await store.add({
         content: options.content,
         type: options.type,
         source: options.source,
@@ -37,8 +40,8 @@ program
   .description('Search memories by content')
   .option('-t, --type <type>', 'Filter by type')
   .option('-l, --limit <number>', 'Max results', '10')
-  .action((query, options) => {
-    const results = store.search(query, {
+  .action(async (query, options) => {
+    const results = await store.search(query, {
       type: options.type,
       limit: parseInt(options.limit, 10),
     });
@@ -66,8 +69,8 @@ program
   .description('List recent memories')
   .option('-t, --type <type>', 'Filter by type')
   .option('-l, --limit <number>', 'Max results', '20')
-  .action((options) => {
-    const memories = store.list({
+  .action(async (options) => {
+    const memories = await store.list({
       type: options.type,
       limit: parseInt(options.limit, 10),
     });
@@ -89,8 +92,8 @@ program
 program
   .command('stats')
   .description('Show memory statistics')
-  .action(() => {
-    const stats = store.stats();
+  .action(async () => {
+    const stats = await store.stats();
     console.log('\n📊 Cortex Memory Statistics\n');
     console.log(`Total memories: ${stats.total}`);
     console.log('\nBy type:');
@@ -109,9 +112,9 @@ program
 program
   .command('get <id>')
   .description('Get details of a specific memory')
-  .action((id) => {
+  .action(async (id) => {
     try {
-      const memory = store.get(parseInt(id, 10));
+      const memory = await store.get(parseInt(id, 10));
       if (!memory) {
         console.log(`Memory ${id} not found`);
         process.exit(1);
@@ -146,12 +149,12 @@ program
   .option('--tags <tags>', 'New comma-separated tags (replaces existing)')
   .option('--add-tags <tags>', 'Add tags (comma-separated, keeps existing)')
   .option('--remove-tags <tags>', 'Remove tags (comma-separated)')
-  .action((id, options) => {
+  .action(async (id, options) => {
     try {
       const memoryId = parseInt(id, 10);
 
       // Check if memory exists
-      const existing = store.get(memoryId);
+      const existing = await store.get(memoryId);
       if (!existing) {
         console.log(`Memory ${id} not found`);
         process.exit(1);
@@ -199,13 +202,13 @@ program
       }
 
       // Perform update
-      const success = store.update(memoryId, updates);
+      const success = await store.update(memoryId, updates);
 
       if (success) {
         console.log(`✓ Memory ${id} updated`);
 
         // Show updated memory
-        const updated = store.get(memoryId);
+        const updated = await store.get(memoryId);
         if (updated) {
           console.log(`\n📝 Updated Memory:\n`);
           console.log(`[${updated.type}] ${updated.content}`);
@@ -228,8 +231,8 @@ program
 program
   .command('delete <id>')
   .description('Delete a memory by ID')
-  .action((id) => {
-    const deleted = store.delete(parseInt(id, 10));
+  .action(async (id) => {
+    const deleted = await store.delete(parseInt(id, 10));
     if (deleted) {
       console.log(`✓ Memory ${id} deleted`);
     } else {
@@ -243,13 +246,13 @@ program
   .command('clear')
   .description('Delete all memories (use with caution!)')
   .option('-f, --force', 'Skip confirmation')
-  .action((options) => {
+  .action(async (options) => {
     if (!options.force) {
       console.log('This will delete ALL memories. Use --force to confirm.');
       process.exit(1);
     }
 
-    const count = store.clear();
+    const count = await store.clear();
     console.log(`✓ Cleared ${count} memories`);
   });
 
@@ -261,7 +264,7 @@ program
     const dbPath = join(homedir(), '.cortex', 'memories.db');
     console.log('\n🧠 Cortex Information\n');
     console.log(`Database: ${dbPath}`);
-    console.log(`Version: 0.1.0`);
+    console.log(`Version: 0.3.0`);
     console.log('\nTo use with Claude Desktop:');
     console.log('Add this to your claude_desktop_config.json:\n');
     console.log(

@@ -5,14 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2025-12-29
 
-### Planned
-- Embeddings + semantic search (sqlite-vec integration)
-- Cross-framework SDK (LangChain, CrewAI, AutoGen)
-- Context observability dashboard
-- `cortex_fuse` MCP tool for multi-source fusion
-- ZKDM (Zero-Knowledge Data Markets) for secure context sharing
+### Added
+- **Interactive Walkthrough**: New onboarding flow in VS Code for new users.
+- **Keyboard Shortcuts**: Native keybindings for fast context capture (`Ctrl+Shift+M`, `Ctrl+Shift+S`, `Ctrl+Shift+Alt+M`).
+- **Modern UI**: Completely redesigned card-based memory webview and monochrome Activity Bar icon.
+- **CLI Branding**: Refreshed CLI with improved help output and consistency.
+- **Enhanced Status Bar**: Real-time memory counter and brain icon in the VS Code status bar.
+
+### Changed
+- **Version Synchronization**: All monorepo packages synchronized to v0.3.0.
+- **Professional Metadata**: Standardized package authors, descriptions, and keywords for Marketplace/npm readiness.
+- **Registry Readiness**: Added `bin` entry to `@cortex/mcp-server` for easier distribution.
+- **CI/CD Polishing**: Fixed coverage reporting and badge URLs.
+
+### Fixed
+- CLI build failure due to async/await mismatch with core storage API.
+- Activity Bar icon rendering issues (replaced multi-color SVG with mask-safe monochrome).
 
 ## [0.2.0] - 2025-12-29
 
@@ -57,6 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for 5 memory types: fact, decision, code, config, note
 - MCP integration with Claude Desktop, GitHub Copilot, and Continue.dev
 
-[Unreleased]: https://github.com/EcuaByte-lat/Cortex/compare/v0.2.0...HEAD
+[0.3.0]: https://github.com/EcuaByte-lat/Cortex/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/EcuaByte-lat/Cortex/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/EcuaByte-lat/Cortex/releases/tag/v0.1.0

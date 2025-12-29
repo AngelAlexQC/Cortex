@@ -20,13 +20,13 @@
     "test:coverage": "bun test --coverage"
   },
   "keywords": [
+    "ai",
     "memory",
-    "storage",
+    "context",
+    "agent",
+    "mcp",
     "sqlite"
   ],
-  "dependencies": {
-    "@cortex/shared": "workspace:*"
-  },
-  "author": "Cortex Team",
+  "author": "EcuaByte <hello@ecuabyte.com> (https://github.com/EcuaByte-lat)",
   "license": "MIT"
 }

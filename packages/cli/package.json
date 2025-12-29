@@ -12,11 +12,14 @@
     "typecheck": "bunx tsc --noEmit"
   },
   "keywords": [
+    "ai",
     "cli",
     "memory",
+    "context",
+    "mcp",
     "cortex"
   ],
-  "author": "Cortex Team",
+  "author": "EcuaByte <hello@ecuabyte.com> (https://github.com/EcuaByte-lat)",
   "license": "MIT",
   "dependencies": {
     "@cortex/core": "workspace:*",

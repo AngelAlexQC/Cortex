@@ -3,6 +3,9 @@
   "version": "0.3.0",
   "description": "MCP server exposing Cortex memories to AI tools",
   "type": "module",
+  "bin": {
+    "cortex-mcp": "./dist/mcp-server.js"
+  },
   "main": "./dist/mcp-server.js",
   "scripts": {
     "build": "bun build src/mcp-server.ts --outdir dist --target node --format esm",
@@ -13,9 +16,12 @@
   "keywords": [
     "mcp",
     "ai",
-    "memory"
+    "memory",
+    "context",
+    "claude",
+    "copilot"
   ],
-  "author": "Cortex Team",
+  "author": "EcuaByte <hello@ecuabyte.com> (https://github.com/EcuaByte-lat)",
   "license": "MIT",
   "dependencies": {
     "@cortex/core": "workspace:*",
