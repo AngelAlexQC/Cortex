@@ -3,21 +3,18 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
-  workflow_dispatch:
+      - 'v*'
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   release:
-    name: Create Release
+    name: Build & Release
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -26,139 +23,40 @@ jobs:
         with:
           bun-version: latest
 
-      # Cache Bun dependencies for faster release builds
-      - name: Cache Bun dependencies
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-release-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-release-
-            ${{ runner.os }}-bun-
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
       - name: Build all packages
         run: bun run build
 
-      - name: Run tests
+      - name: Run Tests
         run: bun test
 
-      - name: Prepare and Package VS Code Extension
-        run: |
-          mkdir -p /tmp/cortex-publish
-          cp -r packages/vscode-extension/dist /tmp/cortex-publish/
-          cp packages/vscode-extension/package.json /tmp/cortex-publish/
-          cp packages/vscode-extension/icon.png /tmp/cortex-publish/
-          cp packages/vscode-extension/README.md /tmp/cortex-publish/
-          cp packages/vscode-extension/CHANGELOG.md /tmp/cortex-publish/
-          cp -r packages/vscode-extension/resources /tmp/cortex-publish/
-          cp LICENSE /tmp/cortex-publish/
-          
-          cd /tmp/cortex-publish
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          # Use jq to update version safely
-          if [ -n "$VERSION" ] && [ "$VERSION" != "$GITHUB_REF" ]; then
-            jq --arg v "$VERSION" '.version = $v' package.json > tmp.json && mv tmp.json package.json
-          fi
-          # Update prepublish script
-          jq '.scripts["vscode:prepublish"] = "echo ok"' package.json > tmp.json && mv tmp.json package.json
-          
-          cat package.json
-          npx @vscode/vsce package --no-dependencies
-          cp *.vsix $GITHUB_WORKSPACE/packages/vscode-extension/
-
-      - name: Extract version from tag
+      - name: Get Version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          if [ -f CHANGELOG.md ]; then
-            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-            awk '/^## \[${{ steps.get_version.outputs.VERSION }}\]/{flag=1;next}/^## \[/{flag=0}flag' CHANGELOG.md >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "CHANGELOG=Release ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_OUTPUT
-          fi
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          name: Release ${{ env.VERSION }}
+          generate_release_notes: true
           draft: false
           prerelease: false
           files: |
             packages/vscode-extension/*.vsix
-            packages/cli/dist/cli.js
-            packages/mcp-server/dist/mcp-server.js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish to VS Code Marketplace
-        if: success()
-        run: |
-          cd /tmp/cortex-publish
-          npx @vscode/vsce publish --no-dependencies -p ${{ secrets.VSCE_PAT }}
-        continue-on-error: true
+      # Optional: Publish to NPM (requires NPM_TOKEN secret)
+      # - name: Publish to NPM
+      #   if: env.NPM_TOKEN != ''
+      #   run: |
+      #     echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+      #     bun publish --filter "@cortex/*" --no-git-checks
+      #   env:
+      #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to Open VSX
-        if: success()
-        run: |
-          cd packages/vscode-extension
-          bun x ovsx publish -p ${{ secrets.OVSX_TOKEN }}
-        continue-on-error: true
-
-  npm-publish:
-    name: Publish to npm
-    runs-on: ubuntu-latest
-    needs: release
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build packages
-        run: bun run build
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Publish @cortex/core to npm
-        run: |
-          cd packages/core
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        continue-on-error: true
-
-      - name: Publish @cortex/cli to npm
-        run: |
-          cd packages/cli
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        continue-on-error: true
-
-      - name: Publish @cortex/mcp-server to npm
-        run: |
-          cd packages/mcp-server
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        continue-on-error: true
+      # Optional: Publish to VS Code Marketplace (requires VSCE_PAT secret)
+      # - name: Publish Extension
+      #   if: env.VSCE_PAT != ''
+      #   working-directory: packages/vscode-extension
+      #   run: bunx vsce publish -p ${{ secrets.VSCE_PAT }}
