@@ -33,7 +33,8 @@
         "noUselessCatch": "error",
         "noUselessTypeConstraint": "error",
         "noAdjacentSpacesInRegex": "error",
-        "noArguments": "error"
+        "noArguments": "error",
+        "useLiteralKeys": "off"
       },
       "correctness": {
         "noConstAssign": "error",

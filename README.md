@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Persistent memory for AI coding assistants</strong>
+  <strong>The Context Layer for AI Coding Assistants</strong>
 </p>
 
 <p align="center">
@@ -24,115 +24,116 @@
 
 ---
 
-Stop repeating yourself to AI tools. Cortex remembers your project context across all sessions and tools.
+**Stop telling AI what your project already knows.** Cortex intelligently manages context for AI coding assistants — storing, routing, and protecting your project knowledge.
 
-**The Problem:** AI assistants forget everything between sessions.  
-**The Solution:** Local-first memory system with CLI, MCP server, and VS Code extension.
+## 🎯 The Problem
 
-## ✨ Features
+AI assistants forget everything between sessions. You repeat the same context. They miss relevant patterns. Context windows fill with noise.
 
-- 🧠 **Persistent Memory** - Context that survives sessions
-- 🔗 **Multi-Tool Integration** - Works with Claude, Copilot, Cursor, Continue
-- 📁 **Project Isolation** - Automatic project detection and memory isolation
-- ⚡ **Local-First** - Fast, offline-capable, zero configuration
-- 🎨 **Visual Interface** - VS Code extension with TreeView and Webview
-- 🔍 **Full-Text Search** - Find memories instantly
-- 🏷️ **5 Memory Types** - fact, decision, code, config, note
+## ✨ The Solution: 5 Simple Primitives
 
-## 🛠️ Stack
+Like Stripe reduced payments to 7 lines of code, Cortex reduces context engineering to **5 composable primitives**:
 
-- **Bun** - Runtime + Bundler (50x faster than npm)
-- **SQLite** - Local database (bun:sqlite native)
-- **MCP** - Model Context Protocol (Anthropic)
-- **VS Code API** - Extension with TreeView + Webview
-- **TypeScript** - Type safety throughout
-- **Monorepo** - Clean architecture with Bun Workspaces
+```typescript
+ctx/store   // Store context (facts, decisions, patterns)
+ctx/get     // Retrieve specific context  
+ctx/route   // Intelligently decide WHAT context to inject ✨
+ctx/fuse    // Combine multiple context sources
+ctx/guard   // Filter sensitive data (API keys, PII)
+```
 
-## Arquitectura
+## 🚀 Quick Start
+
+```bash
+# Install
+bun install && bun run build
+
+# Add context
+bun --cwd packages/cli run dev add -c "We use PostgreSQL with Prisma ORM" -t "decision"
+
+# Get intelligent context for your current task
+bun --cwd packages/cli run dev context "implementing user authentication"
+```
+
+## 🔗 MCP Integration
+
+Cortex is **MCP-native** — works with Claude, Copilot, Cursor, and any MCP client.
+
+```json
+// VS Code or Claude Desktop config
+{
+  "mcpServers": {
+    "cortex": {
+      "command": "bun",
+      "args": ["run", "/path/to/Cortex/packages/mcp-server/dist/mcp-server.js"]
+    }
+  }
+}
+```
+
+Then in your AI chat:
+```
+@cortex What context is relevant for implementing the login flow?
+```
+
+## 📦 Architecture
 
 ```
 cortex/
 ├── packages/
-│   ├── core/              # Storage layer (SQLite + tipos)
-│   ├── cli/               # Interfaz de línea de comandos
-│   ├── mcp-server/        # Servidor MCP para AI tools
-│   └── vscode-extension/  # Extensión visual para VS Code
-├── build.ts               # Build script del monorepo
-└── bunfig.toml           # Configuración Bun
+│   ├── core/              # Context primitives (store, route, guard, fuse)
+│   ├── shared/            # Types and interfaces
+│   ├── cli/               # Command-line interface
+│   ├── mcp-server/        # MCP protocol server
+│   └── vscode-extension/  # VS Code extension
+└── docs/                  # Documentation
 ```
 
-## Quick Start
+## ✨ Features
 
-```bash
-# 1. Install
-bun install
+| Feature | Description |
+|---------|-------------|
+| 🧠 **Intelligent Routing** | Automatically selects relevant context for your current task |
+| 🔒 **Privacy Guard** | Filters API keys, secrets, and PII before sending to LLMs |
+| 📁 **Project Isolation** | Context automatically scoped to your project |
+| ⚡ **Local-First** | Works offline, zero cloud dependency |
+| 🔗 **MCP-Native** | Built on the Linux Foundation standard |
+| 🔍 **Full-Text Search** | SQLite FTS5 for instant search |
 
-# 2. Build
-bun run build
+## 🛠️ Stack
 
-# 3. Try CLI
-bun --cwd packages/cli run dev add -c "First memory" -t "fact" -s "test"
-bun --cwd packages/cli run dev list
+- **Bun** - Runtime + Bundler (50x faster than npm)
+- **SQLite** - Local storage (bun:sqlite native)
+- **MCP** - Model Context Protocol (Linux Foundation standard)
+- **TypeScript** - Type safety throughout
 
-# 4. VS Code Extension
-# Press F5 to open Extension Development Host
-```
+## 🗺️ Roadmap
 
-## MCP Integration (AI Tools)
-
-Configure Cortex to work with Claude, Copilot, Cursor, and Continue.
-
-### VS Code + Copilot
-
-1. `Ctrl+Shift+P` → "MCP: Open User Configuration"
-2. Add:
-
-```json
-{
-  "mcpServers": {
-    "cortex": {
-      "command": "bun",
-      "args": ["run", "/absolute/path/to/Cortex/packages/mcp-server/dist/mcp-server.js"]
-    }
-  }
-}
-```
-
-3. Restart VS Code
-4. In Copilot Chat: `@cortex search "database"`
-
-### Claude Desktop
-
-Edit `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "cortex": {
-      "command": "bun",
-      "args": ["run", "/absolute/path/to/Cortex/packages/mcp-server/dist/mcp-server.js"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop.
+- [x] **ctx/store + ctx/get** - Memory storage layer
+- [x] **MCP Server** - AI tool integration
+- [x] **VS Code Extension** - Visual interface
+- [ ] **ctx/route** - Intelligent context routing ← *In Progress*
+- [ ] **ctx/guard** - PII and secrets filtering
+- [ ] **ctx/fuse** - Multi-source context fusion
+- [ ] **Embeddings** - Semantic search with sqlite-vec
+- [ ] **ZKDM** - Zero-knowledge context sharing
 
 ## 📚 Documentation
 
 - **[Quick Start](./docs/getting-started/quick-start.md)** - 5-minute setup
 - **[Development Guide](./docs/DEVELOPMENT.md)** - For contributors
 - **[Architecture Decisions](./docs/architecture/decisions/)** - Design rationale
+- **[AGENTS.md](./AGENTS.md)** - AI agent instructions
 
 ## 🤝 Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ```bash
 git clone https://github.com/EcuaByte-lat/Cortex.git
 cd Cortex
 bun install && bun run build && bun test
 ```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 

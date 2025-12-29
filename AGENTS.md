@@ -2,12 +2,31 @@
 
 > Instructions for AI agents working on the Cortex ecosystem.
 
-## Vision: "Proactive Context Engine"
+## Vision: "The Context Layer for AI Agents"
 
-Cortex is the operating system for agentic memory. It moves beyond passive retrieval to **Proactive Context Management**.
+Cortex is the **context engineering platform** for AI coding assistants. It moves beyond passive memory storage to **intelligent context orchestration** — deciding what context to inject, when, and how.
 
-### Key Moat: ZKDM
-**Zero-Knowledge Distributed Memory (ZKDM)** allows multiple AI agents to collaborate using shared project context without leaking private user data or proprietary logic.
+### Core Philosophy
+
+**Like Stripe reduced payments to 7 lines, Cortex reduces context engineering to 5 primitives:**
+
+```
+ctx/store  →  Store context (facts, decisions, code patterns)
+ctx/get    →  Retrieve specific context
+ctx/route  →  Intelligently decide WHAT context to inject ✨
+ctx/fuse   →  Combine multiple context sources
+ctx/guard  →  Filter/protect sensitive data
+```
+
+### Key Differentiators
+
+1. **Local-First** - Works offline, zero cloud dependency
+2. **MCP-Native** - Built on the Model Context Protocol standard (Linux Foundation)
+3. **Privacy-First** - Encryption built-in, PII filtering via ctx/guard
+4. **Framework-Agnostic** - Works with Claude, GPT, Copilot, Cursor, any MCP client
+
+### Future Moat: ZKDM
+**Zero-Knowledge Distributed Memory (ZKDM)** will allow multiple AI agents to collaborate using shared project context without leaking private user data — context sharing without context exposure.
 
 ---
 
@@ -32,13 +51,67 @@ bun test --coverage
 ```
 cortex/
 ├── packages/
-│   ├── core/              # @cortex/core - SQLite storage + types (bun:sqlite)
+│   ├── core/              # @cortex/core - Context primitives + SQLite storage
+│   │   ├── storage.ts     # ctx/store, ctx/get (MemoryStore)
+│   │   ├── router.ts      # ctx/route (ContextRouter) ← NEW
+│   │   ├── guard.ts       # ctx/guard (ContextGuard) ← NEW
+│   │   └── fuser.ts       # ctx/fuse (ContextFuser) ← NEW
+│   ├── shared/            # @cortex/shared - Types and interfaces
 │   ├── cli/               # @cortex/cli - Command-line interface  
 │   ├── mcp-server/        # @cortex/mcp-server - MCP protocol server
 │   └── vscode-extension/  # cortex-vscode - VS Code extension
 ├── docs/                  # Architecture docs, ADRs, getting-started
 ├── build.ts               # Monorepo build orchestrator
 └── bunfig.toml            # Bun configuration
+```
+
+## The 5 Context Primitives
+
+### ctx/store & ctx/get (Implemented ✅)
+```typescript
+// Store context
+await cortex.store({
+  content: "We use JWT with RS256 for authentication",
+  type: "decision",
+  tags: ["auth", "security"]
+});
+
+// Retrieve context
+const memories = await cortex.search("authentication");
+```
+
+### ctx/route (The Magic ✨)
+```typescript
+// Intelligently get context relevant to current task
+const context = await cortex.route({
+  task: "implementing login endpoint",
+  currentFile: "src/auth/login.ts",
+  limit: 5
+});
+// Returns: Top 5 most relevant memories for this task
+```
+
+### ctx/fuse
+```typescript
+// Combine multiple context sources
+const unified = await cortex.fuse({
+  sources: [
+    { type: "memory", query: "auth patterns" },
+    { type: "file", path: "./docs/auth.md" },
+    { type: "session", data: conversationHistory }
+  ],
+  maxTokens: 4000
+});
+```
+
+### ctx/guard
+```typescript
+// Filter sensitive data before sending to LLM
+const safe = await cortex.guard(content, {
+  filters: ["api_keys", "pii", "secrets"],
+  mode: "redact"
+});
+// "API key: sk-123abc" → "API key: [REDACTED]"
 ```
 
 ## Build & Test Commands
@@ -110,6 +183,7 @@ The MCP server (`packages/mcp-server`) implements the Model Context Protocol for
 | `cortex_add` | Add new memory |
 | `cortex_list` | List recent memories |
 | `cortex_stats` | Get memory statistics |
+| `cortex_context` | **NEW**: Get intelligent, task-relevant context |
 
 ### Testing MCP Server
 ```bash
@@ -125,6 +199,7 @@ The extension (`packages/vscode-extension`) provides:
 - Webview for memory management
 - TaskProvider for project tools
 - ToolScanner for workspace scanning
+- **NEW**: Auto-inject context based on active file
 
 ### Development
 ```bash
@@ -136,17 +211,19 @@ bun run build:extension
 
 ## Technical Directives
 
-1. **Local-First Default**: All primary memory operations must work offline.
-2. **Privacy**: Zero data telemetry unless explicit Pro sync is enabled.
-3. **Speed**: Semantic search must be <200ms.
-4. **Interop**: Be the gold standard for MCP server implementations.
+1. **Local-First Default**: All context operations must work offline.
+2. **Privacy by Design**: Zero telemetry. ctx/guard for PII filtering.
+3. **Speed**: Context routing must be <200ms.
+4. **Simplicity**: 5 primitives that compose into any solution.
+5. **Interop**: MCP-native, works with any AI tool.
 
 ## Security Considerations
 
-- Never log or expose user memory content in error messages
+- Never log or expose user context in error messages
 - Validate all input types before database operations
 - Use parameterized queries (SQLite prepared statements)
-- Project isolation: memories are scoped by `projectId` hash
+- Project isolation: context scoped by `projectId` hash
+- ctx/guard filters: API keys, secrets, PII, credentials
 
 ## Pull Request Guidelines
 
@@ -160,5 +237,6 @@ bun run build:extension
 
 See `docs/architecture/decisions/` for ADRs:
 - `001-use-sqlite.md` - SQLite as storage layer
-- `002-project-isolation.md` - Project-based memory isolation
+- `002-project-isolation.md` - Project-based context isolation
 - `003-monorepo-structure.md` - Bun Workspaces monorepo
+- `004-context-primitives.md` - The 5 context primitives (NEW)
