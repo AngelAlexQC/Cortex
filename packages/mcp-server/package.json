@@ -23,6 +23,14 @@
   ],
   "author": "EcuaByte <hello@ecuabyte.com> (https://github.com/EcuaByte-lat)",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EcuaByte-lat/Cortex.git",
+    "directory": "packages/mcp-server"
+  },
   "dependencies": {
     "@cortex/core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4"
