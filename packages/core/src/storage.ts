@@ -1,7 +1,9 @@
 import { Database } from 'bun:sqlite';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import type { IMemoryStore, Memory, MemoryStoreOptions } from '@cortex/shared';
 import { getProjectId } from './context';
+import { decrypt, encrypt } from './crypto';
 
 /**
  * Represents a raw database row from SQLite.
@@ -59,40 +61,6 @@ export function validateMemoryType(type: string): asserts type is Memory['type']
  * };
  * ```
  */
-export interface Memory {
-  /** Unique identifier (auto-generated) */
-  id?: number;
-  /** Project identifier for isolation (auto-detected or manual) */
-  projectId?: string;
-  /** The actual content/description of the memory */
-  content: string;
-  /** Category of memory: fact, decision, code, config, or note */
-  type: 'fact' | 'decision' | 'code' | 'config' | 'note';
-  /** Origin of the memory (file path, URL, conversation, etc.) */
-  source: string;
-  /** Optional tags for categorization and filtering */
-  tags?: string[];
-  /** Optional arbitrary metadata as key-value pairs */
-  metadata?: Record<string, unknown>;
-  /** ISO timestamp of creation (auto-generated) */
-  createdAt?: string;
-  /** ISO timestamp of last update (auto-updated) */
-  updatedAt?: string;
-}
-
-/**
- * Configuration options for initializing a MemoryStore.
- *
- * @public
- */
-export interface MemoryStoreOptions {
-  /** Custom path for SQLite database file. Default: ~/.cortex/memories.db */
-  dbPath?: string;
-  /** Override automatic project detection with a specific project ID */
-  projectId?: string;
-  /** Disable project isolation - access all memories globally */
-  globalMode?: boolean;
-}
 
 /**
  * Main storage class for managing persistent memories using SQLite.
@@ -119,10 +87,11 @@ export interface MemoryStoreOptions {
  * const store = new MemoryStore({ globalMode: true });
  * ```
  */
-export class MemoryStore {
+export class MemoryStore implements IMemoryStore {
   private db: Database;
   private projectId: string | null;
   private globalMode: boolean;
+  private password?: string;
 
   /**
    * Creates a new MemoryStore instance.
@@ -151,6 +120,7 @@ export class MemoryStore {
     this.db = new Database(opts.dbPath || defaultPath);
     this.globalMode = opts.globalMode || false;
     this.projectId = this.globalMode ? null : opts.projectId || getProjectId();
+    this.password = opts.password;
 
     this.initialize();
   }
@@ -171,6 +141,43 @@ export class MemoryStore {
       )
     `);
 
+    // Create FTS5 virtual table for search
+    try {
+      this.db.run(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
+          content,
+          content='memories',
+          content_rowid='id'
+        )
+      `);
+
+      // Triggers to keep FTS index in sync
+      this.db.run(`
+        CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
+          INSERT INTO memories_fts(rowid, content) VALUES (new.id, new.content);
+        END;
+      `);
+      this.db.run(`
+        CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
+          INSERT INTO memories_fts(memories_fts, rowid, content) VALUES('delete', old.id, old.content);
+        END;
+      `);
+      this.db.run(`
+        CREATE TRIGGER IF NOT EXISTS memories_bu BEFORE UPDATE ON memories
+        WHEN old.content != new.content BEGIN
+          INSERT INTO memories_fts(memories_fts, rowid, content) VALUES('delete', old.id, old.content);
+        END;
+      `);
+      this.db.run(`
+        CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories
+        WHEN old.content != new.content BEGIN
+          INSERT INTO memories_fts(rowid, content) VALUES (new.id, new.content);
+        END;
+      `);
+    } catch (e) {
+      console.warn('FTS5 not supported or error creating virtual table:', e);
+    }
+
     // Indexes for efficient queries
     this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_project_id ON memories(project_id)');
     this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)');
@@ -180,13 +187,8 @@ export class MemoryStore {
       'CREATE INDEX IF NOT EXISTS idx_memories_project_type ON memories(project_id, type)'
     );
 
-    this.db.run(`
-      CREATE TRIGGER IF NOT EXISTS update_memories_timestamp
-      AFTER UPDATE ON memories
-      BEGIN
-        UPDATE memories SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-      END
-    `);
+    // We handle updated_at manually in the update() method to avoid trigger recursiveness
+    // and potential FTS5 corruption issues.
   }
 
   /**
@@ -197,7 +199,7 @@ export class MemoryStore {
    * @throws {Error} If memory type is invalid or required fields are missing
    * @example
    * ```typescript
-   * const id = store.add({
+   * const id = await store.add({
    *   content: 'PostgreSQL for main database',
    *   type: 'decision',
    *   source: 'tech-review-2025',
@@ -207,7 +209,7 @@ export class MemoryStore {
    * console.log(`Memory created with ID: ${id}`);
    * ```
    */
-  add(memory: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>): number {
+  async add(memory: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     // Validate required fields
     if (!memory.content || memory.content.trim() === '') {
       throw new Error('Memory content is required and cannot be empty');
@@ -227,13 +229,23 @@ export class MemoryStore {
 
     const projectId = memory.projectId || this.projectId;
 
+    let content = memory.content;
+    let metadata = memory.metadata ? JSON.stringify(memory.metadata) : null;
+
+    if (this.password) {
+      content = await encrypt(content, this.password);
+      if (metadata) {
+        metadata = await encrypt(metadata, this.password);
+      }
+    }
+
     stmt.run(
       projectId,
-      memory.content,
+      content,
       memory.type,
       memory.source,
       memory.tags ? JSON.stringify(memory.tags) : null,
-      memory.metadata ? JSON.stringify(memory.metadata) : null
+      metadata
     );
 
     const result = this.db.query('SELECT last_insert_rowid() as id').get() as { id: number };
@@ -249,13 +261,13 @@ export class MemoryStore {
    * @returns The memory object or null if not found
    * @example
    * ```typescript
-   * const memory = store.get(42);
+   * const memory = await store.get(42);
    * if (memory) {
    *   console.log(memory.content);
    * }
    * ```
    */
-  get(id: number): Memory | null {
+  async get(id: number): Promise<Memory | null> {
     let sql = 'SELECT * FROM memories WHERE id = ?';
     const params: (number | string)[] = [id];
 
@@ -265,7 +277,8 @@ export class MemoryStore {
     }
 
     const row = this.db.query(sql).get(...params) as DatabaseRow | undefined;
-    return row ? this.rowToMemory(row) : null;
+    if (!row) return null;
+    return await this.rowToMemory(row);
   }
 
   /**
@@ -277,15 +290,33 @@ export class MemoryStore {
    * @example
    * ```typescript
    * // Simple search
-   * const results = store.search('database');
+   * const results = await store.search('database');
    *
    * // Search with filters
-   * const decisions = store.search('api', { type: 'decision', limit: 10 });
+   * const decisions = await store.search('api', { type: 'decision', limit: 10 });
    * ```
    */
-  search(query: string, options?: { type?: string; limit?: number }): Memory[] {
-    let sql = 'SELECT * FROM memories WHERE content LIKE ?';
-    const params: (number | string)[] = [`%${query}%`];
+  async search(query: string, options?: { type?: string; limit?: number }): Promise<Memory[]> {
+    // If query is empty, just list memories with filters and limit
+    if (!query || query.trim() === '') {
+      return this.list(options);
+    }
+
+    // If encrypted, we can't search with FTS5 easily without decrypting everything.
+    // For now, if password is set, we use simple LIKE on the encrypted content (which won't work well)
+    // or we decrypt and search in memory.
+    // FUTURE: Implement searchable encryption or local index.
+
+    if (this.password) {
+      // Simple implementation: fetch all and filter in memory
+      const all = await this.list({ type: options?.type });
+      const results = all.filter((m) => m.content.toLowerCase().includes(query.toLowerCase()));
+      return options?.limit ? results.slice(0, options.limit) : results;
+    }
+
+    let sql =
+      'SELECT * FROM memories WHERE id IN (SELECT rowid FROM memories_fts WHERE memories_fts MATCH ?)';
+    const params: (number | string)[] = [query];
 
     // Add project isolation unless in global mode
     if (!this.globalMode && this.projectId) {
@@ -306,7 +337,7 @@ export class MemoryStore {
     }
 
     const rows = this.db.query(sql).all(...params) as DatabaseRow[];
-    return rows.map((row) => this.rowToMemory(row));
+    return Promise.all(rows.map((row) => this.rowToMemory(row)));
   }
 
   /**
@@ -317,16 +348,16 @@ export class MemoryStore {
    * @example
    * ```typescript
    * // All memories
-   * const all = store.list();
+   * const all = await store.list();
    *
    * // Only facts, limited to 20
-   * const facts = store.list({ type: 'fact', limit: 20 });
+   * const facts = await store.list({ type: 'fact', limit: 20 });
    *
    * // All decisions
-   * const decisions = store.list({ type: 'decision' });
+   * const decisions = await store.list({ type: 'decision' });
    * ```
    */
-  list(options?: { type?: string; limit?: number }): Memory[] {
+  async list(options?: { type?: string; limit?: number }): Promise<Memory[]> {
     let sql = 'SELECT * FROM memories';
     const params: (number | string)[] = [];
     const conditions: string[] = [];
@@ -354,7 +385,7 @@ export class MemoryStore {
     }
 
     const rows = this.db.query(sql).all(...params) as DatabaseRow[];
-    return rows.map((row) => this.rowToMemory(row));
+    return Promise.all(rows.map((row) => this.rowToMemory(row)));
   }
 
   /**
@@ -369,19 +400,22 @@ export class MemoryStore {
    * @example
    * ```typescript
    * // Update content only
-   * store.update(42, { content: 'Updated content' });
+   * await store.update(42, { content: 'Updated content' });
    *
    * // Update multiple fields
-   * store.update(42, {
+   * await store.update(42, {
    *   content: 'New content',
    *   tags: ['updated', 'revised'],
    *   metadata: { version: 2 }
    * });
    * ```
    */
-  update(id: number, updates: Partial<Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>>): boolean {
+  async update(
+    id: number,
+    updates: Partial<Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>>
+  ): Promise<boolean> {
     // Check if memory exists and belongs to current project
-    const existing = this.get(id);
+    const existing = await this.get(id);
     if (!existing) {
       return false;
     }
@@ -404,7 +438,11 @@ export class MemoryStore {
 
     if (updates.content !== undefined) {
       fields.push('content = ?');
-      params.push(updates.content);
+      let content = updates.content;
+      if (this.password) {
+        content = await encrypt(content, this.password);
+      }
+      params.push(content);
     }
 
     if (updates.type !== undefined) {
@@ -424,7 +462,11 @@ export class MemoryStore {
 
     if (updates.metadata !== undefined) {
       fields.push('metadata = ?');
-      params.push(updates.metadata ? JSON.stringify(updates.metadata) : null);
+      let metadata = updates.metadata ? JSON.stringify(updates.metadata) : null;
+      if (this.password && metadata) {
+        metadata = await encrypt(metadata, this.password);
+      }
+      params.push(metadata);
     }
 
     if (updates.projectId !== undefined) {
@@ -438,6 +480,9 @@ export class MemoryStore {
 
     // Add ID to params
     params.push(id);
+
+    // Always update the timestamp
+    fields.push('updated_at = CURRENT_TIMESTAMP');
 
     let sql = `UPDATE memories SET ${fields.join(', ')} WHERE id = ?`;
 
@@ -463,7 +508,7 @@ export class MemoryStore {
    * store.delete(42);
    * ```
    */
-  delete(id: number): boolean {
+  async delete(id: number): Promise<boolean> {
     let sql = 'DELETE FROM memories WHERE id = ?';
     const params: (number | string)[] = [id];
 
@@ -489,7 +534,7 @@ export class MemoryStore {
    * console.log(`Deleted ${count} memories`);
    * ```
    */
-  clear(): number {
+  async clear(): Promise<number> {
     let countSql = 'SELECT COUNT(*) as count FROM memories';
     let deleteSql = 'DELETE FROM memories';
     const params: (number | string)[] = [];
@@ -519,7 +564,7 @@ export class MemoryStore {
    * console.log(`Project: ${stats.projectId}`);
    * ```
    */
-  stats(): { total: number; byType: Record<string, number>; projectId?: string } {
+  async stats(): Promise<{ total: number; byType: Record<string, number>; projectId?: string }> {
     const params: (number | string)[] = [];
     let whereClause = '';
 
@@ -547,15 +592,31 @@ export class MemoryStore {
     };
   }
 
-  private rowToMemory(row: DatabaseRow): Memory {
+  private async rowToMemory(row: DatabaseRow): Promise<Memory> {
+    let content = row.content;
+    let metadata = row.metadata;
+
+    if (this.password) {
+      try {
+        content = await decrypt(content, this.password);
+        if (metadata) {
+          metadata = await decrypt(metadata, this.password);
+        }
+      } catch (e) {
+        // If decryption fails, it might be unencrypted data or wrong password
+        // For now, we leave it as is (encrypted string) or handle it
+        console.error('Failed to decrypt memory:', row.id, e);
+      }
+    }
+
     return {
       id: row.id,
       projectId: row.project_id ?? undefined,
-      content: row.content,
+      content,
       type: row.type,
       source: row.source,
       tags: row.tags ? JSON.parse(row.tags) : undefined,
-      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      metadata: metadata ? JSON.parse(metadata) : undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

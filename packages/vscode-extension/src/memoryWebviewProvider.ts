@@ -1,5 +1,6 @@
+import type { Memory } from '@cortex/shared';
 import * as vscode from 'vscode';
-import type { Memory, MemoryStore } from './storage';
+import type { MemoryStore } from './storage';
 
 export class MemoryWebviewProvider {
   private panel?: vscode.WebviewPanel;
@@ -123,10 +124,10 @@ export class MemoryWebviewProvider {
     <div class="metadata">
       <span class="metadata-label">Source:</span>
       <span>${this.escapeHtml(memory.source)}</span>
-      
+
       <span class="metadata-label">Created:</span>
       <span>${formatDate(memory.createdAt)}</span>
-      
+
       <span class="metadata-label">Updated:</span>
       <span>${formatDate(memory.updatedAt)}</span>
     </div>
@@ -138,7 +139,7 @@ export class MemoryWebviewProvider {
   <div class="section">
     <div class="section-title">Tags</div>
     <div class="tags">
-      ${memory.tags.map((tag) => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
+      ${memory.tags.map((tag: string) => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
     </div>
   </div>
   `
@@ -148,7 +149,8 @@ export class MemoryWebviewProvider {
 </html>`;
   }
 
-  private escapeHtml(text: string): string {
+  private escapeHtml(text: string | null | undefined): string {
+    if (text === null || text === undefined) return '';
     const map: Record<string, string> = {
       '&': '&amp;',
       '<': '&lt;',
@@ -156,6 +158,6 @@ export class MemoryWebviewProvider {
       '"': '&quot;',
       "'": '&#039;',
     };
-    return text.replace(/[&<>"']/g, (m) => map[m]);
+    return String(text).replace(/[&<>"']/g, (m) => map[m]);
   }
 }

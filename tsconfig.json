@@ -34,11 +34,13 @@
     "declaration": true,
     "declarationMap": true,
     "paths": {
-      "@cortex/core": ["./packages/core/src/index.ts"]
+      "@cortex/core": ["./packages/core/src/index.ts"],
+      "@cortex/shared": ["./packages/shared/src/index.ts"]
     },
     "types": ["bun-types"]
   },
   "references": [
+    { "path": "./packages/shared" },
     { "path": "./packages/core" },
     { "path": "./packages/cli" },
     { "path": "./packages/mcp-server" },

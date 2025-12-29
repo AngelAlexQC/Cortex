@@ -33,16 +33,22 @@ export class ToolScanner {
     const dockerTools = this.scanDockerCompose(this.workspacePath);
     const scriptTools = this.scanScripts(this.workspacePath);
 
-    tools.push(...npmTools, ...makeTools, ...dockerTools, ...scriptTools);
+    if (Array.isArray(npmTools)) tools.push(...npmTools);
+    if (Array.isArray(makeTools)) tools.push(...makeTools);
+    if (Array.isArray(dockerTools)) tools.push(...dockerTools);
+    if (Array.isArray(scriptTools)) tools.push(...scriptTools);
 
     // Scan immediate subdirectories for monorepo support
     const subDirs = this.getSubdirectories();
     console.log('[Cortex ToolScanner] Scanning subdirectories:', subDirs);
 
     for (const subDir of subDirs) {
+      if (!subDir) continue;
       const subPath = join(this.workspacePath, subDir);
       const subNpmTools = this.scanNpmScripts(subPath, subDir);
-      tools.push(...subNpmTools);
+      if (Array.isArray(subNpmTools)) {
+        tools.push(...subNpmTools);
+      }
     }
 
     console.log('[Cortex ToolScanner] Total tools found:', tools.length);
@@ -81,6 +87,8 @@ export class ToolScanner {
    * Detect the package manager used in the workspace
    */
   private detectPackageManager(): string {
+    if (!this.workspacePath) return 'npm';
+
     // Check for lock files to determine package manager
     if (
       existsSync(join(this.workspacePath, 'bun.lockb')) ||
@@ -110,15 +118,19 @@ export class ToolScanner {
     if (!existsSync(packagePath)) return tools;
 
     try {
+      if (!existsSync(packagePath)) return tools;
       const content = readFileSync(packagePath, 'utf-8');
       const pkg = JSON.parse(content);
+
+      if (!pkg || typeof pkg !== 'object') return tools;
+
       const pm = this.detectPackageManager();
       const displayPrefix = prefix ? `[${prefix}] ` : '';
       const cdPrefix = prefix ? `cd ${prefix} && ` : '';
 
       console.log('[Cortex ToolScanner] Found package.json at:', packagePath);
 
-      if (pkg.scripts && typeof pkg.scripts === 'object') {
+      if (pkg.scripts && typeof pkg.scripts === 'object' && pkg.scripts !== null) {
         for (const [name, script] of Object.entries(pkg.scripts)) {
           if (typeof script === 'string') {
             tools.push({

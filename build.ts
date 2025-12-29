@@ -39,6 +39,14 @@ console.log('🏗️  Building Cortex monorepo (optimized)...\n');
 const totalStart = performance.now();
 
 try {
+  // Step 0: Build shared package (required by all others)
+  console.log('📍 Phase 0: Building shared package...');
+  const sharedResult = await buildPackage('shared');
+
+  if (!sharedResult.success) {
+    process.exit(1);
+  }
+
   // Step 1: Build core (required by all others)
   console.log('📍 Phase 1: Building core package...');
   const coreResult = await buildPackage('core');

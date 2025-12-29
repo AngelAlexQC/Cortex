@@ -24,6 +24,9 @@
     "storage",
     "sqlite"
   ],
+  "dependencies": {
+    "@cortex/shared": "workspace:*"
+  },
   "author": "Cortex Team",
   "license": "MIT"
 }
