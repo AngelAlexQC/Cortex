@@ -14,11 +14,10 @@ export class ContextObserver {
   private disposables: vscode.Disposable[] = [];
   private statusBarItem: vscode.StatusBarItem;
   private isEnabled = true;
+  private memoryCount = 0;
 
   constructor(private storage: MemoryStore) {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    this.statusBarItem.text = '$(eye) Cortex: Active';
-    this.statusBarItem.tooltip = 'Cortex Proactive Observer is watching for context';
     this.statusBarItem.command = 'cortex.toggleObserver';
     this.statusBarItem.show();
 
@@ -26,8 +25,9 @@ export class ContextObserver {
     this.isEnabled = vscode.workspace
       .getConfiguration('cortex')
       .get('proactiveCapture.enabled', true);
-    this.updateStatus();
 
+    // Initialize memory count and status
+    this.refreshMemoryCount();
     this.registerListeners();
   }
 
@@ -43,6 +43,7 @@ export class ContextObserver {
         }
       })
     );
+
     // 1. Monitor active editor changes
     this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -76,6 +77,25 @@ export class ContextObserver {
         }, 2000);
       })
     );
+
+    // 4. Periodically refresh memory count (every 30 seconds)
+    const countInterval = setInterval(() => {
+      this.refreshMemoryCount();
+    }, 30000);
+
+    this.disposables.push({
+      dispose: () => clearInterval(countInterval),
+    });
+  }
+
+  private async refreshMemoryCount() {
+    try {
+      const stats = await this.storage.stats();
+      this.memoryCount = stats.total;
+      this.updateStatus();
+    } catch {
+      // Silently ignore errors during count refresh
+    }
   }
 
   private async handleEditorChange(editor: vscode.TextEditor) {
@@ -118,16 +138,18 @@ export class ContextObserver {
   }
 
   private handleTextChange(event: vscode.TextDocumentChangeEvent) {
-    // const text = event.document.getText();
     // FUTURE: More advanced pattern detection or LLM-based suggestion
     // For now, only simple tagging on save is stable.
     console.log(`[Cortex] Text changed in: ${event.document.fileName}`);
   }
 
   private notifyCapture(count: number) {
-    this.statusBarItem.text = `$(check) Cortex: Captured ${count}`;
+    this.memoryCount += count;
+    this.statusBarItem.text = `$(check) +${count} captured`;
+    this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
+
     setTimeout(() => {
-      this.statusBarItem.text = '$(eye) Cortex: Active';
+      this.updateStatus();
     }, 5000);
 
     vscode.window.showInformationMessage(`Cortex captured ${count} proactive memories.`);
@@ -143,12 +165,17 @@ export class ContextObserver {
   }
 
   private updateStatus() {
-    this.statusBarItem.text = this.isEnabled
-      ? '$(eye) Cortex: Active'
-      : '$(eye-closed) Cortex: Paused';
-    this.statusBarItem.tooltip = this.isEnabled
-      ? 'Cortex Proactive Observer is watching'
-      : 'Cortex Proactive Observer is paused';
+    const countText = this.memoryCount > 0 ? ` ${this.memoryCount}` : '';
+
+    if (this.isEnabled) {
+      this.statusBarItem.text = `$(brain)${countText}`;
+      this.statusBarItem.tooltip = `Cortex: ${this.memoryCount} memories • Click to pause`;
+      this.statusBarItem.backgroundColor = undefined;
+    } else {
+      this.statusBarItem.text = `$(brain)${countText}`;
+      this.statusBarItem.tooltip = `Cortex: Paused • Click to resume`;
+      this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    }
   }
 
   public dispose() {

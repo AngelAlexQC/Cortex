@@ -100,6 +100,16 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "cortex.memoryTree",
+        "contents": "No memories yet.\n[$(add) Add Memory](command:cortex.addMemory)\n\nCapture project context that persists across AI sessions.\n[Learn more](https://github.com/EcuaByte-lat/Cortex)"
+      },
+      {
+        "view": "cortex.toolsTree",
+        "contents": "No project tools detected.\n\nAdd a package.json, Makefile, or shell scripts to your project.\n[$(refresh) Refresh](command:cortex.refreshTools)"
+      }
+    ],
     "commands": [
       {
         "command": "cortex.addMemory",
@@ -140,6 +150,29 @@
         "command": "cortex.toggleObserver",
         "title": "Cortex: Toggle Proactive Observer",
         "icon": "$(eye)"
+      },
+      {
+        "command": "cortex.addSelectionAsMemory",
+        "title": "Cortex: Save Selection as Memory",
+        "icon": "$(add)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "cortex.addMemory",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m"
+      },
+      {
+        "command": "cortex.searchMemories",
+        "key": "ctrl+shift+alt+m",
+        "mac": "cmd+shift+alt+m"
+      },
+      {
+        "command": "cortex.addSelectionAsMemory",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorTextFocus && editorHasSelection"
       }
     ],
     "menus": {
@@ -181,6 +214,13 @@
           "when": "view == cortex.toolsTree && viewItem == tool",
           "group": "inline"
         }
+      ],
+      "editor/context": [
+        {
+          "command": "cortex.addSelectionAsMemory",
+          "when": "editorTextFocus && editorHasSelection",
+          "group": "cortex@1"
+        }
       ]
     },
     "configuration": {
@@ -192,7 +232,54 @@
           "description": "Enable or disable proactive context capture (tagging, suggestions)."
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "cortex.gettingStarted",
+        "title": "Getting Started with Cortex",
+        "description": "Learn how to use persistent memory for AI coding assistants",
+        "steps": [
+          {
+            "id": "cortex.welcome",
+            "title": "Welcome to Cortex",
+            "description": "Cortex gives your AI assistants persistent memory that survives across sessions.\n\nYour project context, decisions, and code patterns are remembered forever.\n\n[Open Cortex Panel](command:cortex.memoryTree.focus)",
+            "media": {
+              "markdown": "## 🧠 What is Cortex?\n\nCortex is a **persistent memory layer** for AI coding assistants.\n\n- 💡 **Facts** - Project architecture and context\n- ✅ **Decisions** - Why you chose specific patterns\n- 💻 **Code** - Reusable snippets and patterns\n- ⚙️ **Config** - Configuration details\n- 📝 **Notes** - General observations"
+            }
+          },
+          {
+            "id": "cortex.addMemory",
+            "title": "Add Your First Memory",
+            "description": "Save important context that AI tools should remember.\n\n[Add Memory](command:cortex.addMemory)",
+            "media": {
+              "markdown": "## Adding Memories\n\n1. Click **Add Memory** or press `Ctrl+Shift+P`\n2. Enter the content you want to save\n3. Select the memory type\n4. Specify the source\n\nYour memory is now saved and will be available across all sessions!"
+            },
+            "completionEvents": [
+              "onCommand:cortex.addMemory"
+            ]
+          },
+          {
+            "id": "cortex.search",
+            "title": "Search Your Memories",
+            "description": "Find any memory instantly with full-text search.\n\n[Search Memories](command:cortex.searchMemories)",
+            "media": {
+              "markdown": "## Searching Memories\n\nCortex includes **full-text search** across all your memories.\n\n- Search by content, source, or tags\n- Filter by memory type\n- Results are ranked by relevance"
+            },
+            "completionEvents": [
+              "onCommand:cortex.searchMemories"
+            ]
+          },
+          {
+            "id": "cortex.mcp",
+            "title": "Connect to AI Tools",
+            "description": "Integrate Cortex with GitHub Copilot, Claude, and more using MCP.\n\n[Learn more about MCP](https://github.com/EcuaByte-lat/Cortex#mcp-integration)",
+            "media": {
+              "markdown": "## MCP Integration\n\nCortex includes an **MCP server** for integration with AI tools:\n\n### GitHub Copilot\n```\n@cortex search \"your query\"\n```\n\n### Claude Desktop\nAdd Cortex to your `claude_desktop_config.json` to enable memory access."
+            }
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "build": "bun run build.ts",

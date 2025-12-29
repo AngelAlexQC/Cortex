@@ -198,6 +198,55 @@ export async function activate(context: vscode.ExtensionContext) {
         observer.toggle();
       })
     );
+
+    // Command to save selected text as memory
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.addSelectionAsMemory', async () => {
+        try {
+          const editor = vscode.window.activeTextEditor;
+          if (!editor) {
+            vscode.window.showWarningMessage('No active editor');
+            return;
+          }
+
+          const selection = editor.selection;
+          const selectedText = editor.document.getText(selection);
+
+          if (!selectedText || selectedText.trim().length === 0) {
+            vscode.window.showWarningMessage('No text selected');
+            return;
+          }
+
+          const typeOptions: vscode.QuickPickItem[] = [
+            { label: 'code', description: 'A code pattern or snippet' },
+            { label: 'fact', description: 'A factual piece of information' },
+            { label: 'decision', description: 'An architectural or design decision' },
+            { label: 'config', description: 'Configuration information' },
+            { label: 'note', description: 'General note or observation' },
+          ];
+
+          const typeChoice = await vscode.window.showQuickPick(typeOptions, {
+            placeHolder: 'Select memory type for selection',
+          });
+
+          if (!typeChoice) return;
+
+          const source = vscode.workspace.asRelativePath(editor.document.uri);
+          const lineInfo = `L${selection.start.line + 1}-${selection.end.line + 1}`;
+
+          const id = await store.add({
+            content: selectedText,
+            type: typeChoice.label as Memory['type'],
+            source: `${source}:${lineInfo}`,
+          });
+
+          vscode.window.showInformationMessage(`Selection saved as memory (ID: ${id})`);
+          treeProvider.refresh();
+        } catch (error) {
+          vscode.window.showErrorMessage(`Error saving selection: ${error}`);
+        }
+      })
+    );
   } catch (error) {
     console.error('Failed to activate Cortex extension:', error);
     vscode.window.showErrorMessage(

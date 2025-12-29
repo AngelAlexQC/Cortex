@@ -1,5 +1,6 @@
+import type { Memory } from '@cortex/shared';
 import * as vscode from 'vscode';
-import type { Memory, MemoryStore } from './storage';
+import type { MemoryStore } from './storage';
 
 export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<
@@ -85,6 +86,19 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
   }
 }
 
+/**
+ * Icon mapping for memory types
+ */
+const MEMORY_TYPE_ICONS: Record<string, { icon: string; color?: string }> = {
+  all: { icon: 'library', color: 'charts.purple' },
+  fact: { icon: 'lightbulb', color: 'charts.yellow' },
+  decision: { icon: 'checklist', color: 'charts.green' },
+  code: { icon: 'code', color: 'charts.blue' },
+  config: { icon: 'gear', color: 'charts.orange' },
+  note: { icon: 'note', color: 'charts.foreground' },
+  memory: { icon: 'symbol-snippet' },
+};
+
 class MemoryTreeItem extends vscode.TreeItem {
   memory?: Memory;
   category?: string;
@@ -99,10 +113,10 @@ class MemoryTreeItem extends vscode.TreeItem {
     this.category = category;
     this.tooltip = `${this.label} - ${this.description}`;
 
-    if (category && category !== 'memory') {
-      this.iconPath = new vscode.ThemeIcon('folder');
-    } else {
-      this.iconPath = new vscode.ThemeIcon('note');
-    }
+    // Apply type-specific icons
+    const iconConfig = MEMORY_TYPE_ICONS[category || 'memory'] || MEMORY_TYPE_ICONS.memory;
+    this.iconPath = iconConfig.color
+      ? new vscode.ThemeIcon(iconConfig.icon, new vscode.ThemeColor(iconConfig.color))
+      : new vscode.ThemeIcon(iconConfig.icon);
   }
 }
