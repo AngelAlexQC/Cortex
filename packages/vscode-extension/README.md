@@ -45,7 +45,24 @@ Works seamlessly with:
 - Cursor
 - Continue
 
+## 🆕 New in 0.3.0
+
+- **✨ Modern UI** - Completely redesigned webview and activity bar icon
+- **🧠 Memory Icons** - Type-specific colored icons for better visibility
+- **🗺️ Interactive Walkthrough** - Easy onboarding for new users
+- **⌨️ Keyboard Shortcuts** - Fast context capture without leaving your keyboard
+- **📋 Copy Button** - Quickly copy memories from the detail view
+
+## ⌨️ Keyboard Shortcuts
+
+| Command | Keybinding |
+|---------|------------|
+| **Add Memory** | `Ctrl+Shift+M` |
+| **Search Memories** | `Ctrl+Shift+Alt+M` |
+| **Save Selection** | `Ctrl+Shift+S` (with text selected) |
+
 ## 📸 Screenshots
+
 
 ### Memory Tree View
 View and manage all your memories in a dedicated sidebar panel.

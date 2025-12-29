@@ -12,7 +12,7 @@
   <a href="https://github.com/EcuaByte-lat/Cortex/actions/workflows/ci.yml"><img src="https://github.com/EcuaByte-lat/Cortex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/EcuaByte-lat/Cortex"><img src="https://img.shields.io/codecov/c/github/EcuaByte-lat/Cortex?logo=codecov" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://github.com/EcuaByte-lat/Cortex/releases"><img src="https://img.shields.io/github/v/release/EcuaByte-lat/Cortex?logo=github" alt="GitHub Release"></a>
+  <a href="https://github.com/EcuaByte-lat/Cortex/releases"><img src="https://img.shields.io/github/v/release/EcuaByte-lat/Cortex?logo=github&label=release" alt="GitHub Release"></a>
 </p>
 
 <p align="center">
@@ -112,11 +112,12 @@ cortex/
 - [x] **ctx/store + ctx/get** - Memory storage layer
 - [x] **MCP Server** - AI tool integration
 - [x] **VS Code Extension** - Visual interface
-- [ ] **ctx/route** - Intelligent context routing ← *In Progress*
-- [ ] **ctx/guard** - PII and secrets filtering
-- [ ] **ctx/fuse** - Multi-source context fusion
-- [ ] **Embeddings** - Semantic search with sqlite-vec
+- [x] **ctx/route** - Intelligent context routing
+- [x] **ctx/guard** - PII and secrets filtering
+- [x] **ctx/fuse** - Multi-source context fusion
+- [ ] **Embeddings** - Semantic search with sqlite-vec (In Progress)
 - [ ] **ZKDM** - Zero-knowledge context sharing
+- [ ] **Multi-Agent SDK** - LangChain, CrewAI, AutoGen integration
 
 ## 📚 Documentation
 
