@@ -1,14 +1,15 @@
 # Quick Start
 
-Get up and running with Cortex in 5 minutes!
+Get up and running with Cortex Protocol in 5 minutes!
 
-## What is Cortex?
+## What is Cortex Protocol?
 
-Cortex is a **persistent memory system for AI coding assistants**. It solves the problem of AI tools forgetting context between sessions by providing:
+Cortex Protocol is an **open standard for AI context management**. It solves the fundamental problem of AI systems forgetting context between sessions by providing:
 
 - 🧠 **Persistent memory** across sessions
 - 🔗 **Multi-tool integration** (Claude, Copilot, Cursor, Continue)
-- 📁 **Project isolation** - memories stay with your projects
+- 📁 **Project isolation** - context stays with your projects
+- 🔒 **Privacy-first** - local-first, your data never leaves
 - 🎨 **Visual interface** in VS Code
 
 ## Quick Setup
