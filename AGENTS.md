@@ -1,32 +1,38 @@
-# AGENTS.md - Cortex
+# AGENTS.md - Cortex Protocol
 
-> Instructions for AI agents working on the Cortex ecosystem.
+> Instructions for AI agents working on the Cortex Protocol ecosystem.
 
-## Vision: "The Context Layer for AI Agents"
+## Vision: "The Universal Context Layer for AI"
 
-Cortex is the **context engineering platform** for AI coding assistants. It moves beyond passive memory storage to **intelligent context orchestration** — deciding what context to inject, when, and how.
+Cortex Protocol is an **open standard** for how AI systems store, retrieve, and share context. It defines the missing layer between AI models and the tools they use.
+
+```
+┌─ AI Applications (Claude, Copilot, Cursor)
+├─ Tool Layer (MCP)     ← "How AI DOES things"
+├─ Context Layer (Cortex) ← "How AI KNOWS things" ← US
+└─ Model Layer (GPT, Claude, Llama)
+```
 
 ### Core Philosophy
 
 **Like Stripe reduced payments to 7 lines, Cortex reduces context engineering to 5 primitives:**
 
 ```
-ctx/store  →  Store context (facts, decisions, code patterns)
+ctx/store  →  Persist context (facts, decisions, patterns)
 ctx/get    →  Retrieve specific context
-ctx/route  →  Intelligently decide WHAT context to inject ✨
+ctx/route  →  Intelligently select relevant context ✨
+ctx/guard  →  Filter sensitive data (PII, secrets)
 ctx/fuse   →  Combine multiple context sources
-ctx/guard  →  Filter/protect sensitive data
 ```
 
-### Key Differentiators
+### Protocol Principles
 
-1. **Local-First** - Works offline, zero cloud dependency
-2. **MCP-Native** - Built on the Model Context Protocol standard (Linux Foundation)
-3. **Privacy-First** - Encryption built-in, PII filtering via ctx/guard
-4. **Framework-Agnostic** - Works with Claude, GPT, Copilot, Cursor, any MCP client
+1. **Local-First** - Works offline, data never leaves unless you want
+2. **User-Owned** - You own your context, not the platforms
+3. **Privacy-by-Design** - ctx/guard is a primitive, not a plugin
+4. **Interoperable** - MCP-native, A2A compatible, works with any AI
+5. **Open Standard** - No vendor lock-in, ever
 
-### Future Moat: ZKDM
-**Zero-Knowledge Distributed Memory (ZKDM)** will allow multiple AI agents to collaborate using shared project context without leaking private user data — context sharing without context exposure.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "cortex-monorepo",
   "version": "0.3.0",
-  "description": "The Context Layer for AI Agents - Universal project memory via MCP",
+  "description": "Cortex Protocol - The Universal Context Layer for AI",
   "private": true,
   "workspaces": [
     "packages/*"

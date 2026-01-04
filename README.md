@@ -1,11 +1,11 @@
-# 🧠 Cortex
+# 🧠 Cortex Protocol
 
 <p align="center">
   <img src="docs/branding/png/icon-512.png" alt="Cortex Logo" width="128" height="128">
 </p>
 
 <p align="center">
-  <strong>The Context Layer for AI Coding Assistants</strong>
+  <strong>The Universal Context Layer for AI</strong>
 </p>
 
 <p align="center">
@@ -24,23 +24,61 @@
 
 ---
 
-**Stop telling AI what your project already knows.** Cortex intelligently manages context for AI coding assistants — storing, routing, and protecting your project knowledge.
+## What is Cortex Protocol?
+
+**Cortex Protocol** is an open standard for how AI systems store, retrieve, and share context. Think of it as the missing layer between AI models and the tools they use.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AI APPLICATIONS                              │
+│  Claude | ChatGPT | Copilot | Cursor | Your Agent              │
+├─────────────────────────────────────────────────────────────────┤
+│                    TOOL LAYER (MCP)                             │
+│  "How AI DOES things" - Files, APIs, Databases                 │
+├─────────────────────────────────────────────────────────────────┤
+│                    CONTEXT LAYER (Cortex) ← YOU ARE HERE        │
+│  "How AI KNOWS things" - Memory, Decisions, Patterns           │
+├─────────────────────────────────────────────────────────────────┤
+│                    MODEL LAYER                                  │
+│  GPT | Claude | Llama | Gemini | Mistral                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**MCP** standardizes how AI connects to tools.  
+**Cortex** standardizes how AI remembers and shares knowledge.
 
 ## 🎯 The Problem
 
-AI assistants forget everything between sessions. You repeat the same context. They miss relevant patterns. Context windows fill with noise.
+Every AI interaction suffers from the same fundamental issue:
 
-## ✨ The Solution: 5 Simple Primitives
+> **AI doesn't know what you know.**
 
-Like Stripe reduced payments to 7 lines of code, Cortex reduces context engineering to **5 composable primitives**:
+- It forgets your past decisions
+- It doesn't know your project context
+- It can't remember between sessions
+- Multiple agents can't share what they learned
+
+This affects **billions of AI interactions daily**, across every industry.
+
+## ✨ The Solution: 5 Composable Primitives
 
 ```typescript
-ctx/store   // Store context (facts, decisions, patterns)
-ctx/get     // Retrieve specific context  
-ctx/route   // Intelligently decide WHAT context to inject ✨
-ctx/fuse    // Combine multiple context sources
+ctx/store   // Persist context (facts, decisions, patterns)
+ctx/get     // Retrieve specific context
+ctx/route   // Intelligently select relevant context ✨
 ctx/guard   // Filter sensitive data (API keys, PII)
+ctx/fuse    // Combine multiple context sources
 ```
+
+## 🔐 Why Cortex?
+
+| Principle | Description |
+|-----------|-------------|
+| **Local-First** | Your context never leaves your machine unless you want it to |
+| **User-Owned** | You own your data, not the platforms |
+| **Privacy-by-Design** | `ctx/guard` is a primitive, not a plugin |
+| **Interoperable** | Works with any AI (MCP, A2A compatible) |
+| **Open Standard** | No vendor lock-in, ever |
 
 ## 🚀 Quick Start
 
@@ -71,11 +109,6 @@ Cortex is **MCP-native** — works with Claude, Copilot, Cursor, and any MCP cli
 }
 ```
 
-Then in your AI chat:
-```
-@cortex What context is relevant for implementing the login flow?
-```
-
 ## 📦 Architecture
 
 ```
@@ -86,44 +119,55 @@ cortex/
 │   ├── cli/               # Command-line interface
 │   ├── mcp-server/        # MCP protocol server
 │   └── vscode-extension/  # VS Code extension
-└── docs/                  # Documentation
+├── docs/
+│   └── protocol/          # Cortex Protocol Specification
+└── sdks/                  # Language SDKs (coming soon)
 ```
 
 ## ✨ Features
 
 | Feature | Description |
 |---------|-------------|
-| 🧠 **Intelligent Routing** | Automatically selects relevant context for your current task |
+| 🧠 **Intelligent Routing** | Automatically selects relevant context for your task |
 | 🔒 **Privacy Guard** | Filters API keys, secrets, and PII before sending to LLMs |
 | 📁 **Project Isolation** | Context automatically scoped to your project |
 | ⚡ **Local-First** | Works offline, zero cloud dependency |
 | 🔗 **MCP-Native** | Built on the Linux Foundation standard |
 | 🔍 **Full-Text Search** | SQLite FTS5 for instant search |
 
-## 🛠️ Stack
-
-- **Bun** - Runtime + Bundler (50x faster than npm)
-- **SQLite** - Local storage (bun:sqlite native)
-- **MCP** - Model Context Protocol (Linux Foundation standard)
-- **TypeScript** - Type safety throughout
-
 ## 🗺️ Roadmap
 
-- [x] **ctx/store + ctx/get** - Memory storage layer
-- [x] **MCP Server** - AI tool integration
-- [x] **VS Code Extension** - Visual interface
-- [x] **ctx/route** - Intelligent context routing
-- [x] **ctx/guard** - PII and secrets filtering
-- [x] **ctx/fuse** - Multi-source context fusion
-- [ ] **Embeddings** - Semantic search with sqlite-vec (In Progress)
-- [ ] **ZKDM** - Zero-knowledge context sharing
-- [ ] **Multi-Agent SDK** - LangChain, CrewAI, AutoGen integration
+### Phase 1: Foundation (Current)
+- [x] Core primitives (store, get, route, guard, fuse)
+- [x] MCP Server
+- [x] VS Code Extension
+- [ ] Semantic search with embeddings
+- [ ] Protocol Specification v1.0
+
+### Phase 2: Semantic
+- [ ] Embedding-based routing
+- [ ] Relation graphs between context
+- [ ] Context compression
+
+### Phase 3: Sync
+- [ ] `ctx/sync` - Multi-device synchronization
+- [ ] Cortex Cloud (optional)
+- [ ] Team collaboration
+
+### Phase 4: Federation
+- [ ] `ctx/federate` - Share context across organizations
+- [ ] `ctx/attest` - Verify context authenticity
+- [ ] Zero-knowledge proofs
+
+### Phase 5: Standard
+- [ ] Submit to Linux Foundation / AAIF
+- [ ] Formal standard adoption
 
 ## 📚 Documentation
 
+- **[Protocol Specification](./docs/protocol/SPEC.md)** - The formal standard
 - **[Quick Start](./docs/getting-started/quick-start.md)** - 5-minute setup
 - **[Development Guide](./docs/DEVELOPMENT.md)** - For contributors
-- **[Architecture Decisions](./docs/architecture/decisions/)** - Design rationale
 - **[AGENTS.md](./AGENTS.md)** - AI agent instructions
 
 ## 🤝 Contributing
@@ -143,5 +187,9 @@ MIT License - See [LICENSE](./LICENSE)
 ---
 
 <p align="center">
-  <strong>Built with ❤️ by <a href="https://github.com/EcuaByte-lat">EcuaByte</a></strong>
+  <strong>Cortex Protocol — The Universal Context Layer for AI</strong>
+</p>
+
+<p align="center">
+  Built with ❤️ by <a href="https://github.com/EcuaByte-lat">EcuaByte</a>
 </p>

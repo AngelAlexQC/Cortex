@@ -1,3 +1,5 @@
+# Private files
+.private/
 # Dependencies
 node_modules/
 bun.lockb
