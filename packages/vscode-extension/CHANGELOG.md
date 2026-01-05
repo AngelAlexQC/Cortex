@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.12
+
+### Patch Changes
+
+- [`724b554`](https://github.com/EcuaByte-lat/Cortex/commit/724b5542c8d50629ac940a89d4cf570e8b774f99) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - feat: re-trigger release to validate OpenVSX publishing token
+
 ## 0.5.11
 
 ### Patch Changes
