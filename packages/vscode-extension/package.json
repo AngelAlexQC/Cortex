@@ -1,8 +1,8 @@
 {
   "name": "cortex-vscode",
-  "version": "0.5.1",
-  "displayName": "Cortex Protocol",
-  "description": "The Universal Context Layer for AI. Privacy-first memory that works with GitHub Copilot, Claude, Cursor, and Continue.",
+  "version": "0.5.2",
+  "displayName": "Cortex",
+  "description": "Persistent Memory for AI Agents. Remember context, decisions, and code patterns across sessions. Works with Copilot, Claude, and more.",
   "publisher": "EcuaByte",
   "author": {
     "name": "EcuaByte",
