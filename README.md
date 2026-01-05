@@ -13,6 +13,7 @@
   <a href="https://codecov.io/gh/EcuaByte-lat/Cortex"><img src="https://codecov.io/gh/EcuaByte-lat/Cortex/branch/main/graph/badge.svg" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode"><img src="https://img.shields.io/visual-studio-marketplace/v/EcuaByte.cortex-vscode?label=VS%20Code&logo=visualstudiocode&color=007ACC" alt="VS Code"></a>
+  <a href="https://open-vsx.org/extension/EcuaByte/cortex-vscode"><img src="https://img.shields.io/open-vsx/v/EcuaByte/cortex-vscode?label=Open%20VSX&logo=eclipseide&color=purple" alt="Open VSX"></a>
 </p>
 
 ---
@@ -41,11 +42,18 @@ After Cortex:   AI remembers your architecture, decisions, and preferences
 
 ## 🚀 Quick Start
 
-### VS Code Extension (Recommended)
+### 1. VS Code / Cursor / Windsurf (Recommended)
 
-1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
-2. Click the brain icon (🧠) in the Activity Bar
-3. Click **✨ AI Scan** to analyze your project automatically
+**Option A: Marketplace (Easiest)**
+1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode) or [Open VSX Registry](https://open-vsx.org/extension/EcuaByte/cortex-vscode).
+2. Click the brain icon (🧠) in the Activity Bar.
+3. Click **✨ AI Scan** to analyze your project.
+
+**Option B: Manual Install (Restricted Environments / Google IDX)**
+If you are in a corporate environment or Google IDX where the extension doesn't show up:
+1. Download the `.vsix` file from the [latest release](https://github.com/EcuaByte-lat/Cortex/releases).
+2. Drag and drop it into your editor's Extensions panel.
+3. *Google IDX Users*: Add `"EcuaByte.cortex-vscode"` to your `.idx/dev.nix` extensions list.
 
 ### CLI
 

@@ -58,6 +58,8 @@ Works with Claude, Cursor, Continue.dev and other MCP clients.
 ## Links
 
 - [GitHub](https://github.com/EcuaByte-lat/Cortex)
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
+- [Open VSX Registry](https://open-vsx.org/extension/EcuaByte/cortex-vscode)
 - [Documentation](https://github.com/EcuaByte-lat/Cortex#readme)
 - [Report Issue](https://github.com/EcuaByte-lat/Cortex/issues)
 

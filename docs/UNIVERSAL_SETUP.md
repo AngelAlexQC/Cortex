@@ -37,8 +37,12 @@ If you prefer to configure manually, follow the instructions for your specific t
 These editors support VS Code extensions but use the [Open VSX Registry](https://open-vsx.org/).
 
 1.  Open the **Extensions** panel.
-2.  Search for `Cortex`.
+2.  Search for `Cortex` (or ID: `EcuaByte.cortex-vscode`).
 3.  Install **Cortex: AI Memory** published by `EcuaByte`.
+
+**Troubleshooting: Extension not found?**
+ In some restricted environments (like corporate networks or older IDE versions), the search might fail.
+*   **Solution**: Download the `.vsix` from [GitHub Releases](https://github.com/EcuaByte-lat/Cortex/releases) and drag-and-drop it into the extensions panel.
 
 **Alternative (Native MCP):**
 If you want to use the MCP server directly (e.g., for Composer in Cursor):
@@ -49,7 +53,25 @@ If you want to use the MCP server directly (e.g., for Composer in Cursor):
     *   **Command**: `npx` (or full path to node)
     *   **Args**: `-y @ecuabyte/cortex-mcp-server`
 
-### 2. Claude Desktop
+    *   **Args**: `-y @ecuabyte/cortex-mcp-server`
+    
+### 2. Google IDX
+
+Cortex works natively in Google IDX. Add it to your `.idx/dev.nix` file:
+
+```nix
+{ pkgs, ... }: {
+  idx = {
+    extensions = [
+      "EcuaByte.cortex-vscode"
+    ];
+  };
+}
+```
+
+*Note: If the extension search fails, you can drag and drop the `.vsix` from our [Releases page](https://github.com/EcuaByte-lat/Cortex/releases).*
+
+### 3. Claude Desktop
 
 To give Claude Desktop access to your project memories:
 
