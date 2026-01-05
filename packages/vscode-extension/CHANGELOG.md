@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.11
+
+### Patch Changes
+
+- [`da1af97`](https://github.com/EcuaByte-lat/Cortex/commit/da1af97d39e4d78370b6540c8968fb9acc8b9b9d) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - feat: enable OpenVSX publishing for native editor support
+
 ## 0.5.10
 
 ### Patch Changes
