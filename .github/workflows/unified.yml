@@ -176,6 +176,22 @@ jobs:
             echo "ℹ️ cortex-vscode not included in this release, skipping."
           fi
 
+      - name: Publish to Open VSX Registry
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          PUBLISHED=$(echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | select(.name=="cortex-vscode") | .name')
+
+          if [[ "$PUBLISHED" == "cortex-vscode" ]]; then
+            echo "📦 Publishing to Open VSX..."
+            cd packages/vscode-extension
+            bunx ovsx publish --no-dependencies -p $OVSX_PAT
+            echo "✅ Published to Open VSX successfully"
+          else
+             echo "ℹ️ cortex-vscode not included, skipping OpenVSX."
+          fi
+
   # ═══════════════════════════════════════════════════════════════════════════
   # CODEQL SECURITY ANALYSIS - Only on main branch pushes
   # ═══════════════════════════════════════════════════════════════════════════
