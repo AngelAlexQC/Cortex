@@ -1,6 +1,6 @@
 {
   "name": "cortex-vscode",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "displayName": "Cortex: AI Memory",
   "description": "Persistent Memory for AI Agents. Remember context, decisions, and code patterns across sessions. Works with Copilot, Claude, and more.",
   "publisher": "EcuaByte",
