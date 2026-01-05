@@ -14,6 +14,73 @@ const store = new MemoryStore();
 const router = new ContextRouter(store);
 const guard = new ContextGuard();
 
+// CLI Argument Handling for `generate-config`
+import { parseArgs } from 'node:util';
+
+try {
+  const args = process.argv.slice(2);
+  if (args[0] === 'generate-config') {
+    const { values } = parseArgs({
+      args: args,
+      options: {
+        target: {
+          type: 'string',
+        },
+      },
+      strict: false, // allow params we don't know yet (though we should know them)
+    });
+
+    const target = values.target as string | undefined;
+    const targets = ['claude', 'cursor', 'windsurf', 'goose'];
+
+    if (!target || !targets.includes(target)) {
+      console.error(`Usage: cortex-mcp generate-config --target <${targets.join('|')}>`);
+      process.exit(1);
+    }
+
+    const command = 'npx';
+    const cmdArgs = ['-y', '@ecuabyte/cortex-mcp-server'];
+    let config: Record<string, unknown> = {};
+
+    switch (target) {
+      case 'claude':
+        config = {
+          mcpServers: {
+            cortex: {
+              command,
+              args: cmdArgs,
+            },
+          },
+        };
+        break;
+      case 'cursor':
+      case 'windsurf':
+        config = {
+          cortex: {
+            type: 'command',
+            command,
+            args: cmdArgs,
+          },
+        };
+        break;
+      case 'goose':
+        console.log(`Run this command to configure Goose:`);
+        console.log(`goose configure mcp add cortex "${command} ${cmdArgs.join(' ')}"`);
+        process.exit(0);
+    }
+
+    console.log(JSON.stringify(config, null, 2));
+    process.exit(0);
+  }
+} catch (e) {
+  // If parsing fails or other issues, just ignore and proceed to server start
+  // or print error if it was clearly a CLI attempt
+  if (process.argv[2] === 'generate-config') {
+    console.error('Error generating config:', e);
+    process.exit(1);
+  }
+}
+
 // Initialize embedding provider if available (Ollama or OpenAI)
 let embeddingInitialized = false;
 (async () => {

@@ -99,6 +99,19 @@ export class MemoryStore implements IMemoryStore {
         END
       `);
 
+      // Fix for "no such module: fts5" error
+      // If the DB was created by the CLI/Core (which uses Bun:sqlite with FTS5),
+      // the triggers will exist but sql.js (wasm) might not support FTS5.
+      // We safely drop them here to allow basic CRUD operations to work.
+      try {
+        const triggers = ['memories_ai', 'memories_ad', 'memories_bu', 'memories_au'];
+        for (const trigger of triggers) {
+          this.db.run(`DROP TRIGGER IF EXISTS ${trigger}`);
+        }
+      } catch (e) {
+        console.warn('[Cortex] Failed to clean up FTS5 triggers:', e);
+      }
+
       this.saveToFile();
     } catch (error) {
       console.error('[Cortex] Failed to initialize MemoryStore:', error);

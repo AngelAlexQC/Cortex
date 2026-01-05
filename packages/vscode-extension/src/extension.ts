@@ -1,3 +1,4 @@
+import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net';
 import type { Memory } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import { ContextObserver } from './contextObserver';
@@ -8,6 +9,14 @@ import { MemoryStore } from './storage';
 import { CortexTaskProvider } from './taskProvider';
 import type { Tool } from './toolScanner';
 import { ToolTreeProvider } from './toolTreeProvider';
+
+// Set default timeout for IPv4/IPv6 family auto-selection to avoid long delays
+// This fixes: Set default auto-select family attempt timeout to 1000ms
+try {
+  setDefaultAutoSelectFamilyAttemptTimeout(1000);
+} catch (e) {
+  console.warn('[Cortex] Failed to set auto-select family timeout:', e);
+}
 
 export async function activate(context: vscode.ExtensionContext) {
   try {
