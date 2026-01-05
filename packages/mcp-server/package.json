@@ -1,6 +1,6 @@
 {
   "name": "@ecuabyte/cortex-mcp-server",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "MCP server exposing Cortex memories to AI tools",
   "type": "module",
   "bin": {
