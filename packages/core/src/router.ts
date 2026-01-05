@@ -2,19 +2,21 @@
  * ctx/route - Intelligent Context Routing
  *
  * The magic primitive that decides WHAT context to inject for a given task.
- * Uses FTS5 search + relevance scoring to select the most useful memories.
+ * Uses FTS5 search + relevance scoring + optional semantic similarity.
  *
  * @module @cortex/core/router
  */
 
 import type {
   IContextRouter,
+  IEmbeddingProvider,
   IMemoryStore,
   Memory,
   MemoryType,
   RouteOptions,
   ScoredMemory,
 } from '@cortex/shared';
+import { cosineSimilarity } from './embeddings';
 
 /**
  * Weights for different scoring factors.
@@ -28,16 +30,19 @@ interface ScoringWeights {
   typePriority: number;
   /** Weight for keyword density in content */
   keywordDensity: number;
+  /** Weight for semantic similarity (0 to disable) */
+  semantic: number;
 }
 
 /**
  * Default scoring weights - can be tuned based on usage patterns.
  */
 const DEFAULT_WEIGHTS: ScoringWeights = {
-  recency: 0.3,
-  tagMatch: 0.25,
-  typePriority: 0.2,
-  keywordDensity: 0.25,
+  recency: 0.15,
+  tagMatch: 0.15,
+  typePriority: 0.1,
+  keywordDensity: 0.2,
+  semantic: 0.4, // Semantic similarity is the most important when available
 };
 
 /**
@@ -69,6 +74,7 @@ const TYPE_PRIORITY: Record<MemoryType, number> = {
 export class ContextRouter implements IContextRouter {
   private store: IMemoryStore;
   private weights: ScoringWeights;
+  private embeddingProvider?: IEmbeddingProvider;
 
   /**
    * Create a new ContextRouter.
@@ -78,6 +84,14 @@ export class ContextRouter implements IContextRouter {
   constructor(store: IMemoryStore, weights?: Partial<ScoringWeights>) {
     this.store = store;
     this.weights = { ...DEFAULT_WEIGHTS, ...weights };
+  }
+
+  /**
+   * Set an embedding provider for semantic search.
+   * When set, the router will use hybrid scoring (keyword + semantic).
+   */
+  setEmbeddingProvider(provider: IEmbeddingProvider): void {
+    this.embeddingProvider = provider;
   }
 
   /**
@@ -91,6 +105,7 @@ export class ContextRouter implements IContextRouter {
 
   /**
    * Route with scoring information for debugging/transparency.
+   * Uses hybrid scoring (keyword + semantic) when embedding provider is set.
    */
   async routeWithScores(options: RouteOptions): Promise<ScoredMemory[]> {
     const { task, currentFile, tags, type, limit = 5 } = options;
@@ -115,14 +130,30 @@ export class ContextRouter implements IContextRouter {
       });
     }
 
-    // Step 4: Score each candidate
-    const scored = candidates.map((memory) => ({
-      memory,
-      score: this.scoreMemory(memory, keywords, tags, currentFile),
-      reason: this.explainScore(memory, keywords, tags),
-    }));
+    // Step 4: Generate query embedding if provider is available
+    let queryEmbedding: number[] | null = null;
+    if (this.embeddingProvider && this.weights.semantic > 0) {
+      try {
+        queryEmbedding = await this.embeddingProvider.embed(task);
+      } catch {
+        // Fall back to keyword-only scoring
+        queryEmbedding = null;
+      }
+    }
 
-    // Step 5: Sort by score and return top-K
+    // Step 5: Score each candidate
+    const scored = await Promise.all(
+      candidates.map(async (memory) => {
+        const score = await this.scoreMemory(memory, keywords, tags, currentFile, queryEmbedding);
+        return {
+          memory,
+          score,
+          reason: this.explainScore(memory, keywords, tags, queryEmbedding !== null),
+        };
+      })
+    );
+
+    // Step 6: Sort by score and return top-K
     return scored.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
@@ -275,12 +306,13 @@ export class ContextRouter implements IContextRouter {
   /**
    * Calculate relevance score for a memory.
    */
-  private scoreMemory(
+  private async scoreMemory(
     memory: Memory,
     keywords: string[],
     filterTags?: string[],
-    currentFile?: string
-  ): number {
+    currentFile?: string,
+    queryEmbedding?: number[] | null
+  ): Promise<number> {
     let score = 0;
 
     // 1. Recency score (0-1, newer = higher)
@@ -299,7 +331,24 @@ export class ContextRouter implements IContextRouter {
     const keywordScore = this.calculateKeywordScore(memory, keywords);
     score += keywordScore * this.weights.keywordDensity;
 
-    // 5. Bonus for file path relevance
+    // 5. Semantic similarity score (0-1)
+    if (queryEmbedding && memory.metadata?.['embedding']) {
+      try {
+        // Memory stores embedding in metadata when available
+        const memoryEmbedding = memory.metadata['embedding'] as number[];
+        const similarity = cosineSimilarity(queryEmbedding, memoryEmbedding);
+        // Normalize from [-1, 1] to [0, 1]
+        const normalizedSimilarity = (similarity + 1) / 2;
+        score += normalizedSimilarity * this.weights.semantic;
+      } catch {
+        // Fall back to no semantic score
+      }
+    } else if (!queryEmbedding) {
+      // If no query embedding, redistribute semantic weight to keywords
+      score += keywordScore * this.weights.semantic;
+    }
+
+    // 6. Bonus for file path relevance
     if (currentFile && memory.source) {
       const fileBonus = this.calculateFileBonus(memory, currentFile);
       score += fileBonus * 0.1;
@@ -382,8 +431,18 @@ export class ContextRouter implements IContextRouter {
   /**
    * Generate human-readable explanation for score.
    */
-  private explainScore(memory: Memory, keywords: string[], filterTags?: string[]): string {
+  private explainScore(
+    memory: Memory,
+    keywords: string[],
+    filterTags?: string[],
+    usedSemantic?: boolean
+  ): string {
     const reasons: string[] = [];
+
+    // Semantic mode indicator
+    if (usedSemantic) {
+      reasons.push('mode:hybrid');
+    }
 
     // Type
     reasons.push(`type:${memory.type}`);

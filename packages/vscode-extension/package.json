@@ -1,6 +1,6 @@
 {
   "name": "cortex-vscode",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "displayName": "Cortex Protocol",
   "description": "The Universal Context Layer for AI. Privacy-first memory that works with GitHub Copilot, Claude, Cursor, and Continue.",
   "publisher": "EcuaByte",
@@ -81,6 +81,83 @@
         }
       }
     ],
+    "languageModelTools": [
+      {
+        "name": "cortex_remember",
+        "displayName": "Save Memory",
+        "toolReferenceName": "cortex-remember",
+        "icon": "$(brain)",
+        "userDescription": "Save important context for future AI sessions",
+        "modelDescription": "Saves information to the user's Cortex knowledge base. Use this when the user explicitly asks you to remember something, makes an important decision, establishes a project convention, or shares context that should persist across sessions. Types: 'fact' for project information, 'decision' for architectural choices, 'code' for patterns, 'config' for settings, 'note' for general notes.",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The content to remember"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "fact",
+                "decision",
+                "code",
+                "config",
+                "note"
+              ],
+              "description": "Type of memory"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional tags"
+            }
+          },
+          "required": [
+            "content"
+          ]
+        }
+      },
+      {
+        "name": "cortex_recall",
+        "displayName": "Search Memories",
+        "toolReferenceName": "cortex-recall",
+        "icon": "$(search)",
+        "userDescription": "Search saved project memories",
+        "modelDescription": "Searches the user's Cortex knowledge base for relevant memories. Use this to find past decisions, project facts, code patterns, or any context the user has previously saved. Always try to recall before asking the user questions they may have already answered.",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "fact",
+                "decision",
+                "code",
+                "config",
+                "note"
+              ],
+              "description": "Filter by type (optional)"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max results (default: 5)"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -105,7 +182,7 @@
     "viewsWelcome": [
       {
         "view": "cortex.memoryTree",
-        "contents": "No memories yet.\n[$(add) Add Memory](command:cortex.addMemory)\n\nCapture project context that persists across AI sessions.\n[Learn more](https://github.com/EcuaByte-lat/Cortex)"
+        "contents": "No memories yet.\n[$(search) Scan Project](command:cortex.scanProject)\n[$(add) Add Memory](command:cortex.addMemory)\n\nCapture project context that persists across AI sessions.\n[Learn more](https://github.com/EcuaByte-lat/Cortex)"
       },
       {
         "view": "cortex.toolsTree",
@@ -157,6 +234,17 @@
         "command": "cortex.addSelectionAsMemory",
         "title": "Cortex: Save Selection as Memory",
         "icon": "$(add)"
+      },
+      {
+        "command": "cortex.scanProject",
+        "title": "Cortex: Scan Project",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "cortex.scanWithAI",
+        "title": "Cortex: AI-Powered Scan",
+        "icon": "$(sparkle)",
+        "category": "Cortex"
       }
     ],
     "keybindings": [
@@ -193,6 +281,16 @@
           "command": "cortex.refreshTree",
           "when": "view == cortex.memoryTree",
           "group": "navigation"
+        },
+        {
+          "command": "cortex.scanProject",
+          "when": "view == cortex.memoryTree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cortex.scanWithAI",
+          "when": "view == cortex.memoryTree",
+          "group": "navigation@0"
         },
         {
           "command": "cortex.refreshTools",
