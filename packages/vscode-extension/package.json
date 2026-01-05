@@ -46,6 +46,14 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "files": [
+    "dist",
+    "resources",
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "icon.png"
+  ],
   "devDependencies": {
     "@types/sql.js": "^1.4.9",
     "@types/vscode": "^1.85.0",
