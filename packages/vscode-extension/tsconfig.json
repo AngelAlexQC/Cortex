@@ -10,6 +10,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "rootDir": "src",
     "types": ["node", "@types/vscode", "bun-types"]
   },
   "include": ["src/**/*"],
