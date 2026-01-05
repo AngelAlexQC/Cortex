@@ -1,0 +1,196 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CI JOBS - Run on every push/PR
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  ci:
+    name: CI / ${{ matrix.task }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        task: [build, test, quality]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # ─────────────────────────────────────────────────────────────────────────
+      # Build Task
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Build all packages
+        if: matrix.task == 'build'
+        run: bun run build
+
+      - name: Verify build artifacts
+        if: matrix.task == 'build'
+        run: |
+          echo "Verifying build artifacts..."
+          test -f packages/core/dist/index.js || (echo "❌ core missing" && exit 1)
+          test -f packages/cli/dist/cli.js || (echo "❌ cli missing" && exit 1)
+          test -f packages/mcp-server/dist/mcp-server.js || (echo "❌ mcp-server missing" && exit 1)
+          test -f packages/vscode-extension/dist/extension.js || (echo "❌ vscode-extension missing" && exit 1)
+          echo "✅ All build artifacts verified"
+
+      - name: Upload build artifacts
+        if: matrix.task == 'build'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: packages/*/dist
+          retention-days: 1
+
+      # ─────────────────────────────────────────────────────────────────────────
+      # Test Task
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Build for tests
+        if: matrix.task == 'test'
+        run: bun run build
+
+      - name: Run tests with coverage
+        if: matrix.task == 'test'
+        run: bun test --coverage --coverage-reporter=lcov
+
+      - name: Upload coverage to Codecov
+        if: matrix.task == 'test'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      # ─────────────────────────────────────────────────────────────────────────
+      # Quality Task (Biome + TypeScript)
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Run Biome checks
+        if: matrix.task == 'quality'
+        run: bun run check:ci
+
+      - name: TypeScript type check
+        if: matrix.task == 'quality'
+        run: bun run typecheck
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RELEASE JOB - Only on push to main (after CI passes)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  release:
+    name: Release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js (for npm publish)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build all packages
+        run: bun run build
+
+      - name: Create Release PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: bunx changeset publish
+          commit: "chore(release): version packages"
+          title: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ─────────────────────────────────────────────────────────────────────────
+      # VS Code Extension Publishing (only if packages were published)
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Publish VS Code Extension
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          # Check if cortex-vscode was in the published packages
+          PUBLISHED=$(echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | select(.name=="cortex-vscode") | .name')
+
+          if [[ "$PUBLISHED" == "cortex-vscode" ]]; then
+            echo "📦 Publishing VS Code Extension..."
+            cd packages/vscode-extension
+            bunx vsce publish -p $VSCE_PAT
+            echo "✅ VS Code Extension published successfully"
+          else
+            echo "ℹ️ cortex-vscode not included in this release, skipping."
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CODEQL SECURITY ANALYSIS - Only on main branch pushes
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  codeql:
+    name: CodeQL Security Analysis
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

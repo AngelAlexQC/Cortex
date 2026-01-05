@@ -1,56 +1,46 @@
 version: 2
 updates:
-  # GitHub Actions
+  # GitHub Actions - weekly updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     labels:
       - "dependencies"
-      - "github-actions"
-    
-  # Bun dependencies (main workspace)
+      - "ci"
+    commit-message:
+      prefix: "ci(deps)"
+
+  # Bun/npm dependencies - single config for entire monorepo
+  # Bun workspaces handle all packages automatically
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     labels:
       - "dependencies"
-      - "bun"
-    open-pull-requests-limit: 10
-    
-  # Core package
-  - package-ecosystem: "npm"
-    directory: "/packages/core"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "core"
-    
-  # CLI package
-  - package-ecosystem: "npm"
-    directory: "/packages/cli"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "cli"
-    
-  # MCP Server package
-  - package-ecosystem: "npm"
-    directory: "/packages/mcp-server"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "mcp-server"
-    
-  # VS Code Extension package
-  - package-ecosystem: "npm"
-    directory: "/packages/vscode-extension"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "vscode-extension"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    groups:
+      # Group all minor/patch updates together
+      production-deps:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "typescript"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group type definitions separately
+      type-definitions:
+        patterns:
+          - "@types/*"
+          - "typescript"
+    ignore:
+      # Ignore major updates - these require manual review
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
