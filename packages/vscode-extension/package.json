@@ -385,7 +385,7 @@
     "build": "bun run build.ts",
     "dev": "bun run build.ts --watch",
     "typecheck": "bunx tsc --noEmit",
-    "package": "vsce package",
+    "package": "vsce package --no-dependencies",
     "vscode:prepublish": "bun run build"
   }
 }
