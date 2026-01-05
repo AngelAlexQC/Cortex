@@ -1,114 +1,105 @@
 # Análisis: Gaps para Funcionalidad 100% con Agentes de IA
 
-**Fecha**: 2026-01-04
-**Versión analizada**: Cortex v0.3.0
+**Fecha**: 2026-01-05 (Actualizado)
+**Versión analizada**: Cortex v0.5.5 (`@ecuabyte/*` scope)
 **Autor**: Análisis automatizado
 
 ---
 
 ## Resumen Ejecutivo
 
-Cortex **NO es solo una base de datos**. Ya tiene implementadas las 5 primitivas core (store, get, route, guard, fuse), un servidor MCP funcional, CLI, y extensión VS Code. Sin embargo, para ser **100% funcional con agentes de IA**, hay gaps críticos que necesitan ser abordados.
+Cortex **NO es solo una base de datos**. Ya tiene implementadas las 5 primitivas core, búsqueda semántica con embeddings, un servidor MCP con 7 herramientas, CLI, y extensión VS Code con AI Scanner. El proyecto ha avanzado significativamente desde el análisis inicial.
 
 ### Estado Actual vs. Funcionalidad Completa
 
-| Componente | Implementado | Para 100% Funcional |
-|------------|-------------|---------------------|
-| Storage (SQLite + FTS5) | ✅ 100% | ✅ Completo |
-| 5 Primitivas Core | ✅ 100% | ✅ Completo |
-| MCP Server | ✅ 100% | 🔶 Falta proactividad |
-| Búsqueda | ✅ Keyword-based | ❌ Falta semántica |
-| Token Management | ⚠️ Básico | ❌ Falta integración real |
-| Agent Feedback Loop | ❌ 0% | ❌ Crítico |
-| Session Awareness | ❌ 0% | ❌ Necesario |
-| Observabilidad | ❌ 0% | ❌ Importante |
+| Componente | Estado Anterior | Estado Actual (v0.5.5) |
+|------------|-----------------|------------------------|
+| Storage (SQLite + FTS5) | ✅ 100% | ✅ 100% |
+| 5 Primitivas Core | ✅ 100% | ✅ 100% |
+| MCP Server | ✅ Básico | ✅ 7 tools (incl. scan) |
+| **Búsqueda Semántica** | ❌ Solo keywords | ✅ **IMPLEMENTADO** (Ollama/OpenAI) |
+| **Hybrid Routing** | ❌ No existía | ✅ **IMPLEMENTADO** (40% semantic) |
+| **Project Scanner** | ❌ No existía | ✅ **IMPLEMENTADO** |
+| Token Management | ⚠️ Básico | ⚠️ Básico (length/4) |
+| Agent Feedback Loop | ❌ 0% | ❌ 0% |
+| Session Awareness | ❌ 0% | ❌ 0% |
+| Observabilidad | ❌ 0% | ❌ 0% |
 
 ---
 
-## Gap #1: Búsqueda Semántica con Embeddings (CRÍTICO)
+## ✅ Gaps RESUELTOS (desde análisis anterior)
 
-### Problema Actual
-El `ContextRouter` (línea 95-127 en `router.ts`) usa FTS5 para búsqueda por keywords:
+### Gap #1: Búsqueda Semántica con Embeddings - ✅ RESUELTO
 
-```typescript
-// Actual: búsqueda por palabras clave
-const searchQuery = keywords.join(' ');
-const candidates = await this.store.search(searchQuery, {...});
-```
-
-**Limitación**: Si el agente busca "authentication" pero la memoria dice "login system with OAuth", no habrá match semántico.
-
-### Solución Requerida
-Implementar embeddings con `sqlite-vec` (ya en roadmap):
+**Implementación actual** (`packages/core/src/embeddings.ts`):
 
 ```typescript
-// Propuesto: búsqueda semántica
-interface SemanticRouteOptions extends RouteOptions {
-  embedding?: Float32Array;  // Embedding del task
-  semanticWeight?: number;   // Peso vs keyword matching
+// Soporta Ollama (local) y OpenAI (cloud fallback)
+export class OllamaEmbeddings implements IEmbeddingProvider {
+  readonly model: string;      // nomic-embed-text, bge-m3, etc.
+  readonly dimensions: number; // 768, 1024, etc.
+
+  async embed(text: string): Promise<number[]>;
+  async embedBatch(texts: string[]): Promise<number[][]>;
+  async isAvailable(): Promise<boolean>;
 }
 
-async routeSemantic(options: SemanticRouteOptions): Promise<ScoredMemory[]> {
-  // 1. Generar embedding del task
-  const taskEmbedding = options.embedding ?? await this.embed(options.task);
-
-  // 2. Buscar por similitud vectorial
-  const semanticResults = await this.store.vectorSearch(taskEmbedding, {
-    limit: options.limit * 3
-  });
-
-  // 3. Combinar con FTS5 para hybrid search
-  const ftsResults = await this.store.search(keywords, {...});
-
-  // 4. Fusionar y re-rankear
-  return this.hybridRank(semanticResults, ftsResults, options);
-}
+// Búsqueda semántica en storage
+async searchSemantic(query: string, options?: SemanticSearchOptions): Promise<SemanticSearchResult[]>
 ```
 
-### Archivos a Modificar
-- `packages/core/src/storage.ts` - Agregar tabla de vectores y `vectorSearch()`
-- `packages/core/src/router.ts` - Implementar `routeSemantic()` y hybrid ranking
-- `packages/core/src/embedder.ts` - **NUEVO**: Clase para generar embeddings
+**Routing híbrido** (`packages/core/src/router.ts`):
 
-### Prioridad: **CRÍTICA** - Sin esto, el routing es fundamentalmente limitado
+```typescript
+const DEFAULT_WEIGHTS: ScoringWeights = {
+  recency: 0.15,
+  tagMatch: 0.15,
+  typePriority: 0.1,
+  keywordDensity: 0.2,
+  semantic: 0.4,  // ← 40% peso a similitud semántica
+};
+```
+
+### Gap #2 (parcial): Project Scanner - ✅ RESUELTO
+
+**Implementación actual** (`packages/core/src/scanner.ts`):
+- Escanea README, ARCHITECTURE, docs
+- Extrae TODOs/FIXMEs de código
+- Parsea package.json, docker-compose, tsconfig
+- Nueva MCP tool: `cortex_scan`
 
 ---
 
-## Gap #2: Feedback Loop del Agente (CRÍTICO)
+## ❌ Gaps PENDIENTES
 
-### Problema Actual
-El agente usa `cortex_context` para obtener contexto, pero:
-- No hay forma de indicar si el contexto fue útil
-- El sistema no aprende de las interacciones
-- No hay métricas de relevancia real
+### Gap #1: Feedback Loop del Agente (CRÍTICO)
 
-### Solución Requerida
-Nueva herramienta MCP `cortex_feedback`:
+**Problema**: El agente no puede indicar si el contexto fue útil. Sin feedback, el sistema no aprende.
+
+**Solución Requerida**:
 
 ```typescript
-// Nueva tool MCP
+// Nueva MCP tool: cortex_feedback
 {
   name: 'cortex_feedback',
   description: 'Provide feedback on context relevance to improve future routing',
   inputSchema: {
-    type: 'object',
     properties: {
-      memoryId: { type: 'number', description: 'ID of the memory used' },
-      wasHelpful: { type: 'boolean', description: 'Was this context helpful?' },
-      taskCompleted: { type: 'boolean', description: 'Was the task completed successfully?' },
-      relevanceScore: { type: 'number', description: 'Relevance 1-5' }
+      memoryIds: { type: 'array', items: { type: 'number' } },
+      wasHelpful: { type: 'boolean' },
+      taskCompleted: { type: 'boolean' },
+      notes: { type: 'string' }
     }
   }
 }
 ```
 
-### Implementación en Core
+**Implementación propuesta** (`packages/core/src/feedback.ts`):
 
 ```typescript
-// packages/core/src/feedback.ts
 interface FeedbackEntry {
   memoryId: number;
-  taskHash: string;       // Hash del task description
+  taskHash: string;
   wasHelpful: boolean;
   relevanceScore: number;
   timestamp: string;
@@ -117,278 +108,119 @@ interface FeedbackEntry {
 class ContextFeedback {
   async recordFeedback(entry: FeedbackEntry): Promise<void>;
   async getMemoryEffectiveness(memoryId: number): Promise<number>;
-  async adjustWeights(memoryId: number, boost: number): Promise<void>;
+  async boostMemory(memoryId: number, amount: number): Promise<void>;
 }
 ```
 
-### Prioridad: **CRÍTICA** - Sin feedback, el sistema no puede mejorar
+**Prioridad**: 🔴 **CRÍTICA** - Diferenciador clave vs competencia
 
 ---
 
-## Gap #3: Session Awareness (IMPORTANTE)
+### Gap #2: Session Awareness (IMPORTANTE)
 
-### Problema Actual
-Cada llamada MCP es stateless. El agente no puede:
-- Indicar "esta es la misma sesión de trabajo"
-- Obtener contexto de la conversación actual
-- Evitar repetir los mismos contextos
+**Problema**: Cada llamada MCP es stateless. No hay tracking de conversación.
 
-### Solución Requerida
+**Comparación con competencia**:
+- **Windsurf Cascade**: Mantiene contexto de sesión automáticamente
+- **Mem0**: Session-based memory storage
+- **Zep**: Session management con summarization
+
+**Solución Requerida**:
 
 ```typescript
-// Nueva herramienta MCP
+// Nueva MCP tool: cortex_session
 {
   name: 'cortex_session',
-  description: 'Manage context session for multi-turn conversations',
   inputSchema: {
     properties: {
-      action: { enum: ['start', 'update', 'end'] },
+      action: { enum: ['start', 'update', 'end', 'get'] },
       sessionId: { type: 'string' },
       currentTask: { type: 'string' },
-      usedMemoryIds: { type: 'array', items: { type: 'number' } }
+      usedMemoryIds: { type: 'array' }
     }
   }
 }
 ```
 
-### Implementación en Core
-
-```typescript
-// packages/core/src/session.ts
-interface AgentSession {
-  id: string;
-  startedAt: string;
-  currentTask: string;
-  usedMemoryIds: Set<number>;  // Evitar repetir
-  contextBudget: number;       // Tokens restantes
-}
-
-class SessionManager {
-  private sessions: Map<string, AgentSession>;
-
-  start(task: string): string;
-  update(sessionId: string, usedIds: number[]): void;
-  getUnusedContext(sessionId: string, options: RouteOptions): Promise<Memory[]>;
-  end(sessionId: string): void;
-}
-```
-
-### Prioridad: **IMPORTANTE** - Mejora significativamente la experiencia multi-turn
+**Prioridad**: 🟡 **IMPORTANTE** - Necesario para competir con Mem0/Zep
 
 ---
 
-## Gap #4: Token Management Real (IMPORTANTE)
+### Gap #3: Observabilidad y Métricas (MEDIO)
 
-### Problema Actual
-El `ContextFuser` tiene `maxTokens` pero no hay:
-- Estimación real de tokens (solo aproximación por caracteres)
-- Integración con el límite de contexto del modelo
-- Compresión inteligente cuando excede
-
-Código actual en `fuser.ts`:
-```typescript
-// Aproximación básica
-const estimatedTokens = Math.ceil(content.length / 4);
-```
-
-### Solución Requerida
-
-```typescript
-// packages/core/src/tokenizer.ts
-import { encoding_for_model } from 'tiktoken';
-
-class TokenEstimator {
-  private encoder: Tiktoken;
-
-  constructor(model: 'gpt-4' | 'claude-3' | 'claude-opus') {
-    this.encoder = encoding_for_model(model);
-  }
-
-  count(text: string): number {
-    return this.encoder.encode(text).length;
-  }
-
-  truncateToLimit(text: string, maxTokens: number): string;
-  compressContext(memories: Memory[], maxTokens: number): Memory[];
-}
-```
-
-### Prioridad: **IMPORTANTE** - Evita context overflow
-
----
-
-## Gap #5: Proactive Context Injection (MEDIO)
-
-### Problema Actual
-El agente debe llamar explícitamente a `cortex_context`. No hay:
-- Inyección automática de contexto relevante
-- Triggers basados en patrones de conversación
-- Pre-carga de contexto para tareas comunes
-
-### Solución Propuesta
-Implementar un "Context Observer" en el MCP server:
-
-```typescript
-// packages/mcp-server/src/observer.ts
-class ContextObserver {
-  // Analiza el prompt del agente y sugiere contexto
-  async analyzePrompt(prompt: string): Promise<Memory[] | null> {
-    const patterns = this.detectPatterns(prompt);
-    if (patterns.length > 0) {
-      return await this.router.route({ task: prompt, limit: 3 });
-    }
-    return null;
-  }
-
-  private detectPatterns(prompt: string): string[] {
-    // Detectar: "implement", "fix bug", "add feature", etc.
-  }
-}
-```
-
-### MCP Resources (auto-injected)
-
-```typescript
-// Exponer como MCP Resource en lugar de Tool
-server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-  resources: [{
-    uri: 'cortex://context/auto',
-    name: 'Auto-injected context',
-    description: 'Automatically selected context for current conversation'
-  }]
-}));
-```
-
-### Prioridad: **MEDIA** - Nice to have, mejora UX
-
----
-
-## Gap #6: Observabilidad y Métricas (MEDIO)
-
-### Problema Actual
-No hay forma de saber:
-- Cuántas veces se usa cada memoria
-- Qué queries son más comunes
+**Problema**: No hay visibilidad de:
+- Uso de memorias
 - Efectividad del routing
-- Performance del sistema
+- Queries más comunes
+- Performance
 
-### Solución Requerida
-
-```typescript
-// packages/core/src/telemetry.ts
-interface UsageMetrics {
-  memoryId: number;
-  accessCount: number;
-  lastAccessed: string;
-  averageRelevanceScore: number;
-  helpfulCount: number;
-  notHelpfulCount: number;
-}
-
-interface SystemMetrics {
-  totalQueries: number;
-  avgQueryLatency: number;
-  cacheHitRate: number;
-  topKeywords: string[];
-}
-
-class Telemetry {
-  track(event: 'search' | 'add' | 'route' | 'feedback', data: object): void;
-  getMemoryMetrics(memoryId: number): UsageMetrics;
-  getSystemMetrics(): SystemMetrics;
-}
-```
-
-### Nueva Tool MCP
+**Solución Requerida**:
 
 ```typescript
+// Nueva MCP tool: cortex_metrics
 {
   name: 'cortex_metrics',
-  description: 'Get usage metrics and system health',
   inputSchema: {
     properties: {
-      type: { enum: ['memory', 'system', 'top-used'] }
+      type: { enum: ['usage', 'performance', 'top-memories', 'health'] }
     }
   }
 }
 ```
 
-### Prioridad: **MEDIA** - Importante para optimización
+**Prioridad**: 🟢 **MEDIA** - Importante para enterprise
 
 ---
 
-## Gap #7: Multi-Agent Coordination (BAJO)
+### Gap #4: Token Management Real (BAJO)
 
-### Problema Actual
-Si múltiples agentes trabajan en el mismo proyecto:
-- No hay locks para evitar conflictos
-- No hay awareness de lo que otros agentes están haciendo
-- No hay compartición de contexto de sesión
+**Problema**: Estimación actual es `Math.ceil(content.length / 4)`.
 
-### Solución Futura
+**Estado**: Los context windows modernos (200K+ tokens) hacen esto menos crítico. Claude, Cursor, y Windsurf manejan esto internamente.
 
-```typescript
-// packages/core/src/coordination.ts
-class AgentCoordinator {
-  async acquireLock(agentId: string, memoryId: number): Promise<boolean>;
-  async releaseLock(agentId: string, memoryId: number): void;
-  async broadcastContext(agentId: string, context: Memory): void;
-  async getActiveAgents(): Promise<string[]>;
-}
-```
-
-### Prioridad: **BAJA** - Escenario avanzado
+**Prioridad**: 🟢 **BAJA** - Nice to have
 
 ---
 
-## Roadmap de Implementación Sugerido
+## Matriz de Prioridades Actualizada
 
-### Sprint 1: Fundamentos Semánticos (2-3 semanas)
-1. [ ] Integrar `sqlite-vec` para almacenar embeddings
-2. [ ] Crear `Embedder` class con soporte para modelos locales
-3. [ ] Implementar `vectorSearch()` en MemoryStore
-4. [ ] Actualizar `ContextRouter` con hybrid search
+| Gap | Impacto | Esfuerzo | Prioridad | Diferenciador |
+|-----|---------|----------|-----------|---------------|
+| Feedback Loop | 🔴 Alto | 🟡 Medio | **P0** | ⭐ Único en el mercado |
+| Session Management | 🟡 Medio | 🟡 Medio | **P1** | Paridad con Mem0/Zep |
+| Observabilidad | 🟢 Medio | 🟢 Bajo | **P2** | Enterprise readiness |
+| Token Management | 🟢 Bajo | 🟢 Bajo | **P3** | Nice to have |
 
-### Sprint 2: Feedback & Sessions (2 semanas)
-1. [ ] Implementar `ContextFeedback` class
-2. [ ] Agregar `cortex_feedback` MCP tool
-3. [ ] Crear `SessionManager` para tracking de sesiones
-4. [ ] Agregar `cortex_session` MCP tool
+---
 
-### Sprint 3: Token Management (1 semana)
-1. [ ] Integrar tokenizer real (tiktoken o similar)
-2. [ ] Actualizar `ContextFuser` con conteo preciso
-3. [ ] Implementar compresión inteligente de contexto
+## Roadmap de Implementación Actualizado
 
-### Sprint 4: Observabilidad (1 semana)
+### Sprint 1: Feedback Loop (1-2 semanas)
+1. [ ] Crear tabla `feedback` en SQLite
+2. [ ] Implementar `ContextFeedback` class
+3. [ ] Agregar `cortex_feedback` MCP tool
+4. [ ] Integrar feedback scores en routing
+
+### Sprint 2: Session Management (1-2 semanas)
+1. [ ] Crear `SessionManager` class
+2. [ ] Agregar `cortex_session` MCP tool
+3. [ ] Tracking de memorias usadas por sesión
+4. [ ] Auto-cleanup de sesiones inactivas
+
+### Sprint 3: Observabilidad (1 semana)
 1. [ ] Implementar `Telemetry` class
-2. [ ] Agregar tracking a todas las operaciones
+2. [ ] Agregar tracking a operaciones
 3. [ ] Crear `cortex_metrics` MCP tool
-4. [ ] Dashboard básico en CLI
+4. [ ] CLI command `cortex stats --detailed`
 
 ---
 
 ## Conclusión
 
-Cortex tiene una **base sólida** (no es "solo una DB"), pero para ser 100% funcional con agentes necesita:
+Cortex v0.5.5 ya resolvió el gap más crítico (búsqueda semántica). Los gaps restantes son:
 
-| Gap | Impacto | Esfuerzo | Prioridad |
-|-----|---------|----------|-----------|
-| Búsqueda Semántica | 🔴 Alto | 🔴 Alto | P0 |
-| Feedback Loop | 🔴 Alto | 🟡 Medio | P0 |
-| Session Awareness | 🟡 Medio | 🟡 Medio | P1 |
-| Token Management | 🟡 Medio | 🟢 Bajo | P1 |
-| Proactive Injection | 🟢 Bajo | 🟡 Medio | P2 |
-| Observabilidad | 🟢 Bajo | 🟢 Bajo | P2 |
-| Multi-Agent | 🟢 Bajo | 🔴 Alto | P3 |
+1. **Feedback Loop** - El más importante para diferenciarse
+2. **Session Management** - Necesario para paridad competitiva
+3. **Observabilidad** - Para enterprise readiness
 
-**El gap más crítico es la búsqueda semántica** - sin embeddings, el sistema depende de keyword matching que es fundamentalmente limitado para entender la intención del agente.
-
----
-
-## Próximos Pasos Recomendados
-
-1. **Inmediato**: Abrir issues para cada gap crítico (P0)
-2. **Corto plazo**: Implementar embeddings con sqlite-vec
-3. **Medio plazo**: Agregar feedback loop y session management
-4. **Largo plazo**: Observabilidad y optimizaciones avanzadas
+El enfoque debería estar en **feedback loop** ya que ningún competidor (Mem0, Zep, Letta) lo ofrece de manera integrada con MCP.
