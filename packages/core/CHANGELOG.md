@@ -1,5 +1,11 @@
 # @ecuabyte/cortex-core
 
+## 0.5.8
+
+### Patch Changes
+
+- [`9083765`](https://github.com/EcuaByte-lat/Cortex/commit/9083765151f5bf29f3f429a07ea810664e02b4f0) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - fix: whitelist VSIX files to prevent symlink traversal error in VS Code extension packaging
+
 ## 0.5.7
 
 ### Patch Changes
