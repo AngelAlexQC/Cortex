@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/EcuaByte-lat/Cortex/actions/workflows/ci.yml"><img src="https://github.com/EcuaByte-lat/Cortex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/EcuaByte-lat/Cortex/actions/workflows/unified.yml"><img src="https://github.com/EcuaByte-lat/Cortex/actions/workflows/unified.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/EcuaByte-lat/Cortex"><img src="https://codecov.io/gh/EcuaByte-lat/Cortex/branch/main/graph/badge.svg" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode"><img src="https://img.shields.io/visual-studio-marketplace/v/EcuaByte.cortex-vscode?label=VS%20Code&logo=visualstudiocode&color=007ACC" alt="VS Code"></a>

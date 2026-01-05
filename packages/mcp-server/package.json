@@ -12,7 +12,7 @@
     "dev": "bun run --watch src/mcp-server.ts",
     "start": "bun run dist/mcp-server.js",
     "typecheck": "bunx tsc --noEmit",
-    "generate-config": "bun run scripts/generate-config.ts"
+    "generate-config": "bun run src/mcp-server.ts generate-config"
   },
   "keywords": [
     "mcp",
