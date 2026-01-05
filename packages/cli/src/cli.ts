@@ -64,7 +64,7 @@ program
   .option('--semantic', 'Use semantic (AI) search (requires Ollama or OpenAI)')
   .action(async (query, options) => {
     const limit = parseInt(options.limit, 10);
-    let results: Memory[];
+    let results: Memory[] | undefined;
     let searchMode = 'keyword';
 
     if (options.semantic) {
@@ -84,14 +84,14 @@ program
     }
 
     // Fallback or default keyword search
-    if (!results!) {
+    if (!results) {
       results = await store.search(query, {
         type: options.type,
         limit,
       });
     }
 
-    if (results.length === 0) {
+    if (!results || results.length === 0) {
       console.log(`No memories found (${searchMode} search).`);
       return;
     }

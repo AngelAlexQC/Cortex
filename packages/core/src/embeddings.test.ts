@@ -58,7 +58,7 @@ describe('Embeddings', () => {
 
       expect(deserialized.length).toBe(original.length);
       for (let i = 0; i < original.length; i++) {
-        expect(deserialized[i]).toBeCloseTo(original[i]!, 5);
+        expect(deserialized[i]).toBeCloseTo(original[i] ?? 0, 5);
       }
     });
 

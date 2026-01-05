@@ -34,7 +34,7 @@ export class CortexRememberTool implements vscode.LanguageModelTool<RememberPara
     _token: vscode.CancellationToken
   ): Promise<vscode.PreparedToolInvocation> {
     const content = options.input.content;
-    const preview = content.length > 50 ? content.slice(0, 50) + '...' : content;
+    const preview = content.length > 50 ? `${content.slice(0, 50)}...` : content;
 
     return {
       invocationMessage: `Saving memory: "${preview}"`,

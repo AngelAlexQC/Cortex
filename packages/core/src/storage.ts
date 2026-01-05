@@ -773,7 +773,8 @@ export class MemoryStore implements IMemoryStore {
         decryptedContents = await Promise.all(
           contents.map(async (c) => {
             try {
-              return await decrypt(c, this.password!);
+              if (!this.password) return c;
+              return await decrypt(c, this.password);
             } catch {
               return c;
             }

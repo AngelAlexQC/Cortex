@@ -1,8 +1,21 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "EcuaByte-lat/Cortex"
+    }
+  ],
   "commit": false,
-  "fixed": [],
+  "fixed": [
+    [
+      "@ecuabyte/cortex-core",
+      "@ecuabyte/cortex-cli",
+      "@ecuabyte/cortex-mcp-server",
+      "@ecuabyte/cortex-shared",
+      "cortex-vscode"
+    ]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
