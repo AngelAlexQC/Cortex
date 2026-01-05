@@ -77,18 +77,38 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
 
-      # Publish VS Code Extension
+      # Package and Publish VS Code Extension with Isolation Strategy
+      - name: Package VS Code Extension (Isolated)
+        run: |
+          mkdir -p vscode-build
+          cp packages/vscode-extension/package.json vscode-build/
+          cp packages/vscode-extension/README.md vscode-build/
+          cp packages/vscode-extension/CHANGELOG.md vscode-build/
+          cp packages/vscode-extension/LICENSE.txt vscode-build/ || true
+          cp packages/vscode-extension/icon.png vscode-build/
+          cp -r packages/vscode-extension/resources vscode-build/
+
+          # Copy Bundled Dist
+          mkdir -p vscode-build/dist
+          cp packages/vscode-extension/dist/* vscode-build/dist/
+
+          # Install PROD dependencies only (sql.js)
+          cd vscode-build
+          bun install --production
+
+          # Package
+          bunx vsce package
+
+          # Move VSIX back to expected location
+          cp *.vsix ../packages/vscode-extension/
+
       - name: Publish VS Code Extension
-        working-directory: packages/vscode-extension
+        working-directory: vscode-build
         if: ${{ env.VSCE_PAT != '' }}
-        run: bunx vsce publish -p ${{ secrets.VSCE_PAT }} --packagePath cortex-vscode-${{ env.VERSION }}.vsix
+        run: bunx vsce publish -p ${{ secrets.VSCE_PAT }} --packagePath *.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         continue-on-error: true
-
-      - name: Package Extension (for Release Asset)
-        working-directory: packages/vscode-extension
-        run: bunx vsce package
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
