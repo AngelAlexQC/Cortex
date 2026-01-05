@@ -1,5 +1,14 @@
 # @ecuabyte/cortex-mcp-server
 
+## 0.5.9
+
+### Patch Changes
+
+- [`4c54847`](https://github.com/EcuaByte-lat/Cortex/commit/4c548472f6f30939358888e6f1ce5d8776f4cf18) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - fix: remove .vscodeignore to allow using files whitelist for clean VSIX packaging
+
+- Updated dependencies [[`4c54847`](https://github.com/EcuaByte-lat/Cortex/commit/4c548472f6f30939358888e6f1ce5d8776f4cf18)]:
+  - @ecuabyte/cortex-core@0.5.9
+
 ## 0.5.8
 
 ### Patch Changes
