@@ -1,4 +1,11 @@
-import { ContextGuard, ContextRouter, type Memory, MemoryStore } from '@cortex/core';
+import {
+  ContextGuard,
+  ContextRouter,
+  createEmbeddingProvider,
+  type Memory,
+  MemoryStore,
+  ProjectScanner,
+} from '@cortex/core';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -6,6 +13,24 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 const store = new MemoryStore();
 const router = new ContextRouter(store);
 const guard = new ContextGuard();
+
+// Initialize embedding provider if available (Ollama or OpenAI)
+let embeddingInitialized = false;
+(async () => {
+  try {
+    const provider = await createEmbeddingProvider({
+      openaiApiKey: process.env['OPENAI_API_KEY'],
+    });
+    if (provider) {
+      store.setEmbeddingProvider(provider);
+      router.setEmbeddingProvider(provider);
+      embeddingInitialized = true;
+      console.error(`[Cortex] Embedding provider initialized: ${provider.model}`);
+    }
+  } catch (e) {
+    console.error('[Cortex] Failed to initialize embedding provider:', e);
+  }
+})();
 
 const server = new Server(
   {
@@ -42,6 +67,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'number',
               description: 'Maximum number of results to return (default: 10)',
               default: 10,
+            },
+            semantic: {
+              type: 'boolean',
+              description:
+                'Use semantic (AI) search instead of keyword search. Requires Ollama or OpenAI.',
+              default: false,
             },
           },
           required: ['query'],
@@ -175,6 +206,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['content'],
         },
       },
+      {
+        name: 'cortex_scan',
+        description:
+          'Scan a project directory to extract and store context automatically. Finds TODOs, README info, configs, architecture decisions. Returns extracted data for AI analysis.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'Project directory path to scan (defaults to current working directory)',
+            },
+            save: {
+              type: 'boolean',
+              description: 'Whether to save extracted memories to Cortex (default: true)',
+              default: true,
+            },
+          },
+        },
+      },
     ],
   };
 });
@@ -190,8 +240,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const query = args['query'] as string;
         const type = args['type'] as string | undefined;
         const limit = (args['limit'] as number) || 10;
+        const semantic = (args['semantic'] as boolean) || false;
 
-        const results = await store.search(query, { type, limit });
+        let results: Memory[];
+        let searchMode = 'keyword';
+
+        if (semantic && embeddingInitialized) {
+          // Use semantic search
+          const semanticResults = await store.searchSemantic(query, {
+            type: type as Memory['type'],
+            limit,
+            minScore: 0.3,
+          });
+          results = semanticResults.map((r) => r.memory);
+          searchMode = 'semantic';
+        } else {
+          // Use keyword search
+          results = await store.search(query, { type, limit });
+        }
 
         return {
           content: [
@@ -199,14 +265,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: 'text',
               text:
                 results.length > 0
-                  ? `Found ${results.length} memories:\n\n` +
+                  ? `Found ${results.length} memories (${searchMode} search):\n\n` +
                     results
                       .map(
                         (m: Memory, i: number) =>
                           `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}\n   Created: ${m.createdAt}`
                       )
                       .join('\n\n')
-                  : 'No memories found matching your query.',
+                  : `No memories found matching your query (${searchMode} search).`,
             },
           ],
         };
@@ -373,6 +439,59 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `🔒 Sensitive data redacted:\n\nFiltered:\n${detailsText}\n\nSafe content:\n${result.content}`,
+            },
+          ],
+        };
+      }
+
+      case 'cortex_scan': {
+        const scanPath = (args?.['path'] as string) || process.cwd();
+        const shouldSave = args?.['save'] !== false;
+
+        const scanner = new ProjectScanner();
+        const result = await scanner.scan({ path: scanPath });
+
+        // Save extracted memories if requested
+        if (shouldSave && result.memories.length > 0) {
+          let savedCount = 0;
+          for (const memory of result.memories) {
+            try {
+              await store.add(memory);
+              savedCount++;
+            } catch {
+              // Skip duplicates or errors
+            }
+          }
+          result.summary.memoriesFound = savedCount;
+        }
+
+        // Format for LLM analysis
+        const byTypeStr = Object.entries(result.summary.byType)
+          .filter(([, count]) => count > 0)
+          .map(([type, count]) => `${type}: ${count}`)
+          .join(', ');
+
+        const memorySummary = result.memories
+          .slice(0, 20)
+          .map(
+            (m, i) =>
+              `${i + 1}. [${m.type}] ${m.content.slice(0, 100)}${m.content.length > 100 ? '...' : ''}`
+          )
+          .join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text:
+                `📊 Project Scan Complete\n\n` +
+                `Path: ${scanPath}\n` +
+                `Files scanned: ${result.summary.filesScanned}\n` +
+                `Memories ${shouldSave ? 'saved' : 'found'}: ${result.summary.memoriesFound}\n` +
+                `By type: ${byTypeStr}\n` +
+                `Sources: ${result.summary.sources.slice(0, 5).join(', ')}${result.summary.sources.length > 5 ? '...' : ''}\n\n` +
+                `Extracted context:\n${memorySummary}\n\n` +
+                `💡 You can now use these memories for context. Ask me to analyze patterns or summarize the project architecture.`,
             },
           ],
         };

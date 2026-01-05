@@ -208,3 +208,72 @@ export interface IContextFuser {
    */
   fuse(options: FuseOptions): Promise<FuseResult>;
 }
+
+// =============================================================================
+// EMBEDDING TYPES (ctx/embed)
+// =============================================================================
+
+/**
+ * Configuration for embedding providers.
+ */
+export interface EmbeddingProviderConfig {
+  /** Provider type */
+  type: 'ollama' | 'openai';
+  /** Model to use */
+  model?: string;
+  /** API base URL (for Ollama) */
+  baseUrl?: string;
+  /** API key (for OpenAI) */
+  apiKey?: string;
+  /** Request timeout in ms */
+  timeout?: number;
+}
+
+/**
+ * Interface for embedding providers.
+ */
+export interface IEmbeddingProvider {
+  /** Generate embedding for a single text */
+  embed(text: string): Promise<number[]>;
+  /** Generate embeddings for multiple texts (batch) */
+  embedBatch(texts: string[]): Promise<number[][]>;
+  /** Model identifier */
+  readonly model: string;
+  /** Vector dimensions */
+  readonly dimensions: number;
+  /** Check if provider is available */
+  isAvailable(): Promise<boolean>;
+}
+
+/**
+ * A memory with its embedding vector.
+ */
+export interface MemoryWithEmbedding extends Memory {
+  /** Embedding vector */
+  embedding?: number[];
+  /** Model used to generate embedding */
+  embeddingModel?: string;
+}
+
+/**
+ * Options for semantic search.
+ */
+export interface SemanticSearchOptions {
+  /** Maximum number of results */
+  limit?: number;
+  /** Filter by memory type */
+  type?: MemoryType;
+  /** Minimum similarity score (0-1) */
+  minScore?: number;
+  /** Whether to include similarity scores in results */
+  includeScores?: boolean;
+}
+
+/**
+ * Result of semantic search.
+ */
+export interface SemanticSearchResult {
+  memory: Memory;
+  /** Cosine similarity score (0-1) */
+  similarity: number;
+}
