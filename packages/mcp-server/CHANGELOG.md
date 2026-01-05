@@ -1,5 +1,12 @@
 # @ecuabyte/cortex-mcp-server
 
+## 0.5.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ecuabyte/cortex-core@0.5.13
+
 ## 0.5.12
 
 ### Patch Changes

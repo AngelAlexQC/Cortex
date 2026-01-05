@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.13
+
+### Patch Changes
+
+- [`afd8c70`](https://github.com/EcuaByte-lat/Cortex/commit/afd8c701c86e0b919d0a28ec83097d87f8763fab) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - fix: improved error messages when no AI models are detected during scan
+
+- [`c8ab0c1`](https://github.com/EcuaByte-lat/Cortex/commit/c8ab0c1db47d04705a6fe01626c80a6864c0b014) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - fix: update engine requirement to ^1.93.0 to support native Language Model API
+
 ## 0.5.12
 
 ### Patch Changes
