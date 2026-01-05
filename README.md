@@ -80,8 +80,8 @@ Add to your Claude Desktop or VS Code settings:
 {
   "mcpServers": {
     "cortex": {
-      "command": "bun",
-      "args": ["run", "/path/to/Cortex/packages/mcp-server/dist/mcp-server.js"]
+      "command": "npx",
+      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
     }
   }
 }
