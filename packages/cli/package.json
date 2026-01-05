@@ -1,5 +1,5 @@
 {
-  "name": "@cortex/cli",
+  "name": "@ecuabyte/cortex-cli",
   "version": "0.5.5",
   "description": "Command-line interface for Cortex memory management",
   "type": "module",
@@ -30,7 +30,7 @@
     "directory": "packages/cli"
   },
   "dependencies": {
-    "@cortex/core": "workspace:*",
+    "@ecuabyte/cortex-core": "workspace:*",
     "commander": "^14.0.2"
   }
 }

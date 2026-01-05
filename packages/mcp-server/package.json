@@ -1,5 +1,5 @@
 {
-  "name": "@cortex/mcp-server",
+  "name": "@ecuabyte/cortex-mcp-server",
   "version": "0.5.5",
   "description": "MCP server exposing Cortex memories to AI tools",
   "type": "module",
@@ -32,7 +32,7 @@
     "directory": "packages/mcp-server"
   },
   "dependencies": {
-    "@cortex/core": "workspace:*",
+    "@ecuabyte/cortex-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4"
   }
 }

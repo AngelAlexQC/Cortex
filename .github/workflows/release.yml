@@ -127,7 +127,7 @@ jobs:
 
           # Use jq to remove workspace dependencies that are already bundled
           # and disable prepublish script to prevent rebuilding
-          jq 'del(.devDependencies["@cortex/shared"])' package.json > tmp.json && mv tmp.json package.json
+          jq 'del(.devDependencies["@ecuabyte/cortex-shared"])' package.json > tmp.json && mv tmp.json package.json
           jq '.scripts["vscode:prepublish"] = "echo ok"' package.json > tmp.json && mv tmp.json package.json
 
           # Install PROD dependencies only (sql.js)
