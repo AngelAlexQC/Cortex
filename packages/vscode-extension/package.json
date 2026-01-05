@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "sql.js": "^1.13.0",
-    "@cortex/shared": "workspace:*"
+    "@cortex/shared": "^0.4.0"
   },
   "contributes": {
     "taskDefinitions": [
