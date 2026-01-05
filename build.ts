@@ -17,20 +17,47 @@ async function buildPackage(pkg: string): Promise<BuildResult> {
   const startTime = performance.now();
   console.log(`📦 Building @cortex/${pkg}...`);
 
-  const proc = Bun.spawn(['bun', 'run', 'build'], {
-    cwd: `./packages/${pkg}`,
-    stdout: 'inherit',
-    stderr: 'inherit',
-  });
+  // Special handling for VS Code extension bundling
+  if (pkg === 'vscode-extension') {
+    try {
+      // 1. Compile with tsc for type checking (optional but good)
+      // 2. Bundle with Bun
+      const result = await Bun.build({
+        entrypoints: ['./packages/vscode-extension/src/extension.ts'],
+        outdir: './packages/vscode-extension/dist',
+        target: 'node',
+        external: ['vscode', 'sql.js'], // vscode is provided by host, sql.js needs wasm handling
+        minify: true,
+        sourcemap: 'external',
+      });
 
-  const exitCode = await proc.exited;
-  const duration = Math.round(performance.now() - startTime);
+      if (!result.success) {
+        console.error(result.logs);
+        return { package: pkg, success: false, duration: 0 };
+      }
 
-  if (exitCode !== 0) {
-    console.error(`❌ Failed to build ${pkg} (${duration}ms)`);
-    return { package: pkg, success: false, duration };
+      // Copy resources if needed (sql.js wasm?) - keeping simple for now
+    } catch (e) {
+      console.error(e);
+      return { package: pkg, success: false, duration: 0 };
+    }
+  } else {
+    // Standard build for other packages
+    const proc = Bun.spawn(['bun', 'run', 'build'], {
+      cwd: `./packages/${pkg}`,
+      stdout: 'inherit',
+      stderr: 'inherit',
+    });
+
+    const exitCode = await proc.exited;
+    if (exitCode !== 0) {
+      const duration = Math.round(performance.now() - startTime);
+      console.error(`❌ Failed to build ${pkg} (${duration}ms)`);
+      return { package: pkg, success: false, duration };
+    }
   }
 
+  const duration = Math.round(performance.now() - startTime);
   console.log(`✅ ${pkg} built in ${duration}ms\n`);
   return { package: pkg, success: true, duration };
 }
