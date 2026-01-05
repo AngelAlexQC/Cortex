@@ -1,9 +1,21 @@
 import { Database } from 'bun:sqlite';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { IMemoryStore, Memory, MemoryStoreOptions } from '@cortex/shared';
+import type {
+  IMemoryStore,
+  Memory,
+  MemoryStoreOptions,
+  SemanticSearchOptions,
+  SemanticSearchResult,
+} from '@ecuabyte/cortex-shared';
 import { getProjectId } from './context';
 import { decrypt, encrypt } from './crypto';
+import {
+  cosineSimilarity,
+  deserializeEmbedding,
+  type IEmbeddingProvider,
+  serializeEmbedding,
+} from './embeddings';
 
 /**
  * Represents a raw database row from SQLite.
@@ -17,6 +29,8 @@ interface DatabaseRow {
   source: string;
   tags: string | null;
   metadata: string | null;
+  embedding: Uint8Array | null;
+  embedding_model: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -92,6 +106,7 @@ export class MemoryStore implements IMemoryStore {
   private projectId: string | null;
   private globalMode: boolean;
   private password?: string;
+  private embeddingProvider?: IEmbeddingProvider;
 
   /**
    * Creates a new MemoryStore instance.
@@ -136,6 +151,8 @@ export class MemoryStore implements IMemoryStore {
         source TEXT NOT NULL,
         tags TEXT,
         metadata TEXT,
+        embedding BLOB,
+        embedding_model TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -665,6 +682,202 @@ export class MemoryStore implements IMemoryStore {
       projectId: row.project_id,
       count: row.count,
     }));
+  }
+
+  /**
+   * Sets the embedding provider for semantic search.
+   *
+   * @param provider - The embedding provider to use
+   * @example
+   * ```typescript
+   * const ollama = new OllamaEmbeddings();
+   * store.setEmbeddingProvider(ollama);
+   * ```
+   */
+  setEmbeddingProvider(provider: IEmbeddingProvider): void {
+    this.embeddingProvider = provider;
+  }
+
+  /**
+   * Gets the current embedding provider.
+   */
+  getEmbeddingProvider(): IEmbeddingProvider | undefined {
+    return this.embeddingProvider;
+  }
+
+  /**
+   * Updates the embedding for a memory.
+   *
+   * @param id - The memory ID to update
+   * @returns true if embedding was updated, false if memory not found
+   * @example
+   * ```typescript
+   * await store.updateEmbedding(42);
+   * ```
+   */
+  async updateEmbedding(id: number): Promise<boolean> {
+    if (!this.embeddingProvider) {
+      throw new Error('No embedding provider configured. Call setEmbeddingProvider first.');
+    }
+
+    const memory = await this.get(id);
+    if (!memory) {
+      return false;
+    }
+
+    const embedding = await this.embeddingProvider.embed(memory.content);
+    const serialized = serializeEmbedding(embedding);
+
+    let sql = 'UPDATE memories SET embedding = ?, embedding_model = ? WHERE id = ?';
+    const params: (Uint8Array | string | number)[] = [serialized, this.embeddingProvider.model, id];
+
+    if (!this.globalMode && this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    this.db.run(sql, params);
+    return true;
+  }
+
+  /**
+   * Updates embeddings for all memories that don't have one.
+   *
+   * @returns Number of memories updated
+   */
+  async updateAllEmbeddings(): Promise<number> {
+    if (!this.embeddingProvider) {
+      throw new Error('No embedding provider configured. Call setEmbeddingProvider first.');
+    }
+
+    let sql = 'SELECT id, content FROM memories WHERE embedding IS NULL';
+    const params: string[] = [];
+
+    if (!this.globalMode && this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    const rows = this.db.query(sql).all(...params) as Array<{ id: number; content: string }>;
+
+    // Process in batches of 10 for efficiency
+    const batchSize = 10;
+    let updated = 0;
+
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const contents = batch.map((r) => r.content);
+
+      let decryptedContents = contents;
+      if (this.password) {
+        decryptedContents = await Promise.all(
+          contents.map(async (c) => {
+            try {
+              return await decrypt(c, this.password!);
+            } catch {
+              return c;
+            }
+          })
+        );
+      }
+
+      const embeddings = await this.embeddingProvider.embedBatch(decryptedContents);
+
+      for (let j = 0; j < batch.length; j++) {
+        const row = batch[j];
+        const embedding = embeddings[j];
+        if (row && embedding) {
+          const serialized = serializeEmbedding(embedding);
+          this.db.run('UPDATE memories SET embedding = ?, embedding_model = ? WHERE id = ?', [
+            serialized,
+            this.embeddingProvider.model,
+            row.id,
+          ]);
+          updated++;
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  /**
+   * Searches memories using semantic similarity.
+   *
+   * Uses cosine similarity between query embedding and stored embeddings.
+   * Falls back to keyword search if no embedding provider is configured.
+   *
+   * @param query - Natural language query
+   * @param options - Search options
+   * @returns Array of memories with similarity scores, sorted by relevance
+   * @example
+   * ```typescript
+   * const results = await store.searchSemantic('database architecture');
+   * for (const { memory, similarity } of results) {
+   *   console.log(`${similarity.toFixed(2)}: ${memory.content}`);
+   * }
+   * ```
+   */
+  async searchSemantic(
+    query: string,
+    options?: SemanticSearchOptions
+  ): Promise<SemanticSearchResult[]> {
+    if (!this.embeddingProvider) {
+      // Fall back to keyword search
+      const memories = await this.search(query, {
+        type: options?.type,
+        limit: options?.limit,
+      });
+      // Return with default similarity score
+      return memories.map((memory) => ({ memory, similarity: 0.5 }));
+    }
+
+    // Generate query embedding
+    const queryEmbedding = await this.embeddingProvider.embed(query);
+
+    // Get all memories with embeddings
+    let sql = 'SELECT * FROM memories WHERE embedding IS NOT NULL';
+    const params: string[] = [];
+
+    if (!this.globalMode && this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    if (options?.type) {
+      sql += ' AND type = ?';
+      params.push(options.type);
+    }
+
+    const rows = this.db.query(sql).all(...params) as DatabaseRow[];
+
+    // Calculate similarity for each memory
+    const results: SemanticSearchResult[] = [];
+
+    for (const row of rows) {
+      if (!row.embedding) continue;
+
+      const embedding = deserializeEmbedding(row.embedding);
+      const similarity = cosineSimilarity(queryEmbedding, embedding);
+
+      // Filter by minimum score
+      if (options?.minScore !== undefined && similarity < options.minScore) {
+        continue;
+      }
+
+      const memory = await this.rowToMemory(row);
+      results.push({ memory, similarity });
+    }
+
+    // Sort by similarity (highest first)
+    results.sort((a, b) => b.similarity - a.similarity);
+
+    // Apply limit
+    if (options?.limit) {
+      return results.slice(0, options.limit);
+    }
+
+    return results;
   }
 
   /**

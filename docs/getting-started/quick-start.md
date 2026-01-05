@@ -1,201 +1,80 @@
 # Quick Start
 
-Get up and running with Cortex Protocol in 5 minutes!
+Get up and running with Cortex in under 5 minutes.
 
-## What is Cortex Protocol?
+## Option 1: VS Code Extension (Recommended)
 
-Cortex Protocol is an **open standard for AI context management**. It solves the fundamental problem of AI systems forgetting context between sessions by providing:
+1. **Install from Marketplace**
+   - Search "Cortex" in VS Code Extensions
+   - Or install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
 
-- 🧠 **Persistent memory** across sessions
-- 🔗 **Multi-tool integration** (Claude, Copilot, Cursor, Continue)
-- 📁 **Project isolation** - context stays with your projects
-- 🔒 **Privacy-first** - local-first, your data never leaves
-- 🎨 **Visual interface** in VS Code
+2. **Open your project**
+   - Open any project in VS Code
 
-## Quick Setup
+3. **Run AI Scan**
+   - Click the brain icon (🧠) in the Activity Bar
+   - Click **✨ AI Scan** button
+   - Watch as Cortex analyzes your project and extracts memories
+
+4. **Use with Copilot**
+   - Copilot can now use `cortex_remember` and `cortex_recall` tools
+   - Your memories are automatically available as context
+
+## Option 2: CLI
 
 ```bash
-# 1. Clone and install
+# Clone the repository
 git clone https://github.com/EcuaByte-lat/Cortex.git
 cd Cortex
+
+# Install dependencies
 bun install
 
-# 2. Build
+# Build all packages
 bun run build
 
-# 3. You're ready!
+# Add your first memory
+bun --cwd packages/cli run dev add \
+  -c "We use PostgreSQL with Prisma ORM for database operations" \
+  -t "decision"
+
+# Search memories
+bun --cwd packages/cli run dev search "database"
+
+# Get context for a task
+bun --cwd packages/cli run dev context "setting up database migrations"
 ```
 
-## Your First Memory
+## Option 3: MCP Server
 
-### Using CLI
-
-```bash
-# Add a memory
-bun run dev:cli add \
-  --content "We use React 19 with Server Components" \
-  --type "fact" \
-  --source "architecture-decision"
-
-# Search for it
-bun run dev:cli search "React"
-
-# List all memories
-bun run dev:cli list
-```
-
-### Using VS Code Extension
-
-1. Press `F5` in VS Code (opens Extension Development Host)
-2. Click the Cortex icon in the sidebar
-3. Click "Add Memory" or use Command Palette: `Cortex: Add Memory`
-4. Fill in the details and save
-
-## Memory Types
-
-Cortex supports 5 types of memories:
-
-| Type | Description | Example |
-|------|-------------|---------|
-| **fact** | Technical facts about your project | "Uses PostgreSQL database" |
-| **decision** | Architecture or design decisions | "Chose tRPC over REST for type safety" |
-| **code** | Code patterns or conventions | "All API routes use async/await" |
-| **config** | Configuration information | "API key stored in .env as API_KEY" |
-| **note** | General notes or reminders | "TODO: Refactor auth module" |
-
-## Integrate with AI Tools
-
-### Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+For Claude Desktop, Cursor, or other MCP clients:
 
 ```json
 {
   "mcpServers": {
     "cortex": {
       "command": "bun",
-      "args": ["run", "/path/to/Cortex/packages/mcp-server/dist/mcp-server.js"]
+      "args": ["run", "/absolute/path/to/Cortex/packages/mcp-server/dist/mcp-server.js"]
     }
   }
 }
 ```
 
-Restart Claude. Now you can ask:
-```
-"Remember that we use React 19 with Server Components"
-"What database are we using?"
-"Search memories for authentication"
-```
+Then in Claude/Cursor, you can say:
+- "Remember that we use TypeScript strict mode"
+- "What do you know about our authentication setup?"
 
-### VS Code + GitHub Copilot
+## Memory Types
 
-Create `.vscode/mcp.json` in your project:
-
-```json
-{
-  "servers": {
-    "cortex": {
-      "type": "stdio",
-      "command": "bun",
-      "args": ["run", "C:\\Code\\Cortex\\packages\\mcp-server\\dist\\mcp-server.js"]
-    }
-  }
-}
-```
-
-Restart VS Code. Copilot now has access to your project memories!
-
-## Example Workflow
-
-Let's set up a new project with Cortex:
-
-```bash
-# 1. Start a new project
-mkdir my-app && cd my-app
-git init
-
-# 2. Add project facts
-cortex add -c "Using Next.js 15 with App Router" -t "fact" -s "setup"
-cortex add -c "Using Tailwind CSS with shadcn/ui" -t "fact" -s "setup"
-cortex add -c "Decided on Prisma over Drizzle for better DX" -t "decision" -s "database"
-
-# 3. Ask your AI assistant
-# "Create a new page component"
-# -> AI will automatically use Next.js 15 App Router patterns
-# -> AI will style it with Tailwind
-# -> AI will use Prisma for database queries
-```
-
-## Common Commands
-
-```bash
-# Add memory
-cortex add -c "content" -t "type" -s "source"
-
-# Search memories
-cortex search "query"
-
-# List all memories
-cortex list
-
-# List by type
-cortex list --type fact
-
-# Get statistics
-cortex stats
-
-# Delete a memory
-cortex delete <id>
-
-# Clear all memories in current project
-cortex clear
-```
-
-## Understanding Project Isolation
-
-Cortex automatically detects your project and isolates memories:
-
-```bash
-# In project A
-cd ~/projects/project-a
-cortex add -c "Uses Express.js" -t "fact" -s "setup"
-
-# In project B
-cd ~/projects/project-b
-cortex add -c "Uses Fastify" -t "fact" -s "setup"
-
-# Each project has its own memories!
-cortex list  # Shows only project B memories
-```
-
-Project detection uses:
-1. Git repository root (preferred)
-2. package.json location
-3. Directory path (fallback)
+| Type | Use For |
+|------|---------|
+| `fact` | Technical facts (versions, stack) |
+| `decision` | Architectural decisions |
+| `code` | Code patterns and examples |
+| `config` | Configuration details |
+| `note` | General notes |
 
 ## Next Steps
 
-Now that you're set up:
-
-1. **Explore the CLI** - [CLI Usage Guide](../guides/cli-usage.md)
-2. **Integrate with your AI tools** - [MCP Integration](../guides/mcp-integration.md)
-3. **Use the VS Code extension** - [Extension Guide](../guides/vscode-extension.md)
-4. **Learn about project isolation** - [Project Isolation Guide](../guides/project-isolation.md)
-
-## Tips
-
-💡 **Add memories as you code** - Make it a habit to record important decisions
-
-💡 **Use descriptive sources** - Makes it easier to find related memories later
-
-💡 **Tag everything** - Use tags to organize related memories
-
-💡 **Review regularly** - Check `cortex stats` to see what you've recorded
-
-## Examples
-
-See [Examples](./examples.md) for more real-world use cases.
-
----
-
-**Having issues?** Check [Common Issues](../troubleshooting/common-issues.md) or [open an issue](https://github.com/EcuaByte-lat/Cortex/issues).
+- [Development Guide](../DEVELOPMENT.md) - Contributing to Cortex
+- [Examples](./examples.md) - More usage examples

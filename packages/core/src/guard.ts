@@ -4,10 +4,15 @@
  * Filters sensitive data (API keys, secrets, PII) before sending to LLMs.
  * Prevents accidental exposure of credentials and personal information.
  *
- * @module @cortex/core/guard
+ * @module @ecuabyte/cortex-core/guard
  */
 
-import type { GuardFilterType, GuardOptions, GuardResult, IContextGuard } from '@cortex/shared';
+import type {
+  GuardFilterType,
+  GuardOptions,
+  GuardResult,
+  IContextGuard,
+} from '@ecuabyte/cortex-shared';
 
 /**
  * Regex patterns for detecting sensitive data.

@@ -1,10 +1,31 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { type Memory, MemoryStore } from '@cortex/core';
+import {
+  createEmbeddingProvider,
+  type Memory,
+  MemoryStore,
+  type SemanticSearchResult,
+} from '@ecuabyte/cortex-core';
 import { Command } from 'commander';
 
 const program = new Command();
 const store = new MemoryStore();
+
+// Initialize embedding provider if available
+let embeddingAvailable = false;
+(async () => {
+  try {
+    const provider = await createEmbeddingProvider({
+      openaiApiKey: process.env['OPENAI_API_KEY'],
+    });
+    if (provider) {
+      store.setEmbeddingProvider(provider);
+      embeddingAvailable = true;
+    }
+  } catch {
+    // No embedding provider available
+  }
+})();
 
 program
   .name('cortex')
@@ -40,18 +61,42 @@ program
   .description('Search memories by content')
   .option('-t, --type <type>', 'Filter by type')
   .option('-l, --limit <number>', 'Max results', '10')
+  .option('--semantic', 'Use semantic (AI) search (requires Ollama or OpenAI)')
   .action(async (query, options) => {
-    const results = await store.search(query, {
-      type: options.type,
-      limit: parseInt(options.limit, 10),
-    });
+    const limit = parseInt(options.limit, 10);
+    let results: Memory[];
+    let searchMode = 'keyword';
+
+    if (options.semantic) {
+      if (!embeddingAvailable) {
+        console.log(
+          '⚠️  Semantic search requires Ollama or OPENAI_API_KEY. Falling back to keyword search.'
+        );
+      } else {
+        const semanticResults: SemanticSearchResult[] = await store.searchSemantic(query, {
+          type: options.type,
+          limit,
+          minScore: 0.3,
+        });
+        results = semanticResults.map((r) => r.memory);
+        searchMode = 'semantic';
+      }
+    }
+
+    // Fallback or default keyword search
+    if (!results!) {
+      results = await store.search(query, {
+        type: options.type,
+        limit,
+      });
+    }
 
     if (results.length === 0) {
-      console.log('No memories found.');
+      console.log(`No memories found (${searchMode} search).`);
       return;
     }
 
-    console.log(`\nFound ${results.length} memories:\n`);
+    console.log(`\nFound ${results.length} memories (${searchMode} search):\n`);
     results.forEach((memory: Memory, i: number) => {
       console.log(`${i + 1}. [${memory.type}] ${memory.content}`);
       console.log(`   Source: ${memory.source}`);
@@ -282,6 +327,76 @@ program
       )
     );
     console.log('');
+  });
+
+// Scan project command
+program
+  .command('scan [path]')
+  .description('Scan a project to auto-extract context (TODOs, configs, docs)')
+  .option('--no-save', 'Only show results, do not save to Cortex')
+  .option('--no-todos', 'Skip TODO/FIXME extraction')
+  .option('--no-docs', 'Skip documentation scanning')
+  .option('--no-configs', 'Skip config file scanning')
+  .action(async (scanPath: string | undefined, options) => {
+    const { ProjectScanner } = await import('@ecuabyte/cortex-core');
+    const path = scanPath || process.cwd();
+
+    console.log(`\n📂 Scanning: ${path}\n`);
+
+    const scanner = new ProjectScanner();
+    const result = await scanner.scan({
+      path,
+      scanTodos: options.todos !== false,
+      scanDocs: options.docs !== false,
+      scanConfigs: options.configs !== false,
+    });
+
+    // Display results
+    console.log(`Files scanned: ${result.summary.filesScanned}`);
+    console.log(`Memories found: ${result.summary.memoriesFound}`);
+    console.log('');
+
+    const byType = Object.entries(result.summary.byType)
+      .filter(([, count]) => count > 0)
+      .map(([type, count]) => `${type}: ${count}`)
+      .join(', ');
+    if (byType) {
+      console.log(`By type: ${byType}`);
+    }
+
+    if (result.summary.sources.length > 0) {
+      console.log(
+        `Sources: ${result.summary.sources.slice(0, 5).join(', ')}${result.summary.sources.length > 5 ? '...' : ''}`
+      );
+    }
+    console.log('');
+
+    // Show preview
+    if (result.memories.length > 0) {
+      console.log('Preview (first 10):');
+      result.memories.slice(0, 10).forEach((m, i) => {
+        console.log(
+          `  ${i + 1}. [${m.type}] ${m.content.slice(0, 80)}${m.content.length > 80 ? '...' : ''}`
+        );
+      });
+      console.log('');
+    }
+
+    // Save if requested
+    if (options.save !== false && result.memories.length > 0) {
+      let saved = 0;
+      for (const memory of result.memories) {
+        try {
+          await store.add(memory);
+          saved++;
+        } catch {
+          // Skip duplicates
+        }
+      }
+      console.log(`✓ Saved ${saved} memories to Cortex\n`);
+    } else if (options.save === false) {
+      console.log('(Use without --no-save to store memories)\n');
+    }
   });
 
 program.parse();

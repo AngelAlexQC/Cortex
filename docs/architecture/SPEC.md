@@ -1,4 +1,4 @@
-# Cortex Protocol Specification
+# Cortex Architecture Specification
 
 **Version**: 1.0-draft  
 **Status**: Draft  
@@ -8,7 +8,7 @@
 
 ## Abstract
 
-Cortex Protocol defines an open standard for persistent, privacy-first context management in AI systems. It specifies how AI agents store, retrieve, route, protect, and share contextual information across sessions, devices, and organizations.
+Cortex defines an open platform for persistent, privacy-first context management in AI systems. It specifies how AI agents store, retrieve, route, protect, and share contextual information across sessions, devices, and organizations.
 
 ## 1. Introduction
 
@@ -30,7 +30,7 @@ Current AI systems lack a standardized mechanism for:
 ### 1.3 Relationship to MCP
 
 The Model Context Protocol (MCP) standardizes how AI connects to **tools**.  
-Cortex Protocol standardizes how AI manages **context**.
+Cortex standardizes how AI manages **context**.
 
 ```
 MCP: "How AI DOES things"
@@ -43,7 +43,7 @@ Cortex: "How AI KNOWS things"
 
 ### 2.1 ContextBlock
 
-The fundamental unit of context in Cortex Protocol.
+The fundamental unit of context in Cortex.
 
 ```typescript
 interface ContextBlock {
@@ -213,7 +213,7 @@ fuse(sources: ContextSource[]): Promise<FusedContext>
 
 ### 4.1 MCP Integration
 
-Cortex Protocol implementations SHOULD provide an MCP server.
+Cortex implementations SHOULD provide an MCP server.
 
 **Required Tools:**
 | Tool | Maps To |
@@ -342,4 +342,4 @@ https://github.com/EcuaByte-lat/Cortex
 
 ---
 
-*Cortex Protocol Specification v1.0-draft*
+*Cortex Specification v1.0-draft*

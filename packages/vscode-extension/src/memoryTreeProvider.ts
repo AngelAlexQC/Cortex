@@ -1,4 +1,4 @@
-import type { Memory } from '@cortex/shared';
+import type { Memory } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import type { MemoryStore } from './storage';
 

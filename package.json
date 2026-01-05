@@ -1,7 +1,7 @@
 {
   "name": "cortex-monorepo",
   "version": "0.3.0",
-  "description": "Cortex Protocol - The Universal Context Layer for AI",
+  "description": "Cortex - The Universal Context Layer for AI",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -55,6 +55,7 @@
   "homepage": "https://github.com/EcuaByte-lat/Cortex#readme",
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
+    "@changesets/cli": "^2.29.8",
     "@types/bun": "^1.1.13",
     "@types/node": "^25.0.0",
     "@types/vscode": "^1.85.0",

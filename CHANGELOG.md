@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-05
+
+### Added
+- **CI/CD**: Fully automated release pipeline triggered by version changes.
+- **GitHub Integration**: Links NPM packages to GitHub repository metadata.
+- **Isolation Build**: Robust packaging strategy for VS Code extension in monorepo.
+- **Packages**: Updated all core packages (@cortex/core, @cortex/cli, etc.) to v0.5.0.
+
+## [0.4.0] - 2026-01-05
+
+### Added
+- **AI-Powered Project Scanner**: Comprehensive two-pass intelligent analysis
+  - Pass 1: AI reviews project tree and selects relevant files autonomously
+  - Pass 2: AI analyzes selected files and extracts memories with deduplication
+  - No hardcoded limits - AI decides what to analyze
+  - Real-time visual streaming in professional webview panel
+- **Language Model Tools for Copilot**: Native VS Code integration
+  - `cortex_remember`: AI can save memories directly
+  - `cortex_recall`: AI can search context
+  - Automatic tree view refresh on memory save
+- **Visual AI Scan Panel**: Professional webview with VS Code native theme
+  - Uses `--vscode-*` CSS variables for seamless theme integration
+  - Real-time memory cards with type-based color coding
+  - Live streaming output display
+  - Summary statistics on completion
+- **Premium Model Selection**: Intelligent 2026 model priority
+  - Claude Opus 4.5, GPT-5.2, GPT-5.1-Codex, Gemini 3 Pro support
+  - Automatic fallback to best available model
+
+### Changed
+- **Deduplication**: AI now receives ALL existing memories for context (no limits)
+- **Tree Command**: Uses native `tree` command for accurate project structure
+
+### Fixed
+- Memory tree view now auto-refreshes when AI tools add memories
+
 ## [0.3.0] - 2025-12-29
 
 ### Added

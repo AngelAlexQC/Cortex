@@ -1,6 +1,7 @@
-import type { Memory } from '@cortex/shared';
+import type { Memory } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import { ContextObserver } from './contextObserver';
+import { registerCortexTools } from './cortexTools';
 import { MemoryTreeProvider } from './memoryTreeProvider';
 import { MemoryWebviewProvider } from './memoryWebviewProvider';
 import { MemoryStore } from './storage';
@@ -39,6 +40,10 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register webview provider
     console.log('[Cortex] Registering Webview Provider...');
     const webviewProvider = new MemoryWebviewProvider(context.extensionUri, store);
+
+    // Register Language Model Tools for Copilot integration
+    console.log('[Cortex] Registering Language Model Tools...');
+    registerCortexTools(context, store, () => treeProvider.refresh());
 
     // Register commands
     console.log('[Cortex] Registering Commands...');
@@ -244,6 +249,132 @@ export async function activate(context: vscode.ExtensionContext) {
           treeProvider.refresh();
         } catch (error) {
           vscode.window.showErrorMessage(`Error saving selection: ${error}`);
+        }
+      })
+    );
+
+    // Command to scan project for context
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.scanProject', async () => {
+        try {
+          const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+          if (!workspaceFolder) {
+            vscode.window.showWarningMessage('No workspace folder open');
+            return;
+          }
+
+          const scanPath = workspaceFolder.uri.fsPath;
+
+          await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: 'Cortex: Scanning project...',
+              cancellable: false,
+            },
+            async (progress) => {
+              progress.report({ message: 'Initializing scanner...' });
+
+              // Use local scanner (no bun:sqlite dependency)
+              const { ProjectScanner } = await import('./projectScanner');
+              const scanner = new ProjectScanner();
+
+              progress.report({ message: 'Scanning files...' });
+
+              const result = await scanner.scan({ path: scanPath });
+
+              progress.report({ message: `Saving ${result.memories.length} memories...` });
+
+              // Save memories
+              let savedCount = 0;
+              for (const memory of result.memories) {
+                try {
+                  await store.add({
+                    content: memory.content,
+                    type: memory.type as Memory['type'],
+                    source: memory.source,
+                    tags: memory.tags,
+                  });
+                  savedCount++;
+                } catch (e) {
+                  console.error('[Cortex] Failed to save memory:', e);
+                }
+              }
+
+              // Refresh tree view
+              treeProvider.refresh();
+
+              // Show results
+              const byType = Object.entries(result.summary.byType)
+                .filter(([, count]) => (count as number) > 0)
+                .map(([type, count]) => `${type}: ${count}`)
+                .join(', ');
+
+              vscode.window.showInformationMessage(
+                `✓ Scan complete! Saved ${savedCount} memories (${byType})`
+              );
+            }
+          );
+        } catch (error) {
+          vscode.window.showErrorMessage(`Error scanning project: ${error}`);
+        }
+      })
+    );
+
+    // Command to scan project with AI (intelligent analysis)
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.scanWithAI', async () => {
+        try {
+          const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+          if (!workspaceFolder) {
+            vscode.window.showWarningMessage('No workspace folder open');
+            return;
+          }
+
+          const scanPath = workspaceFolder.uri.fsPath;
+
+          // Create visual webview panel
+          const { AIScanWebview } = await import('./aiScanWebview');
+          const webview = new AIScanWebview();
+          webview.show();
+
+          await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: 'Cortex: AI-powered scan...',
+              cancellable: true,
+            },
+            async (progress, token) => {
+              progress.report({ message: 'Analyzing with AI...' });
+
+              const { scanProjectWithAI } = await import('./aiScanner');
+              const result = await scanProjectWithAI(scanPath, token, store, webview);
+
+              progress.report({ message: 'Saving memories...' });
+
+              let savedCount = 0;
+              for (const memory of result.memories) {
+                try {
+                  await store.add({
+                    content: memory.content,
+                    type: memory.type,
+                    source: memory.source,
+                    tags: memory.tags,
+                  });
+                  savedCount++;
+                } catch (e) {
+                  console.error('[Cortex] Failed to save AI memory:', e);
+                }
+              }
+
+              treeProvider.refresh();
+
+              vscode.window.showInformationMessage(
+                `✓ AI scan complete! Analyzed ${result.filesAnalyzed} files, saved ${savedCount} intelligent memories.`
+              );
+            }
+          );
+        } catch (error) {
+          vscode.window.showErrorMessage(`Error in AI scan: ${error}`);
         }
       })
     );

@@ -4,7 +4,7 @@
  * Combines and consolidates context from multiple sources (memory, files, sessions)
  * into an optimal format for LLMs.
  *
- * @module @cortex/core/fuser
+ * @module @ecuabyte/cortex-core/fuser
  */
 
 import type {
@@ -14,7 +14,7 @@ import type {
   IContextFuser,
   IMemoryStore,
   Memory,
-} from '@cortex/shared';
+} from '@ecuabyte/cortex-shared';
 
 /**
  * Approximate tokens per character (conservative estimate for English text).
