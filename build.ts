@@ -28,7 +28,7 @@ async function buildPackage(pkg: string): Promise<BuildResult> {
         target: 'node',
         external: ['vscode', 'sql.js'], // vscode is provided by host, sql.js needs wasm handling
         minify: true,
-        sourcemap: 'external',
+        sourcemap: 'none',
       });
 
       if (!result.success) {
