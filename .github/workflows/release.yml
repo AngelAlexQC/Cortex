@@ -2,8 +2,11 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - 'package.json'
   workflow_dispatch:
 
 permissions:
@@ -25,31 +28,49 @@ jobs:
         with:
           bun-version: latest
 
-      # Setup Node is explicitly needed for npm publish --provenance
+      # Check if version has changed
+      - name: Check Version
+        id: check_version
+        shell: bash
+        run: |
+          # Read version from vscode-extension package.json (Product Version)
+          PACKAGE_VERSION=$(jq -r .version packages/vscode-extension/package.json)
+          echo "Current version in package.json: $PACKAGE_VERSION"
+
+          # Check if git tag exists
+          if git rev-parse "v$PACKAGE_VERSION" >/dev/null 2>&1; then
+            echo "Tag v$PACKAGE_VERSION already exists. Skipping release."
+            echo "RELEASE=false" >> $GITHUB_ENV
+          else
+            echo "Tag v$PACKAGE_VERSION does not exist. Proceeding with release."
+            echo "RELEASE=true" >> $GITHUB_ENV
+            echo "VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+          fi
+
       - name: Setup Node.js
+        if: env.RELEASE == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
+        if: env.RELEASE == 'true'
         run: bun install --frozen-lockfile
 
       - name: Build all packages
+        if: env.RELEASE == 'true'
         run: bun run build
 
       - name: Run Tests
+        if: env.RELEASE == 'true'
         run: bun test
-
-      - name: Get Version
-        id: get_version
-        shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       # Publish NPM Packages in dependency order
       # Using npm publish --provenance for security
 
       - name: Publish @cortex/shared
+        if: env.RELEASE == 'true'
         working-directory: packages/shared
         run: npm publish --provenance --access public
         env:
@@ -57,6 +78,7 @@ jobs:
         continue-on-error: true # Continue if version already exists
 
       - name: Publish @cortex/core
+        if: env.RELEASE == 'true'
         working-directory: packages/core
         run: npm publish --provenance --access public
         env:
@@ -64,6 +86,7 @@ jobs:
         continue-on-error: true
 
       - name: Publish @cortex/cli
+        if: env.RELEASE == 'true'
         working-directory: packages/cli
         run: npm publish --provenance --access public
         env:
@@ -71,6 +94,7 @@ jobs:
         continue-on-error: true
 
       - name: Publish @cortex/mcp-server
+        if: env.RELEASE == 'true'
         working-directory: packages/mcp-server
         run: npm publish --provenance --access public
         env:
@@ -79,6 +103,7 @@ jobs:
 
       # Package and Publish VS Code Extension with Isolation Strategy
       - name: Package VS Code Extension (Isolated)
+        if: env.RELEASE == 'true'
         run: |
           mkdir -p vscode-build
           cp packages/vscode-extension/package.json vscode-build/
@@ -115,18 +140,28 @@ jobs:
           cp *.vsix ../packages/vscode-extension/
 
       - name: Publish VS Code Extension
+        if: env.RELEASE == 'true' && env.VSCE_PAT != ''
         working-directory: vscode-build
-        if: ${{ env.VSCE_PAT != '' }}
         run: bunx vsce publish -p ${{ secrets.VSCE_PAT }} --packagePath *.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         continue-on-error: true
 
       - name: Create GitHub Release
+        if: env.RELEASE == 'true'
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Release ${{ env.VERSION }}
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
           generate_release_notes: true
           files: |
             packages/vscode-extension/*.vsix
+
+      # Auto-tag the version in git if successful
+      - name: Push Git Tag
+        if: env.RELEASE == 'true'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git tag v${{ env.VERSION }}
+          git push origin v${{ env.VERSION }}
