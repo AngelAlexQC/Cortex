@@ -1,5 +1,12 @@
 # @ecuabyte/cortex-cli
 
+## 0.5.11
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ecuabyte/cortex-core@0.5.11
+
 ## 0.5.10
 
 ### Patch Changes
