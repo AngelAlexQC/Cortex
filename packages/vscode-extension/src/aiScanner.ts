@@ -157,7 +157,19 @@ async function selectBestModel(channel: vscode.OutputChannel): Promise<vscode.La
   const allModels = await vscode.lm.selectChatModels({});
 
   if (allModels.length === 0) {
-    throw new Error('No language models available.');
+    const errorMsg = 'No language models available. Please configure a provider.';
+
+    channel.appendLine('❌ ERROR: ' + errorMsg);
+    channel.appendLine('\n🛠️ TROUBLESHOOTING:');
+    channel.appendLine(
+      '1. Ensure you have a compatible extension installed (e.g. GitHub Copilot, Google Gemini, etc.)'
+    );
+    channel.appendLine('2. For local inference, install an MCP server that provides models.');
+    channel.appendLine(
+      '3. If using Antigravity/IDX, verify your environment has access to AI services.'
+    );
+
+    throw new Error(errorMsg);
   }
 
   channel.appendLine(`📋 Available models (${allModels.length}):`);
