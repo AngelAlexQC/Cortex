@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.10
+
+### Patch Changes
+
+- [`8c92d4d`](https://github.com/EcuaByte-lat/Cortex/commit/8c92d4d75df67ef7a14fface1626dbb17b8654dc) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - fix: update vsce publish command to skip dependency check for Bun monorepo compatibility
+
 ## 0.5.9
 
 ### Patch Changes
