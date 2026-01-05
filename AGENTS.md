@@ -1,55 +1,25 @@
-# AGENTS.md - Cortex Protocol
+# AGENTS.md - Cortex
 
-> Instructions for AI agents working on the Cortex Protocol ecosystem.
+> Instructions for AI agents working on the Cortex codebase.
 
-## Vision: "The Universal Context Layer for AI"
+## What is Cortex?
 
-Cortex Protocol is an **open standard** for how AI systems store, retrieve, and share context. It defines the missing layer between AI models and the tools they use.
+**Cortex** is persistent memory for AI agents. It helps AI remember decisions, code patterns, and project context across conversations.
 
 ```
 ┌─ AI Applications (Claude, Copilot, Cursor)
-├─ Tool Layer (MCP)     ← "How AI DOES things"
-├─ Context Layer (Cortex) ← "How AI KNOWS things" ← US
+├─ Tool Layer (MCP)     ← How AI DOES things
+├─ Memory Layer (Cortex) ← How AI REMEMBERS things ← US
 └─ Model Layer (GPT, Claude, Llama)
 ```
-
-### Core Philosophy
-
-**Like Stripe reduced payments to 7 lines, Cortex reduces context engineering to 5 primitives:**
-
-```
-ctx/store  →  Persist context (facts, decisions, patterns)
-ctx/get    →  Retrieve specific context
-ctx/route  →  Intelligently select relevant context ✨
-ctx/guard  →  Filter sensitive data (PII, secrets)
-ctx/fuse   →  Combine multiple context sources
-```
-
-### Protocol Principles
-
-1. **Local-First** - Works offline, data never leaves unless you want
-2. **User-Owned** - You own your context, not the platforms
-3. **Privacy-by-Design** - ctx/guard is a primitive, not a plugin
-4. **Interoperable** - MCP-native, A2A compatible, works with any AI
-5. **Open Standard** - No vendor lock-in, ever
-
-
----
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-bun install
-
-# Build all packages (ordered: core → cli, mcp-server, vscode-extension)
-bun run build
-
-# Run all tests
-bun test
-
-# Run with coverage
-bun test --coverage
+bun install          # Install dependencies
+bun run build        # Build all packages
+bun test             # Run all tests
+bun test --coverage  # Run with coverage
 ```
 
 ## Project Structure
@@ -57,192 +27,106 @@ bun test --coverage
 ```
 cortex/
 ├── packages/
-│   ├── core/              # @cortex/core - Context primitives + SQLite storage
-│   │   ├── storage.ts     # ctx/store, ctx/get (MemoryStore)
-│   │   ├── router.ts      # ctx/route (ContextRouter) ← NEW
-│   │   ├── guard.ts       # ctx/guard (ContextGuard) ← NEW
-│   │   └── fuser.ts       # ctx/fuse (ContextFuser) ← NEW
+│   ├── core/              # @cortex/core - Storage, routing, guard, fuse
 │   ├── shared/            # @cortex/shared - Types and interfaces
-│   ├── cli/               # @cortex/cli - Command-line interface  
-│   ├── mcp-server/        # @cortex/mcp-server - MCP protocol server
+│   ├── cli/               # @cortex/cli - Command-line interface
+│   ├── mcp-server/        # @cortex/mcp-server - MCP server
 │   └── vscode-extension/  # cortex-vscode - VS Code extension
-├── docs/                  # Architecture docs, ADRs, getting-started
-├── build.ts               # Monorepo build orchestrator
-└── bunfig.toml            # Bun configuration
+├── docs/                  # Documentation
+└── build.ts               # Monorepo build orchestrator
 ```
 
-## The 5 Context Primitives
+## The 5 Primitives
 
-### ctx/store & ctx/get (Implemented ✅)
+### store & get
 ```typescript
-// Store context
-await cortex.store({
-  content: "We use JWT with RS256 for authentication",
-  type: "decision",
-  tags: ["auth", "security"]
-});
-
-// Retrieve context
+await cortex.store({ content: "Using JWT RS256", type: "decision" });
 const memories = await cortex.search("authentication");
 ```
 
-### ctx/route (The Magic ✨)
+### route (Intelligent Context)
 ```typescript
-// Intelligently get context relevant to current task
 const context = await cortex.route({
-  task: "implementing login endpoint",
-  currentFile: "src/auth/login.ts",
-  limit: 5
-});
-// Returns: Top 5 most relevant memories for this task
-```
-
-### ctx/fuse
-```typescript
-// Combine multiple context sources
-const unified = await cortex.fuse({
-  sources: [
-    { type: "memory", query: "auth patterns" },
-    { type: "file", path: "./docs/auth.md" },
-    { type: "session", data: conversationHistory }
-  ],
-  maxTokens: 4000
+  task: "implementing login",
+  currentFile: "src/auth.ts"
 });
 ```
 
-### ctx/guard
+### guard (Privacy Filter)
 ```typescript
-// Filter sensitive data before sending to LLM
 const safe = await cortex.guard(content, {
-  filters: ["api_keys", "pii", "secrets"],
-  mode: "redact"
+  filters: ["api_keys", "secrets", "pii"]
 });
-// "API key: sk-123abc" → "API key: [REDACTED]"
 ```
 
-## Build & Test Commands
-
-| Command | Description |
-|---------|-------------|
-| `bun install` | Install all dependencies |
-| `bun run build` | Build entire monorepo (parallelized) |
-| `bun run build:core` | Build only @cortex/core |
-| `bun run build:cli` | Build only @cortex/cli |
-| `bun run build:mcp` | Build only @cortex/mcp-server |
-| `bun run build:extension` | Build only VS Code extension |
-| `bun test` | Run all tests |
-| `bun test --coverage` | Run tests with coverage |
-| `bun run typecheck` | TypeScript type checking |
-| `bun run check` | Biome lint + format |
-
-## Code Style Guidelines
-
-### General
-- **Runtime**: Bun 1.0+ (use `bun:sqlite` for database)
-- **Language**: TypeScript 5.7+ with strict mode
-- **Linter/Formatter**: Biome (not ESLint/Prettier)
-- **Module System**: ESM only (`"type": "module"`)
-
-### Conventions
-- Use **camelCase** for variables/functions, **PascalCase** for types/classes
-- Prefer `const` over `let`, never use `var`
-- Use explicit return types for public functions
-- Document public APIs with JSDoc comments
-- No `console.log` in production code (use `console.error` for CLI/server output)
-
-### File Organization
-- Put tests in `src/__tests__/` with `.test.ts` suffix
-- Export from package entry point (`src/index.ts`)
-- Keep files under 500 lines; split if larger
-
-## Testing Instructions
-
-```bash
-# Run all tests
-bun test
-
-# Run specific package tests
-bun --cwd packages/core test
-bun --cwd packages/vscode-extension test
-
-# Watch mode
-bun test --watch
-
-# Coverage (aim for >90%)
-bun test --coverage
+### fuse (Multi-Source)
+```typescript
+const unified = await cortex.fuse({
+  sources: [{ type: "memory" }, { type: "file" }]
+});
 ```
 
-### Test Conventions
-- Use Bun's native test runner (`bun test`)
-- Use temporary in-memory databases for storage tests
-- Clean up temp files/directories after tests
-- Test edge cases: empty strings, null, undefined, invalid types
+## MCP Tools
 
-## MCP Server Implementation
-
-The MCP server (`packages/mcp-server`) implements the Model Context Protocol for AI tool integration.
-
-### Available Tools
 | Tool | Description |
 |------|-------------|
 | `cortex_search` | Search memories by content |
 | `cortex_add` | Add new memory |
 | `cortex_list` | List recent memories |
 | `cortex_stats` | Get memory statistics |
-| `cortex_context` | **NEW**: Get intelligent, task-relevant context |
+| `cortex_context` | Get task-relevant context |
+| `cortex_remember` | LM Tool: AI saves memory |
+| `cortex_recall` | LM Tool: AI searches context |
 
-### Testing MCP Server
+## VS Code Extension Features
+
+- **AI Scanner**: Two-pass intelligent project analysis
+- **Visual Webview**: Real-time streaming during scan
+- **Language Model Tools**: Copilot can save/recall memories
+- **TreeView**: Browse and manage memories
+- **Status Bar**: Memory count indicator
+
+## Build Commands
+
+| Command | Description |
+|---------|-------------|
+| `bun install` | Install all dependencies |
+| `bun run build` | Build entire monorepo |
+| `bun test` | Run all tests |
+| `bun run check` | Biome lint + format |
+
+## Code Style
+
+- **Runtime**: Bun 1.0+
+- **Language**: TypeScript 5.7+ strict
+- **Linter**: Biome (not ESLint)
+- **Module**: ESM only
+
+## Testing
+
 ```bash
-# Build and run
-bun run build:mcp
-bun run packages/mcp-server/dist/mcp-server.js
-```
-
-## VS Code Extension
-
-The extension (`packages/vscode-extension`) provides:
-- TreeView for memory browsing
-- Webview for memory management
-- TaskProvider for project tools
-- ToolScanner for workspace scanning
-- **NEW**: Auto-inject context based on active file
-
-### Development
-```bash
-# Build extension
-bun run build:extension
-
-# Debug: Press F5 in VS Code to launch Extension Development Host
+bun test                    # All tests
+bun --cwd packages/core test  # Specific package
+bun test --coverage         # Coverage report
 ```
 
 ## Technical Directives
 
-1. **Local-First Default**: All context operations must work offline.
-2. **Privacy by Design**: Zero telemetry. ctx/guard for PII filtering.
-3. **Speed**: Context routing must be <200ms.
-4. **Simplicity**: 5 primitives that compose into any solution.
-5. **Interop**: MCP-native, works with any AI tool.
+1. **Local-First**: All operations work offline
+2. **Privacy by Design**: Zero telemetry, guard for PII
+3. **Speed**: Context routing < 200ms
+4. **MCP-Native**: Works with any MCP client
 
-## Security Considerations
+## Security
 
-- Never log or expose user context in error messages
-- Validate all input types before database operations
-- Use parameterized queries (SQLite prepared statements)
-- Project isolation: context scoped by `projectId` hash
-- ctx/guard filters: API keys, secrets, PII, credentials
+- Never log user context in errors
+- Use parameterized queries (SQLite)
+- Project isolation via `projectId` hash
+- Guard filters: API keys, secrets, PII
 
 ## Pull Request Guidelines
 
 1. Run `bun run check` before committing
-2. Ensure all tests pass (`bun test`)
-3. Update relevant documentation
-4. Follow [Conventional Commits](https://www.conventionalcommits.org/)
-5. Keep PRs focused on a single concern
-
-## Architecture Decisions
-
-See `docs/architecture/decisions/` for ADRs:
-- `001-use-sqlite.md` - SQLite as storage layer
-- `002-project-isolation.md` - Project-based context isolation
-- `003-monorepo-structure.md` - Bun Workspaces monorepo
-- `004-context-primitives.md` - The 5 context primitives (NEW)
+2. Ensure all tests pass
+3. Follow [Conventional Commits](https://www.conventionalcommits.org/)
+4. Keep PRs focused on a single concern
