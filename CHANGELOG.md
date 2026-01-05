@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-05
+
+### Added
+- **CI/CD**: Fully automated release pipeline triggered by version changes.
+- **GitHub Integration**: Links NPM packages to GitHub repository metadata.
+- **Isolation Build**: Robust packaging strategy for VS Code extension in monorepo.
+- **Packages**: Updated all core packages (@cortex/core, @cortex/cli, etc.) to v0.5.0.
+
 ## [0.4.0] - 2026-01-05
 
 ### Added

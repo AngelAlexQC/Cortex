@@ -110,6 +110,7 @@ jobs:
           cp packages/vscode-extension/README.md vscode-build/
           cp packages/vscode-extension/CHANGELOG.md vscode-build/
           cp packages/vscode-extension/icon.png vscode-build/
+          cp packages/vscode-extension/.vscodeignore vscode-build/
           cp -r packages/vscode-extension/resources vscode-build/
 
           # Try to copy LICENSE (exact name variation)
