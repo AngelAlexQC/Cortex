@@ -170,7 +170,7 @@ jobs:
           if [[ "$PUBLISHED" == "cortex-vscode" ]]; then
             echo "📦 Publishing VS Code Extension..."
             cd packages/vscode-extension
-            bunx vsce publish -p $VSCE_PAT
+            bunx vsce publish --no-dependencies -p $VSCE_PAT
             echo "✅ VS Code Extension published successfully"
           else
             echo "ℹ️ cortex-vscode not included in this release, skipping."
