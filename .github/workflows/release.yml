@@ -52,7 +52,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         if: env.RELEASE == 'true'
@@ -73,32 +72,24 @@ jobs:
         if: env.RELEASE == 'true'
         working-directory: packages/shared
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true # Continue if version already exists
 
       - name: Publish @cortex/core
         if: env.RELEASE == 'true'
         working-directory: packages/core
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
 
       - name: Publish @cortex/cli
         if: env.RELEASE == 'true'
         working-directory: packages/cli
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
 
       - name: Publish @cortex/mcp-server
         if: env.RELEASE == 'true'
         working-directory: packages/mcp-server
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
 
       # Package and Publish VS Code Extension with Isolation Strategy
