@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "composite": true,
     "paths": {
-      "@cortex/core": ["../core/src/index.ts"]
+      "@ecuabyte/cortex-core": ["../core/src/index.ts"]
     }
   },
   "references": [{ "path": "../core" }],

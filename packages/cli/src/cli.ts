@@ -5,7 +5,7 @@ import {
   type Memory,
   MemoryStore,
   type SemanticSearchResult,
-} from '@cortex/core';
+} from '@ecuabyte/cortex-core';
 import { Command } from 'commander';
 
 const program = new Command();
@@ -338,7 +338,7 @@ program
   .option('--no-docs', 'Skip documentation scanning')
   .option('--no-configs', 'Skip config file scanning')
   .action(async (scanPath: string | undefined, options) => {
-    const { ProjectScanner } = await import('@cortex/core');
+    const { ProjectScanner } = await import('@ecuabyte/cortex-core');
     const path = scanPath || process.cwd();
 
     console.log(`\n📂 Scanning: ${path}\n`);

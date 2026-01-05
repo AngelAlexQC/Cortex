@@ -3,7 +3,7 @@
  * These tools allow Copilot to save and recall Cortex memories.
  */
 
-import type { MemoryType } from '@cortex/shared';
+import type { MemoryType } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import type { MemoryStore } from './storage';
 

@@ -4,7 +4,7 @@
  * The magic primitive that decides WHAT context to inject for a given task.
  * Uses FTS5 search + relevance scoring + optional semantic similarity.
  *
- * @module @cortex/core/router
+ * @module @ecuabyte/cortex-core/router
  */
 
 import type {
@@ -15,7 +15,7 @@ import type {
   MemoryType,
   RouteOptions,
   ScoredMemory,
-} from '@cortex/shared';
+} from '@ecuabyte/cortex-shared';
 import { cosineSimilarity } from './embeddings';
 
 /**

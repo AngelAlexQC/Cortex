@@ -1,6 +1,6 @@
 /**
  * Tests for embeddings provider module.
- * @module @cortex/core/embeddings.test
+ * @module @ecuabyte/cortex-core/embeddings.test
  */
 
 import { describe, expect, it } from 'bun:test';

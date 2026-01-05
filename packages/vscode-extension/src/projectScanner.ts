@@ -1,11 +1,11 @@
 /**
  * ProjectScanner for VS Code Extension
- * Standalone implementation that doesn't depend on @cortex/core (which uses bun:sqlite)
+ * Standalone implementation that doesn't depend on @ecuabyte/cortex-core (which uses bun:sqlite)
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
-import type { MemoryType } from '@cortex/shared';
+import type { MemoryType } from '@ecuabyte/cortex-shared';
 
 interface ScanMemory {
   content: string;

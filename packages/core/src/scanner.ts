@@ -7,12 +7,12 @@
  * - docker-compose.yml, .env.example → configs
  * - package.json → facts about dependencies
  *
- * @module @cortex/core/scanner
+ * @module @ecuabyte/cortex-core/scanner
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
-import type { Memory, MemoryType } from '@cortex/shared';
+import type { Memory, MemoryType } from '@ecuabyte/cortex-shared';
 
 /**
  * Result of a project scan.

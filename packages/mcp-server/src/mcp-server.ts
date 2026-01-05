@@ -5,7 +5,7 @@ import {
   type Memory,
   MemoryStore,
   ProjectScanner,
-} from '@cortex/core';
+} from '@ecuabyte/cortex-core';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';

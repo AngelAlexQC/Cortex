@@ -15,7 +15,7 @@ interface BuildResult {
 
 async function buildPackage(pkg: string): Promise<BuildResult> {
   const startTime = performance.now();
-  console.log(`📦 Building @cortex/${pkg}...`);
+  console.log(`📦 Building @ecuabyte/cortex-${pkg}...`);
 
   // Special handling for VS Code extension bundling
   if (pkg === 'vscode-extension') {

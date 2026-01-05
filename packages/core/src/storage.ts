@@ -7,7 +7,7 @@ import type {
   MemoryStoreOptions,
   SemanticSearchOptions,
   SemanticSearchResult,
-} from '@cortex/shared';
+} from '@ecuabyte/cortex-shared';
 import { getProjectId } from './context';
 import { decrypt, encrypt } from './crypto';
 import {

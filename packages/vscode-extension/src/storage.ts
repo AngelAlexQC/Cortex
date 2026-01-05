@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { IMemoryStore, Memory } from '@cortex/shared';
+import type { IMemoryStore, Memory } from '@ecuabyte/cortex-shared';
 import initSqlJs, { type Database, type SqlValue } from 'sql.js';
 
 export class MemoryStore implements IMemoryStore {

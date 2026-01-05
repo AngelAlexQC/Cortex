@@ -16,7 +16,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Memory, MemoryType } from '@cortex/shared';
+import type { Memory, MemoryType } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import type { AIScanWebview } from './aiScanWebview';
 import type { MemoryStore } from './storage';

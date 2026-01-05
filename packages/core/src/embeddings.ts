@@ -5,7 +5,7 @@
  * - Ollama (local, recommended: nomic-embed-text, bge-m3)
  * - OpenAI API (cloud fallback)
  *
- * @module @cortex/core/embeddings
+ * @module @ecuabyte/cortex-core/embeddings
  */
 
 /// <reference types="bun-types" />

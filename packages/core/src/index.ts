@@ -1,5 +1,5 @@
 /**
- * @cortex/core - Core storage and context primitives for Cortex
+ * @ecuabyte/cortex-core - Core storage and context primitives for Cortex
  *
  * Provides the 5 context primitives:
  * - ctx/store + ctx/get: MemoryStore ✅
@@ -35,7 +35,7 @@ export type {
   ScoredMemory,
   SemanticSearchOptions,
   SemanticSearchResult,
-} from '@cortex/shared';
+} from '@ecuabyte/cortex-shared';
 // Project context utilities
 export { clearProjectCache, getProjectId, getProjectName } from './context';
 // ctx/embed
