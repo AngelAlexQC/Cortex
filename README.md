@@ -18,64 +18,69 @@
 
 ---
 
-## What is Cortex?
+## 🚀 What is Cortex?
 
-**Cortex** gives your AI agents persistent memory. It remembers your decisions, code patterns, and project context — so AI doesn't start from scratch every conversation.
+**Cortex** solves the "amnesia" problem for AI coding assistants. It serves as a universal, persistent memory layer that lets your AI (Copilot, Claude, Cursor, etc.) remember:
 
+*   🏛️ **Architecture Decisions**: "We use Feature-Sliced Design"
+*   💡 **Code Patterns**: "All React components must use functional style"
+*   🔧 **Configuration**: "Production uses AWS RDS with specific flags"
+*   🚫 **Exclusions**: "Never touch the legacy payment module"
+
+Unlike a simple vector database, Cortex is an **active storage engine** that understands code context and can proactively inject memories into your AI's context window.
+
+## ✨ Key Features
+
+### 1. 🧠 AI-Powered Project Scanner (Two-Pass)
+Cortex doesn't just "read files". It performs a **semantic analysis** of your entire project:
+1.  **Pass 1 (Tree Scan):** The AI analyzes your file structure to understand the project's topology.
+2.  **Pass 2 (Extraction):** It selectively reads key files to extract "Facts", "Decisions", and "Patterns", storing them as structured memories.
+
+### 2. 🌐 Universal MCP Support
+Built on the **Model Context Protocol (MCP)**, Cortex works with *any* modern AI tool:
+*   **VS Code / Cursor / Windsurf**: Native integration.
+*   **Claude Desktop**: Full memory access.
+*   **JetBrains / Neovim**: Via MCP stdio.
+*   **Command Line Agents**: Works with Goose, Zed, and others.
+
+### 3. 🔐 Privacy & Local-First
+*   **100% Local Storage:** Memories are stored in SQLite (`~/.cortex/memories.db`) on your machine.
+*   **Privacy Guard:** (Coming Soon) Automatic PII redaction before context injection.
+*   **Project Isolation:** Memories are automatically scoped to the specific git repository you are working on.
+
+### 4. 🔎 Hybrid Search
+Cortex uses a hybrid approach for finding context:
+*   **FTS5 (Full Text Search):** Fast, exact matching for keywords/symbols.
+*   **Vectors (Semantic Search):** (Optional) If you provide an `OPENAI_API_KEY`, Cortex enables semantic understanding to find related concepts even if keywords don't match.
+
+## 🛠️ Installation & Setup
+
+### A. VS Code / Cursor / Windsurf (Recommended)
+
+**Option 1: One-Click Install**
+*   **VS Code:** [Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
+*   **OpenVSX (VSCodium, etc.):** [Install from OpenVSX](https://open-vsx.org/extension/EcuaByte/cortex-vscode)
+*   **Google IDX:** Add `"EcuaByte.cortex-vscode"` to your `.idx/dev.nix`.
+
+**Option 2: Native MCP Integration (Advanced)**
+For editors like **Cursor** (Composer) or **Windsurf** that support MCP natively:
+
+Run this command to generate the configuration:
+```bash
+npx -y @ecuabyte/cortex-mcp-server generate-config --target cursor
 ```
-Before Cortex:  AI forgets everything between sessions
-After Cortex:   AI remembers your architecture, decisions, and preferences
-```
+*Then copy the output into your editor's MCP settings.*
 
-**Works with:** GitHub Copilot, Claude, Cursor, Continue.dev, and any MCP-compatible client.
+### B. Claude Desktop
 
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 🧠 **AI-Powered Scanner** | Analyzes your project and extracts memories automatically |
-| 🔍 **Intelligent Routing** | Automatically finds relevant context for your current task |
-| 🔒 **Privacy Guard** | Filters API keys, secrets, and PII before sending to LLMs |
-| 📁 **Project Isolation** | Context automatically scoped to your project |
-| ⚡ **Local-First** | Your data stays on your machine. Works offline |
-| 🔗 **MCP-Native** | Deep integration with Claude, Copilot, and modern AI tools |
-
-## 🚀 Quick Start
-
-### 1. VS Code / Cursor / Windsurf (Recommended)
-
-**Option A: Marketplace (Easiest)**
-1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode) or [Open VSX Registry](https://open-vsx.org/extension/EcuaByte/cortex-vscode).
-2. Click the brain icon (🧠) in the Activity Bar.
-3. Click **✨ AI Scan** to analyze your project.
-
-**Option B: Manual Install (Restricted Environments / Google IDX)**
-If you are in a corporate environment or Google IDX where the extension doesn't show up:
-1. Download the `.vsix` file from the [latest release](https://github.com/EcuaByte-lat/Cortex/releases).
-2. Drag and drop it into your editor's Extensions panel.
-3. *Google IDX Users*: Add `"EcuaByte.cortex-vscode"` to your `.idx/dev.nix` extensions list.
-
-### CLI
+To give accessible memory to Claude:
 
 ```bash
-# Clone and build
-git clone https://github.com/EcuaByte-lat/Cortex.git
-cd Cortex && bun install && bun run build
-
-# Add a memory
-bun --cwd packages/cli run dev add -c "We use PostgreSQL with Prisma ORM" -t "decision"
-
-# Search memories
-bun --cwd packages/cli run dev search "database"
-
-# Get context for a task
-bun --cwd packages/cli run dev context "implementing user authentication"
+# Generate config automatically
+npx -y @ecuabyte/cortex-mcp-server generate-config --target claude >> ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
-### MCP Integration
-
-Add to your Claude Desktop or VS Code settings:
-
+*Or manually add:*
 ```json
 {
   "mcpServers": {
@@ -87,74 +92,55 @@ Add to your Claude Desktop or VS Code settings:
 }
 ```
 
-## 📦 Packages
+### C. Command Line Agents (Goose, etc.)
 
-| Package | Description |
-|---------|-------------|
-| `@cortex/core` | Storage, routing, and context primitives |
-| `@cortex/cli` | Command-line interface |
-| `@cortex/mcp-server` | MCP server for AI integration |
-| `cortex-vscode` | VS Code extension with AI scanner |
-
-## 🛠️ How It Works
-
-Cortex provides 5 composable primitives:
-
-```typescript
-// Store context
-await cortex.store({ content: "Using JWT with RS256", type: "decision" });
-
-// Get relevant context for your task
-const context = await cortex.route({ task: "implementing auth endpoint" });
-
-// Filter sensitive data before sending to LLM
-const safe = await cortex.guard(content, { filters: ["api_keys", "secrets"] });
-
-// Combine multiple sources
-const unified = await cortex.fuse({ sources: [memory, file, session] });
+```bash
+goose configure mcp add cortex "npx -y @ecuabyte/cortex-mcp-server"
 ```
 
-## 🗺️ Roadmap
+## 📦 Architecture
 
-### ✅ Current (v0.4.0)
-- [x] 5 context primitives (store, get, route, guard, fuse)
-- [x] VS Code extension with AI scanner
-- [x] Language Model Tools for Copilot
-- [x] MCP server
-- [x] CLI
+Cortex allows you to compose 5 core primitives:
 
-### 🔜 Next
-- [ ] Semantic search with embeddings
-- [ ] Memory relations and graphs
-- [ ] Context compression
-- [ ] Multi-project support
+```typescript
+// 1. STORE: Save items (facts, decisions, code)
+await cortex.store({ content: "Use Zod for validation", type: "decision" });
+
+// 2. ROUTE: Find context relevant to a generic query
+const context = await cortex.route({ task: "Implement user login" });
+
+// 3. GET: Retrieve specific memories
+const memories = await cortex.get({ type: "code", tags: ["auth"] });
+
+// 4. GUARD: (Beta) Sanitize output
+const safe = await cortex.guard(content);
+
+// 5. SCAN: Analyze project structure
+await cortex.scan();
+```
+
+## 🗺️ Roadmap & Status
+
+| Feature | Status | Notes |
+|:---|:---:|:---|
+| **Core Storage (SQLite)** | ✅ | Production ready, local FTS5 |
+| **Vector Search** | 🚧 | Supported via OpenAI API, improving local embeddings |
+| **VS Code Extension** | ✅ | Full UI, AI Scanner, Native Models |
+| **MCP Server** | ✅ | Universal support (Claude, Cursor, etc.) |
+| **Privacy Guard** | ⏳ | In development |
+| **Multi-Agent Sync** | 🔮 | Future |
 
 ## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ```bash
 git clone https://github.com/EcuaByte-lat/Cortex.git
 cd Cortex
-bun install && bun run build && bun test
+bun install
+bun run build
 ```
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-## 📚 Documentation
-
-- [Quick Start](./docs/getting-started/quick-start.md)
-- [Development Guide](./docs/DEVELOPMENT.md)
-- [AI Agent Instructions](./AGENTS.md)
 
 ## 📄 License
 
-MIT License - See [LICENSE](./LICENSE)
-
----
-
-<p align="center">
-  <strong>Cortex — Persistent Memory for AI Agents</strong>
-</p>
-
-<p align="center">
-  Built with ❤️ by <a href="https://github.com/EcuaByte-lat">EcuaByte</a>
-</p>
+MIT License © [EcuaByte](https://github.com/EcuaByte-lat)
