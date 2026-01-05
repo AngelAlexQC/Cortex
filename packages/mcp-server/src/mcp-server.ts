@@ -40,7 +40,7 @@ try {
 
     const command = 'npx';
     const cmdArgs = ['-y', '@ecuabyte/cortex-mcp-server'];
-    let config: Record<string, unknown>;
+    let config: Record<string, unknown> = {};
 
     switch (target) {
       case 'claude':
