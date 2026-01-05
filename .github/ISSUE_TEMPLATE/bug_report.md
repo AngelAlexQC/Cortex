@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in Cortex Protocol
+about: Report a bug in Cortex
 title: "[Bug] "
 labels: "type: bug"
 assignees: ""

@@ -1,6 +1,6 @@
-# Cortex Protocol Primitives
+# Cortex Primitives
 
-This directory contains detailed documentation for each Cortex Protocol primitive.
+This directory contains detailed documentation for each Cortex primitive.
 
 ## Core Primitives
 

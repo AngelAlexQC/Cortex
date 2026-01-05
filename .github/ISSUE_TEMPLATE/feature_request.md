@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for Cortex Protocol
+about: Suggest a feature for Cortex
 title: "[Feature] "
 labels: "type: feature"
 assignees: ""
