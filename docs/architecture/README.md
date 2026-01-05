@@ -1,4 +1,4 @@
-# Cortex Protocol Documentation
+# Cortex Documentation
 
 **The Universal Context Layer for AI**
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-Cortex Protocol is an open standard for how AI systems store, retrieve, and share context. It defines the missing layer between AI models and the tools they use.
+Cortex is an open platform for how AI systems store, retrieve, and share context. It defines the missing layer between AI models and the tools they use.
 
 ```
 ┌─ AI Applications (Claude, Copilot, Cursor)
@@ -64,7 +64,7 @@ Cortex Protocol is an open standard for how AI systems store, retrieve, and shar
 
 - **Reference Implementation**: [Cortex](https://github.com/EcuaByte-lat/Cortex)
 - **MCP Server**: `@cortex/mcp-server`
-- **VS Code Extension**: [Cortex Protocol](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
+- **VS Code Extension**: [Cortex](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
 
 ---
 
