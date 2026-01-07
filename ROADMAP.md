@@ -42,8 +42,8 @@ Become the universal context layer for AI — the HTTP of AI memory.
 
 - [ ] `ctx/sync` primitive
 - [ ] Multi-device synchronization
-- [ ] Cloud backup (optional)
 - [ ] CRDT-based conflict resolution
+- [ ] Cloud backup (optional)
 
 ---
 
@@ -66,6 +66,13 @@ Become the universal context layer for AI — the HTTP of AI memory.
 
 ---
 
+## Commercial Services
+
+For cloud sync, team features, and enterprise support, see [Cortex Cloud](https://cortex.ecuabyte.lat).
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) to help shape the future of Cortex Protocol.
+

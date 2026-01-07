@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Persistent Memory for AI Agents</strong>
+  <strong>Own Your AI's Memory — Local-First, Privacy-First</strong>
 </p>
 
 <p align="center">
@@ -20,14 +20,18 @@
 
 ## 🚀 What is Cortex?
 
-**Cortex** solves the "amnesia" problem for AI coding assistants. It serves as a universal, persistent memory layer that lets your AI (Copilot, Claude, Cursor, etc.) remember:
+**Cortex** solves the "amnesia" problem for AI coding assistants. Your AI forgets everything when you close the window. Cortex doesn't.
+
+It's a **universal, persistent memory layer** that lets your AI (Copilot, Claude, Cursor, etc.) remember:
 
 *   🏛️ **Architecture Decisions**: "We use Feature-Sliced Design"
 *   💡 **Code Patterns**: "All React components must use functional style"
 *   🔧 **Configuration**: "Production uses AWS RDS with specific flags"
 *   🚫 **Exclusions**: "Never touch the legacy payment module"
 
-Unlike a simple vector database, Cortex is an **active storage engine** that understands code context and can proactively inject memories into your AI's context window.
+Unlike cloud-based solutions, Cortex stores everything **locally on your machine** (`~/.cortex/memories.db`). Your code context never leaves your computer.
+
+> **💡 Stop teaching your AI the same things over and over.**
 
 ## ✨ Key Features
 
@@ -144,3 +148,9 @@ bun run build
 ## 📄 License
 
 MIT License © [EcuaByte](https://github.com/EcuaByte-lat)
+
+---
+
+## ☁️ Cloud Services
+
+Need multi-device sync, team collaboration, or enterprise features? Check out [Cortex Cloud](https://cortex.ecuabyte.lat).
