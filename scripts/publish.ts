@@ -38,6 +38,17 @@ interface PublishResult {
 
 // Get all package info
 async function getAllPackages(): Promise<Map<string, PackageInfo>> {
+  // Ensure .npmrc exists with token for bun publish
+  const token = process.env.NPM_TOKEN || process.env.NODE_AUTH_TOKEN;
+  if (token) {
+    console.log('🔑 Configuring .npmrc with token...');
+    const npmrcPath = join(import.meta.dir, '..', '.npmrc');
+    const npmrcContent = `//registry.npmjs.org/:_authToken=${token}\nregistry=https://registry.npmjs.org/\n`;
+    await Bun.write(npmrcPath, npmrcContent);
+  } else {
+    console.warn('⚠️ No NPM_TOKEN found! Publishing might fail.');
+  }
+
   const packages = new Map<string, PackageInfo>();
 
   for (const dir of PUBLISH_ORDER) {
