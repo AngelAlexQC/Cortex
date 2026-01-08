@@ -1,5 +1,32 @@
 # @ecuabyte/cortex-cli
 
+## 0.6.0
+
+### Minor Changes
+
+- ## New Features
+
+  - **Gemini Code Assist Support**: Added MCP configuration generator for Google Gemini Code Assist
+  - **Auto-Memory Rules**: New automatic memory rules generation for Cursor and Claude Code
+  - **Universal Installer**: Complete installer module with support for all major AI coding assistants
+  - **Config Generator Improvements**: Standardized `generate-config` command for all editors
+
+  ## Fixes
+
+  - Fixed demo mode in MCP server
+  - Standardized configuration generation across all supported editors
+
+  ## Documentation
+
+  - Updated installation instructions for all supported tools
+  - Improved README with real features and comprehensive guides
+  - Added Gemini Code Assist to supported editors list
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ecuabyte/cortex-core@0.6.0
+
 ## 0.5.13
 
 ### Patch Changes
