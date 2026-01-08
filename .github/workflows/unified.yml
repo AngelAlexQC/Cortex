@@ -152,7 +152,9 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: bunx changeset publish
+          # Use custom publish script that properly resolves workspace: protocol
+          # See: https://github.com/oven-sh/bun/issues/24687
+          publish: bun run scripts/publish.ts
           commit: "chore(release): version packages"
           title: "chore(release): version packages"
         env:

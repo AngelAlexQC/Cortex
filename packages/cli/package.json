@@ -1,6 +1,6 @@
 {
   "name": "@ecuabyte/cortex-cli",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Command-line interface for Cortex memory management",
   "type": "module",
   "bin": {
@@ -30,7 +30,7 @@
     "directory": "packages/cli"
   },
   "dependencies": {
-    "@ecuabyte/cortex-core": "workspace:*",
+    "@ecuabyte/cortex-core": "workspace:^",
     "commander": "^14.0.2"
   }
 }

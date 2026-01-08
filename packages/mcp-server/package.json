@@ -1,6 +1,6 @@
 {
   "name": "@ecuabyte/cortex-mcp-server",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "MCP server exposing Cortex memories to AI tools",
   "type": "module",
   "bin": {
@@ -33,7 +33,7 @@
     "directory": "packages/mcp-server"
   },
   "dependencies": {
-    "@ecuabyte/cortex-core": "workspace:*",
+    "@ecuabyte/cortex-core": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.0.4"
   }
 }

@@ -1,5 +1,20 @@
 # @ecuabyte/cortex-cli
 
+## 0.6.2
+
+### Patch Changes
+
+- Fix workspace dependency resolution for npm installation
+
+  - Changed workspace:\* to workspace:^ for proper semver resolution
+  - Added custom publish script using bun publish instead of changeset publish
+  - bun publish properly resolves workspace: protocol to actual versions
+
+  See: https://github.com/oven-sh/bun/issues/24687
+
+- Updated dependencies []:
+  - @ecuabyte/cortex-core@0.6.2
+
 ## 0.6.1
 
 ### Patch Changes
