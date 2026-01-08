@@ -33,6 +33,13 @@ const IS_MAC = platform() === 'darwin';
 export function getEditorConfigs(): EditorConfig[] {
   return [
     {
+      name: 'gemini',
+      displayName: 'Gemini Code Assist',
+      globalPath: join(HOME, '.gemini', 'settings.json'),
+      configKey: 'mcpServers',
+      format: 'mcp-servers',
+    },
+    {
       name: 'cursor',
       displayName: 'Cursor',
       globalPath: join(HOME, '.cursor', 'mcp.json'),
