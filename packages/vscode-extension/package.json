@@ -61,6 +61,7 @@
     "@ecuabyte/cortex-shared": "workspace:^"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.0",
     "sql.js": "^1.13.0"
   },
   "contributes": {

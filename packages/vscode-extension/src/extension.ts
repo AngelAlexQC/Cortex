@@ -438,7 +438,8 @@ export async function activate(context: vscode.ExtensionContext) {
               (_memory, count) => {
                 progress.report({ message: `Saved ${count} memories...` });
               },
-              () => treeProvider.refresh()
+              () => treeProvider.refresh(),
+              context.secrets // For Gemini API BYOK
             );
 
             // Final refresh to ensure tree is up-to-date and status is idle

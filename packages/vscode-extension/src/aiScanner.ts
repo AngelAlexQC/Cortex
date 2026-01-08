@@ -19,6 +19,10 @@ import { basename, join } from 'node:path';
 import type { Memory, MemoryType } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import type { AIScanWebview } from './aiScanWebview';
+import type { ModelAdapter } from './providers';
+import { AnthropicModelAdapter } from './providers/anthropic';
+import { GeminiModelAdapter } from './providers/gemini';
+import { OpenAIModelAdapter } from './providers/openai';
 import type { MemoryStore } from './storage';
 
 export interface AIMemory {
@@ -217,47 +221,148 @@ function formatExistingMemories(memories: Memory[]): string {
 }
 
 /**
- * Select the best available model
+ * Select the best available model using hybrid provider logic
+ * 1. Try native vscode.lm first (Copilot, Gemini Code Assist, etc.)
+ * 2. Check for any stored API keys (Gemini, OpenAI, Anthropic)
+ * 3. Prompt user to choose provider and enter API key
  */
-async function selectBestModel(channel: vscode.OutputChannel): Promise<vscode.LanguageModelChat> {
-  const allModels = await vscode.lm.selectChatModels({});
+async function selectBestModel(
+  channel: vscode.OutputChannel,
+  secrets?: vscode.SecretStorage
+): Promise<{ adapter: ModelAdapter; nativeModel?: vscode.LanguageModelChat }> {
+  // 1. Try native vscode.lm API first
+  if (vscode.lm?.selectChatModels) {
+    const allModels = await vscode.lm.selectChatModels({});
 
-  if (allModels.length === 0) {
-    throw new Error('No language models available. Please configure a provider.');
-  }
+    if (allModels.length > 0) {
+      channel.appendLine(`📋 Modelos nativos disponibles (${allModels.length}):`);
+      for (const m of allModels.slice(0, 10)) {
+        channel.appendLine(`   - ${m.name || m.id}`);
+      }
 
-  channel.appendLine(`📋 Modelos disponibles (${allModels.length}):`);
-  for (const m of allModels.slice(0, 10)) {
-    channel.appendLine(`   - ${m.name || m.id}`);
-  }
+      // Priority: most powerful models first
+      const priorityNames = [
+        'claude opus 4',
+        'opus 4.5',
+        'gpt-5',
+        'gemini 3 pro',
+        'claude sonnet 4',
+        'sonnet 4.5',
+        'o3',
+        'gemini 2.5 pro',
+        'gpt-4o',
+        'gemini 2.5 flash',
+      ];
 
-  const priorityNames = [
-    'claude opus 4',
-    'opus 4',
-    'gpt-5',
-    'gemini 3 pro',
-    'claude sonnet 4',
-    'sonnet 4',
-    'o3',
-    'o1',
-    'gpt-4o',
-  ];
+      for (const priority of priorityNames) {
+        const match = allModels.find(
+          (m) =>
+            m.name?.toLowerCase().includes(priority) ||
+            m.id?.toLowerCase().includes(priority.replace(/\s+/g, '-'))
+        );
+        if (match) {
+          channel.appendLine(`\n✓ Seleccionado (nativo): ${match.name || match.id}`);
+          const { VSCodeModelAdapter } = await import('./providers');
+          return {
+            adapter: new VSCodeModelAdapter(match),
+            nativeModel: match,
+          };
+        }
+      }
 
-  for (const priority of priorityNames) {
-    const match = allModels.find(
-      (m) =>
-        m.name?.toLowerCase().includes(priority) ||
-        m.id?.toLowerCase().includes(priority.replace(/\s+/g, '-'))
-    );
-    if (match) {
-      channel.appendLine(`\n✓ Seleccionado: ${match.name || match.id}`);
-      return match;
+      // Use first available model
+      const fallback = allModels[0];
+      channel.appendLine(`\n⚠️ Fallback (nativo): ${fallback.name || fallback.id}`);
+      const { VSCodeModelAdapter } = await import('./providers');
+      return {
+        adapter: new VSCodeModelAdapter(fallback),
+        nativeModel: fallback,
+      };
     }
   }
 
-  const fallback = allModels[0];
-  channel.appendLine(`\n⚠️ Fallback: ${fallback.name || fallback.id}`);
-  return fallback;
+  // 2. No native models - check for stored API keys (try most powerful first)
+  channel.appendLine('\n⚠️ No hay modelos nativos disponibles');
+  channel.appendLine('🔑 Buscando API keys guardadas...');
+
+  if (secrets) {
+    // Try Anthropic first (most powerful)
+    const anthropicAdapter = await AnthropicModelAdapter.fromSecrets(secrets, 'claude-opus-4-5');
+    if (anthropicAdapter) {
+      channel.appendLine(`✓ Usando Anthropic API: ${anthropicAdapter.name}`);
+      return { adapter: anthropicAdapter };
+    }
+
+    // Try OpenAI
+    const openaiAdapter = await OpenAIModelAdapter.fromSecrets(secrets, 'gpt-5');
+    if (openaiAdapter) {
+      channel.appendLine(`✓ Usando OpenAI API: ${openaiAdapter.name}`);
+      return { adapter: openaiAdapter };
+    }
+
+    // Try Gemini
+    const geminiAdapter = await GeminiModelAdapter.fromSecrets(secrets, 'gemini-2.5-pro');
+    if (geminiAdapter) {
+      channel.appendLine(`✓ Usando Gemini API: ${geminiAdapter.name}`);
+      return { adapter: geminiAdapter };
+    }
+
+    // 3. Prompt user to choose provider
+    channel.appendLine('❓ No hay API keys guardadas. Solicitando al usuario...');
+
+    const provider = await vscode.window.showQuickPick(
+      [
+        {
+          label: '$(sparkle) Google Gemini',
+          description: 'FREE API key available',
+          value: 'gemini',
+        },
+        {
+          label: '$(beaker) OpenAI GPT-5',
+          description: 'Most advanced reasoning',
+          value: 'openai',
+        },
+        { label: '$(robot) Anthropic Claude', description: 'Best for coding', value: 'anthropic' },
+      ],
+      {
+        title: 'Select AI Provider',
+        placeHolder: 'Choose your preferred AI provider (Gemini is FREE)',
+      }
+    );
+
+    if (!provider) {
+      throw new Error('No AI provider selected');
+    }
+
+    if (provider.value === 'gemini') {
+      const apiKey = await GeminiModelAdapter.promptForApiKey(secrets);
+      if (apiKey) {
+        const { GoogleGenerativeAI } = await import('@google/generative-ai');
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const adapter = new GeminiModelAdapter(genAI, 'gemini-2.5-pro');
+        channel.appendLine(`✓ Configurado: ${adapter.name}`);
+        return { adapter };
+      }
+    } else if (provider.value === 'openai') {
+      const apiKey = await OpenAIModelAdapter.promptForApiKey(secrets);
+      if (apiKey) {
+        const adapter = new OpenAIModelAdapter(apiKey, 'gpt-5');
+        channel.appendLine(`✓ Configurado: ${adapter.name}`);
+        return { adapter };
+      }
+    } else if (provider.value === 'anthropic') {
+      const apiKey = await AnthropicModelAdapter.promptForApiKey(secrets);
+      if (apiKey) {
+        const adapter = new AnthropicModelAdapter(apiKey, 'claude-opus-4-5');
+        channel.appendLine(`✓ Configurado: ${adapter.name}`);
+        return { adapter };
+      }
+    }
+  }
+
+  throw new Error(
+    'No AI models available. Install GitHub Copilot, Gemini Code Assist, or configure an API key.'
+  );
 }
 
 // ============================================================================
@@ -385,12 +490,9 @@ export async function scanProjectWithAI(
   store?: MemoryStore,
   webview?: AIScanWebview,
   onMemorySaved?: OnMemorySaved,
-  refreshTree?: () => void
+  refreshTree?: () => void,
+  secrets?: vscode.SecretStorage
 ): Promise<AIScanResult> {
-  if (!vscode.lm?.selectChatModels) {
-    throw new Error('Language Model API not available.');
-  }
-
   const channel = getOutputChannel();
   channel.clear();
   channel.show(true); // Show output channel as requested
@@ -401,17 +503,30 @@ export async function scanProjectWithAI(
   log('🧠 CORTEX AI SCAN - Análisis Contextual Jerárquico');
   log('═══════════════════════════════════════════════════════════════\n');
 
-  // Select model
+  // Select model (hybrid: native or Gemini API)
   webview?.setStatus('selecting', 'Seleccionando modelo AI...');
   log('🔍 Seleccionando mejor modelo...');
-  const model = await selectBestModel(channel);
-  const modelName = model.name || model.id || 'Unknown';
+  const { adapter, nativeModel } = await selectBestModel(channel, secrets);
+  const modelName = adapter.name;
+  const model = nativeModel; // For backward compatibility with existing code
 
-  const allModels = await vscode.lm.selectChatModels({});
-  webview?.setModel(
-    modelName,
-    allModels.slice(0, 15).map((m) => m.name || m.id || 'Unknown')
-  );
+  // Get available models for webview display
+  const allModels = vscode.lm?.selectChatModels ? await vscode.lm.selectChatModels({}) : [];
+  const availableModelNames =
+    allModels.length > 0
+      ? allModels.slice(0, 15).map((m) => m.name || m.id || 'Unknown')
+      : [modelName]; // Just show the Gemini model if no native models
+  webview?.setModel(modelName, availableModelNames);
+
+  // For now, the internal functions require native vscode.LanguageModelChat
+  // TODO: Refactor all internal functions to use ModelAdapter interface
+  if (!model) {
+    throw new Error(
+      `AI Scanner currently requires a native VS Code language model provider. ` +
+        `Please install one of: GitHub Copilot, Gemini Code Assist, or another VS Code LM extension. ` +
+        `Your Gemini API key has been saved and will be used once native model adapters are fully implemented.`
+    );
+  }
 
   // Generate tree
   webview?.setStatus('selecting', 'Analizando estructura...');
