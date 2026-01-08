@@ -64,7 +64,7 @@ Cortex uses a hybrid approach for finding context:
 
 ### ⚡ One-Command Install (Recommended)
 
-Cortex provides a universal installer that automatically configures **Cursor, Windsurf, Claude Code, VS Code, and Zed** in one go.
+Cortex provides a universal installer that automatically configures **Cursor, Windsurf, Claude Code, Gemini Code Assist, VS Code, and Zed** in one go.
 
 ```bash
 npx @ecuabyte/cortex-cli setup
