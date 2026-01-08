@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use Cortex in your research, please cite it as below."
+authors:
+  - family-names: "EcuaByte"
+    given-names: "Team"
+    email: "research@ecuabyte.com"
+title: "Cortex System: The Operating System for AI Engineering"
+version: 0.8.0
+date-released: 2026-01-08
+url: "https://cortex.ecuabyte.lat"
+repository-code: "https://github.com/EcuaByte-lat/Cortex"
+keywords:
+  - "ai-memory"
+  - "context-management"
+  - "operating-system"
+  - "artificial-intelligence"
+  - "software-engineering"
+abstract: "Cortex is a persistent memory layer for AI coding assistants, enabling synchronization of institutional context across developers and agents locally and securely."
+license: "MIT"

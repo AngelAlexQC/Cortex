@@ -1,12 +1,3 @@
 # These are supported funding model platforms
-
 github: [EcuaByte-lat]
-# patreon: # your-patreon-username
-# open_collective: # your-opencollective-username
-# ko_fi: # your-ko-fi-username
-# tidelift: # npm/package-name
-# community_bridge: # your-project-name
-# liberapay: # your-liberapay-username
-# issuehunt: # your-issuehunt-username
-# lfx_crowdfunding: # your-crowdfunding-project-name
-# custom: # Add custom URLs if needed
+custom: ["https://cortex.ecuabyte.lat/pricing"]

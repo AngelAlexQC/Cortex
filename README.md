@@ -1,11 +1,12 @@
-# 🧠 Cortex
+# Cortex System
 
 <p align="center">
   <img src="docs/branding/png/icon-512.png" alt="Cortex Logo" width="128" height="128">
 </p>
 
 <p align="center">
-  <strong>Own Your AI's Memory — Local-First, Privacy-First</strong>
+  <strong>The Operating System for AI Engineering</strong><br>
+  <em>Persistent Memory for AI Teams</em>
 </p>
 
 <p align="center">
@@ -20,18 +21,15 @@
 
 ## 🚀 What is Cortex?
 
-**Cortex** solves the "amnesia" problem for AI coding assistants. Your AI forgets everything when you close the window. Cortex doesn't.
+**Cortex System** is the universal context layer that cures **Technical Amnesia**.
 
-It's a **universal, persistent memory layer** that lets your AI (Copilot, Claude, Cursor, etc.) remember:
+Instead of having your AI forget everything when you close the chat, Cortex builds a **Shared Knowledge Graph** that persists architectural truth locally and securely. It synchronizes institutional context between developers and agents, ensuring your AI "knows" your project's DNA.
 
-*   🏛️ **Architecture Decisions**: "We use Feature-Sliced Design"
-*   💡 **Code Patterns**: "All React components must use functional style"
-*   🔧 **Configuration**: "Production uses AWS RDS with specific flags"
-*   🚫 **Exclusions**: "Never touch the legacy payment module"
-
-Unlike cloud-based solutions, Cortex stores everything **locally on your machine** (`~/.cortex/memories.db`). Your code context never leaves your computer.
-
-> **💡 Stop teaching your AI the same things over and over.**
+### Why Cortex?
+- **100% Local**: No data leaves your machine unless you explicitly sync.
+- **OpenAI Compatible**: Works with Copilot, Cursor, Windsurf, Claude, and more.
+- **Zero Latency**: Local SQLite + Vector optimized for speed.
+- **Open Source**: Built on the Model Context Protocol (MCP).
 
 ## ✨ Key Features
 
