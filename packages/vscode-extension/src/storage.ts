@@ -9,6 +9,7 @@ export class MemoryStore implements IMemoryStore {
   private db: Database | null = null;
   private dbPath: string;
   private initPromise: Promise<void>;
+  private initError: Error | null = null;
 
   constructor(dbPath?: string) {
     const defaultPath = join(homedir(), '.cortex', 'memories.db');
@@ -21,8 +22,9 @@ export class MemoryStore implements IMemoryStore {
     this.dbPath = dbPath || defaultPath;
     this.initPromise = this.initialize().catch((error) => {
       console.error('[Cortex] MemoryStore initialization failed:', error);
-      // We don't rethrow here to avoid unhandled rejection,
-      // as ensureInitialized will catch it later.
+      this.initError = error instanceof Error ? error : new Error(String(error));
+      // Re-throw so ensureInitialized can catch it
+      throw this.initError;
     });
   }
 
@@ -144,14 +146,27 @@ export class MemoryStore implements IMemoryStore {
   }
 
   private async ensureInitialized() {
+    // If there was an initialization error, provide a clear message
+    if (this.initError) {
+      throw new Error(
+        `Database initialization failed: ${this.initError.message}. Try restarting the extension.`
+      );
+    }
+
     try {
       await this.initPromise;
     } catch (error) {
-      throw new Error(`Database failed to initialize: ${error}`);
+      // Store the error for future calls
+      if (!this.initError) {
+        this.initError = error instanceof Error ? error : new Error(String(error));
+      }
+      throw new Error(`Database failed to initialize: ${this.initError.message}`);
     }
 
     if (!this.db) {
-      throw new Error('Database not available (null after initialization)');
+      throw new Error(
+        'Database not available. Please restart VS Code or check if ~/.cortex directory is accessible.'
+      );
     }
   }
 
