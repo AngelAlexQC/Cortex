@@ -52,8 +52,12 @@ This server provides the following MCP tools to your AI agent:
 - `cortex_search`: Search project memories (facts, decisions, code patterns)
 - `cortex_add`: Add a new memory
 - `cortex_list`: List recent memories
-- `cortex_context`: Get intelligent context for a specific task
+- `cortex_auto_save`: Batch save memories from conversation
+- `cortex_remember`: Quick save a single fact
+- `cortex_recall`: Get intelligent context/injection for a task
 - `cortex_scan`: Scan the current project to extract context automatically
+- `cortex_stats`: View memory database statistics
+- `cortex_guard`: (Beta) Sanitize output for PII
 
 ## 📦 Installation
 

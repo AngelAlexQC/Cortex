@@ -134,7 +134,7 @@ await cortex.scan();
 |:---|:---:|:---|
 | **Core Storage (SQLite)** | ✅ | Production ready, local FTS5 |
 | **Vector Search** | 🚧 | Supported via OpenAI API, improving local embeddings |
-| **VS Code Extension** | ✅ | Full UI, AI Scanner, Native Models |
+| **VS Code Extension** | ✅ | Hierarchical Scanner, Native Models |
 | **MCP Server** | ✅ | Universal support (Claude, Cursor, etc.) |
 | **Privacy Guard** | ⏳ | In development |
 | **Multi-Agent Sync** | 🔮 | Future |

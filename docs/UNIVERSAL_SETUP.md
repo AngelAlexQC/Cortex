@@ -17,13 +17,13 @@ We provide a utility to generate the configuration for your specific tool.
     Run the following command to get the config block for your tool:
     ```bash
     # For Cursor
-    cortex-mcp generate-config --target cursor
+    cortex install --editor cursor
+
+    # For Gemini Code Assist (Antigravity)
+    cortex install --editor gemini
 
     # For Claude Desktop
-    cortex-mcp generate-config --target claude
-
-    # For Windsurf
-    cortex-mcp generate-config --target windsurf
+    cortex install --editor claude-desktop
     ```
 
 ---
@@ -127,9 +127,26 @@ Use [`avante.nvim`](https://github.com/yetone/avante.nvim) or similar AI plugins
 
 ### 5. Goose / Gemini Code Assist
 
-Most command-line agents simply require you to register the MCP server.
-
 **Goose:**
 ```bash
 goose configure mcp add cortex "npx -y @ecuabyte/cortex-mcp-server"
+```
+
+**Gemini Code Assist (Antigravity):**
+Gemini uses a global settings file located at `~/.gemini/settings.json`.
+```bash
+# Fastest way:
+cortex install --editor gemini
+```
+
+Or manually add to `~/.gemini/settings.json`:
+```json
+{
+  "mcpServers": {
+    "cortex": {
+      "command": "npx",
+      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
+    }
+  }
+}
 ```

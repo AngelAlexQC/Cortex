@@ -10,6 +10,7 @@ These editors are supported out-of-the-box by our **Auto-Installer**.
 |--------|---------------|---------------|
 | **Cursor** | ⭐ Premium | `cortex install --editor cursor` |
 | **Windsurf** | ⭐ Premium | `cortex install --editor windsurf` |
+| **Gemini (Antigravity)** | ⭐ Premium | `cortex install --editor gemini` |
 | **VS Code** | ⭐ Native | [Extension](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode) or MCP |
 | **Claude Desktop** | ⭐ Full | `cortex install --editor claude-desktop` |
 | **Claude Code** | ⭐ Experimental | `cortex install --editor claude` |
