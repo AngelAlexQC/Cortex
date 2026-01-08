@@ -30,6 +30,7 @@ cortex install --editor cursor
 ```
 
 **Supported Editors:**
+- Gemini Code Assist (`~/.gemini/settings.json`) **[NEW]**
 - Cursor (`.cursor/mcp.json`)
 - Windsurf (`.codeium/windsurf/mcp_config.json`)
 - Claude Code (`.claude/settings.json`)
@@ -41,8 +42,8 @@ cortex install --editor cursor
 
 Initializes Cortex for the current project:
 1. Configures editors (local project scope)
-2. Creates `AGENTS.md` instructions file
-3. Scans project for context
+2. Creates Always-On rule files (`.cursorrules`, `CLAUDE.md`, `AGENTS.md`)
+3. Performs an AI-powered project scan for deep context extraction
 
 ```bash
 cortex setup

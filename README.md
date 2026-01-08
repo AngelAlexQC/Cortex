@@ -153,9 +153,3 @@ bun run build
 ## 📄 License
 
 MIT License © [EcuaByte](https://github.com/EcuaByte-lat)
-
----
-
-## ☁️ Cloud Services
-
-Need multi-device sync, team collaboration, or enterprise features? Check out [Cortex Cloud](https://cortex.ecuabyte.lat).
