@@ -93,7 +93,7 @@ async function runDemo() {
         case 3:
           console.log("\n🤖 \x1b[36mAI Agent\x1b[0m: 'Now I'll verify I can recall it.'");
           console.log('   → Calling tool: \x1b[1mcortex_search\x1b[0m');
-          send('tools/call', { name: 'cortex_search', arguments: { query: 'Universal Setup' } });
+          send('tools/call', { name: 'cortex_search', arguments: { query: 'Universal MCP' } });
           break;
         case 4:
           console.log(

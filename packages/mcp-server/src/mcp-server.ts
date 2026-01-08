@@ -31,7 +31,7 @@ try {
     });
 
     const target = values.target as string | undefined;
-    const targets = ['claude', 'cursor', 'windsurf', 'goose'];
+    const targets = ['claude', 'claude-desktop', 'cursor', 'windsurf', 'vscode', 'zed', 'goose'];
 
     if (!target || !targets.includes(target)) {
       console.error(`Usage: cortex-mcp generate-config --target <${targets.join('|')}>`);
@@ -44,6 +44,10 @@ try {
 
     switch (target) {
       case 'claude':
+      case 'claude-desktop':
+      case 'cursor':
+      case 'windsurf':
+      case 'vscode':
         config = {
           mcpServers: {
             cortex: {
@@ -53,13 +57,16 @@ try {
           },
         };
         break;
-      case 'cursor':
-      case 'windsurf':
+      case 'zed':
         config = {
-          cortex: {
-            type: 'command',
-            command,
-            args: cmdArgs,
+          context_servers: {
+            'cortex-memory': {
+              command: {
+                path: command,
+                args: cmdArgs,
+              },
+              settings: {},
+            },
           },
         };
         break;
