@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+### Patch Changes
+
+- Fix VS Code engine version to match @types/vscode requirement (^1.107.0)
+
 ## 0.6.0
 
 ### Minor Changes
