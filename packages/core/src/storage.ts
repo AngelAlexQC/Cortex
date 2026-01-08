@@ -125,14 +125,15 @@ export class MemoryStore implements IMemoryStore {
     // Support legacy string parameter for backwards compatibility
     const opts = typeof options === 'string' ? { dbPath: options } : options || {};
 
-    const defaultPath = join(homedir(), '.cortex', 'memories.db');
-    // Create directory if it doesn't exist
-    const dir = join(homedir(), '.cortex');
+    const dbPath = opts.dbPath || join(homedir(), '.cortex', 'memories.db');
+
+    // Create parent directory if it doesn't exist
+    const dir = join(dbPath, '..');
     if (!require('node:fs').existsSync(dir)) {
       require('node:fs').mkdirSync(dir, { recursive: true });
     }
 
-    this.db = new Database(opts.dbPath || defaultPath);
+    this.db = new Database(dbPath);
     this.globalMode = opts.globalMode || false;
     this.projectId = this.globalMode ? null : opts.projectId || getProjectId();
     this.password = opts.password;
