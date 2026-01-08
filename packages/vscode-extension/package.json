@@ -251,6 +251,12 @@
         "title": "Cortex: AI-Powered Scan",
         "icon": "$(sparkle)",
         "category": "Cortex"
+      },
+      {
+        "command": "cortex.openDashboard",
+        "title": "Open Cortex Dashboard",
+        "icon": "$(dashboard)",
+        "category": "Cortex"
       }
     ],
     "keybindings": [
@@ -326,6 +332,12 @@
           "command": "cortex.addSelectionAsMemory",
           "when": "editorTextFocus && editorHasSelection",
           "group": "cortex@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "cortex.openDashboard",
+          "group": "navigation"
         }
       ]
     },

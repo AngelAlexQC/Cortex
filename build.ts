@@ -36,7 +36,20 @@ async function buildPackage(pkg: string): Promise<BuildResult> {
         return { package: pkg, success: false, duration: 0 };
       }
 
-      // Copy resources if needed (sql.js wasm?) - keeping simple for now
+      // Copy sql-wasm.wasm to dist directory for runtime access
+      const wasmSource = './node_modules/sql.js/dist/sql-wasm.wasm';
+      const wasmDest = './packages/vscode-extension/dist/sql-wasm.wasm';
+      try {
+        const wasmFile = Bun.file(wasmSource);
+        if (await wasmFile.exists()) {
+          await Bun.write(wasmDest, wasmFile);
+          console.log('  ✓ Copied sql-wasm.wasm to dist');
+        } else {
+          console.warn('  ⚠ sql-wasm.wasm not found, database may not work');
+        }
+      } catch (wasmError) {
+        console.warn('  ⚠ Failed to copy sql-wasm.wasm:', wasmError);
+      }
     } catch (e) {
       console.error(e);
       return { package: pkg, success: false, duration: 0 };

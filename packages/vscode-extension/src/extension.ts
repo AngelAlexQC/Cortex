@@ -1,4 +1,6 @@
-import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net';
+// Set default timeout for IPv4/IPv6 family auto-selection to avoid long delays
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { Memory } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
 import { ContextObserver } from './contextObserver';
@@ -10,17 +12,66 @@ import { CortexTaskProvider } from './taskProvider';
 import type { Tool } from './toolScanner';
 import { ToolTreeProvider } from './toolTreeProvider';
 
-// Set default timeout for IPv4/IPv6 family auto-selection to avoid long delays
-// This fixes: Set default auto-select family attempt timeout to 1000ms
-try {
-  setDefaultAutoSelectFamilyAttemptTimeout(1000);
-} catch (e) {
-  console.warn('[Cortex] Failed to set auto-select family timeout:', e);
-}
+const execAsync = promisify(exec);
 
 export async function activate(context: vscode.ExtensionContext) {
   try {
     console.log('[Cortex] Extension activation started');
+
+    // --- Auto-Configuration Logic ---
+    const isConfigured = context.globalState.get<boolean>('cortex.configured');
+    if (!isConfigured) {
+      // 1. Configure VS Code itself (MCP)
+      const config = vscode.workspace.getConfiguration('mcp.servers');
+      const cortex = config.get('cortex');
+      if (!cortex) {
+        console.log('[Cortex] Auto-configuring VS Code MCP server...');
+        await config.update(
+          'cortex',
+          { command: 'npx', args: ['-y', '@ecuabyte/cortex-mcp-server'] },
+          vscode.ConfigurationTarget.Global
+        );
+        vscode.window.showInformationMessage('✅ Cortex configured for VS Code Copilot');
+      }
+
+      // 2. Offer to configure other editors
+      const selection = await vscode.window.showInformationMessage(
+        'Would you like to auto-configure Cortex for other editors (Cursor, Claude, Windsurf)?',
+        'Yes, Configure All',
+        'Not now'
+      );
+
+      if (selection === 'Yes, Configure All') {
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'Configuring Cortex globally...',
+            cancellable: false,
+          },
+          async () => {
+            try {
+              // Try to run npx cortex-cli install --global
+              // Using npx -y to avoid prompts and force install if needed
+              await execAsync('npx -y @ecuabyte/cortex-cli install --global');
+              vscode.window.showInformationMessage(
+                '🎉 Cortex configured for all detected editors!'
+              );
+            } catch (error) {
+              // Fallback or error message
+              console.error('Failed to run global install:', error);
+              // Try local bin if likely (monorepo dev)
+              vscode.window.showErrorMessage(
+                'Failed to run global configuration. Please run `npx @ecuabyte/cortex-cli install` in your terminal.'
+              );
+            }
+          }
+        );
+      }
+
+      // Mark as configured so we don't prompt again
+      await context.globalState.update('cortex.configured', true);
+    }
+    // --------------------------------
 
     // Initialize memory store
     console.log('[Cortex] Initializing MemoryStore...');
@@ -53,6 +104,22 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register Language Model Tools for Copilot integration
     console.log('[Cortex] Registering Language Model Tools...');
     registerCortexTools(context, store, () => treeProvider.refresh());
+
+    // Initialize dashboard webview (singleton)
+    console.log('[Cortex] Initializing Dashboard...');
+    const { AIScanWebview } = await import('./aiScanWebview');
+    const dashboardWebview = new AIScanWebview(context.extensionUri, context);
+
+    // Command to open the dashboard
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.openDashboard', () => {
+        dashboardWebview.show(context);
+      })
+    );
+
+    // Auto-show dashboard on activation
+    // Auto-show dashboard on activation
+    dashboardWebview.show(context);
 
     // Register commands
     console.log('[Cortex] Registering Commands...');
@@ -330,63 +397,155 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     // Command to scan project with AI (intelligent analysis)
-    context.subscriptions.push(
-      vscode.commands.registerCommand('cortex.scanWithAI', async () => {
-        try {
-          const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-          if (!workspaceFolder) {
-            vscode.window.showWarningMessage('No workspace folder open');
-            return;
+    const startProjectAnalysis = async () => {
+      try {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) {
+          vscode.window.showWarningMessage('No workspace folder open');
+          return;
+        }
+
+        const scanPath = workspaceFolder.uri.fsPath;
+
+        // Use existing dashboard webview
+        dashboardWebview.show(context);
+
+        // Clear any previous state if needed or set to analyzing
+        dashboardWebview.setStatus('analyzing', 'Starting new analysis session...');
+
+        // Update tree status
+        treeProvider.setAnalysisStatus('running');
+
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'Cortex: AI-powered scan...',
+            cancellable: true,
+          },
+          async (progress, token) => {
+            progress.report({ message: 'Analyzing with AI...' });
+
+            progress.report({ message: 'Analyzing with AI...' });
+
+            const { scanProjectWithAI } = await import('./aiScanner');
+
+            // Pass refresh callback for real-time tree updates
+            const result = await scanProjectWithAI(
+              scanPath,
+              token,
+              store,
+              dashboardWebview,
+              (_memory, count) => {
+                progress.report({ message: `Saved ${count} memories...` });
+              },
+              () => treeProvider.refresh()
+            );
+
+            // Final refresh to ensure tree is up-to-date and status is idle
+            treeProvider.setAnalysisStatus('idle');
+
+            vscode.window.showInformationMessage(
+              `✓ AI scan complete! Analyzed ${result.filesAnalyzed} files, saved ${result.savedCount} memories in real-time.`
+            );
           }
+        );
+      } catch (error) {
+        dashboardWebview.setStatus('error', `Scan failed: ${error}`);
+        treeProvider.setAnalysisStatus('idle');
+        vscode.window.showErrorMessage(`Error scanning project: ${error}`);
+      }
+    };
 
-          const scanPath = workspaceFolder.uri.fsPath;
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.scanWithAI', startProjectAnalysis)
+    );
 
-          // Create visual webview panel
-          const { AIScanWebview } = await import('./aiScanWebview');
-          const webview = new AIScanWebview();
-          webview.show();
+    // Listen for dashboard messages (Start Scan button)
+    // biome-ignore lint/suspicious/noExplicitAny: Message payload is loosely typed
+    dashboardWebview.onDidReceiveMessage(async (message: any) => {
+      if (message.type === 'startScan') {
+        startProjectAnalysis();
+      }
+      if (message.type === 'analyzeArea' && message.areaName) {
+        // Find the area
+        const area = dashboardWebview.getArea(message.areaName);
+        if (!area) {
+          vscode.window.showErrorMessage(`Area not found: ${message.areaName}`);
+          return;
+        }
 
-          await vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              title: 'Cortex: AI-powered scan...',
-              cancellable: true,
-            },
-            async (progress, token) => {
-              progress.report({ message: 'Analyzing with AI...' });
+        // Trigger analysis
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: `Analyzing Area: ${area.name}...`,
+            cancellable: true,
+          },
+          async (_progress, token) => {
+            try {
+              dashboardWebview.updateAreaStatus(area.name, 'analyzing');
 
-              const { scanProjectWithAI } = await import('./aiScanner');
-              const result = await scanProjectWithAI(scanPath, token, store, webview);
+              const { analyzeAreaWithRealTimeSave, getOutputChannel } = await import('./aiScanner');
 
-              progress.report({ message: 'Saving memories...' });
+              // Select model (simplified: use default or ask user if this was a rigorous flow, but for now assuming previous model or simple pick)
+              // For interactive mode, we'll try to get a model. If fail, show error.
+              const models = await vscode.lm.selectChatModels({ family: 'gpt-4' }); // Prefer GPT-4 class
+              let model = models[0];
+              if (!model) {
+                const allModels = await vscode.lm.selectChatModels({});
+                model = allModels[0];
+              }
+              if (!model) throw new Error('No Language Model available.');
 
-              let savedCount = 0;
-              for (const memory of result.memories) {
-                try {
+              // We need a dummy root path or the real one.
+              // Assuming single root workspace for now as per startProjectAnalysis
+              const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+              if (!workspaceFolder) throw new Error('No workspace open');
+
+              // Mock context for the single area (we don't have full context here easily without passing it around)
+              // But analyzeAreaWithRealTimeSave needs 'context'.
+              // We'll reconstruct a minimal context or retrieve it if possible.
+              // For now, we'll pass a basic context object derived from the area itself + dashboard info.
+              // biome-ignore lint/suspicious/noExplicitAny: Minimal context construction
+              const minimalContext: any = {
+                projectName: dashboardWebview.getProjectContext()?.name || 'Unknown',
+                techStack: dashboardWebview.getProjectContext()?.techStack || [],
+                areas: [area],
+              };
+
+              await analyzeAreaWithRealTimeSave(
+                model,
+                workspaceFolder.uri.fsPath,
+                area,
+                minimalContext,
+                getOutputChannel(),
+                dashboardWebview,
+                token,
+                async (memory) => {
                   await store.add({
                     content: memory.content,
-                    type: memory.type,
+                    // biome-ignore lint/suspicious/noExplicitAny: Type matching
+                    type: memory.type as any,
                     source: memory.source,
                     tags: memory.tags,
                   });
-                  savedCount++;
-                } catch (e) {
-                  console.error('[Cortex] Failed to save AI memory:', e);
+                  // Tree refresh for real-time memory list updates?
+                  // Ideally we fire an event or call treeProvider directly if in scope.
+                  treeProvider.refresh();
                 }
-              }
-
-              treeProvider.refresh();
-
-              vscode.window.showInformationMessage(
-                `✓ AI scan complete! Analyzed ${result.filesAnalyzed} files, saved ${savedCount} intelligent memories.`
               );
+
+              dashboardWebview.updateAreaStatus(area.name, 'complete');
+              treeProvider.refresh();
+            } catch (error) {
+              console.error('Area analysis failed:', error);
+              dashboardWebview.updateAreaStatus(area.name, 'error');
+              vscode.window.showErrorMessage(`Failed to analyze area: ${error}`);
             }
-          );
-        } catch (error) {
-          vscode.window.showErrorMessage(`Error in AI scan: ${error}`);
-        }
-      })
-    );
+          }
+        );
+      }
+    });
   } catch (error) {
     console.error('Failed to activate Cortex extension:', error);
     vscode.window.showErrorMessage(

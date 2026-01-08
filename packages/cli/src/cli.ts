@@ -11,6 +11,12 @@ import { Command } from 'commander';
 const program = new Command();
 const store = new MemoryStore();
 
+// First-run auto-configuration
+(async () => {
+  const { ensureFirstRun } = await import('./installer.js');
+  await ensureFirstRun();
+})();
+
 // Initialize embedding provider if available
 let embeddingAvailable = false;
 (async () => {
@@ -397,6 +403,158 @@ program
     } else if (options.save === false) {
       console.log('(Use without --no-save to store memories)\n');
     }
+  });
+
+// Install command - auto-configure for all editors
+program
+  .command('install')
+  .description('Auto-configure Cortex for AI editors (Cursor, Windsurf, Claude, VS Code, Zed)')
+  .option('-g, --global', 'Install globally for all projects (default)', true)
+  .option('-p, --project [path]', 'Install for current project only')
+  .option(
+    '-e, --editor <editor>',
+    'Install for specific editor only (cursor|windsurf|claude|vscode|zed)'
+  )
+  .option('--agents', 'Also create AGENTS.md file in project')
+  .option('--hooks', 'Also configure Claude Code hooks for auto-memory')
+  .option('--list', 'List detected editors and their config paths')
+  .action(async (options) => {
+    const installer = await import('./installer.js');
+
+    // List mode
+    if (options.list) {
+      console.log('\n🔍 Detected AI Editors:\n');
+      const editors = installer.detectInstalledEditors();
+      editors.forEach((editor) => {
+        const status = editor.installed ? '✅' : '❌';
+        console.log(`${status} ${editor.displayName}`);
+        console.log(`   Global: ${editor.globalPath}`);
+        if (editor.projectPath) {
+          console.log(`   Project: ${editor.projectPath}`);
+        }
+        console.log('');
+      });
+      return;
+    }
+
+    const projectPath =
+      typeof options.project === 'string'
+        ? options.project
+        : options.project
+          ? process.cwd()
+          : undefined;
+    const isGlobal = !projectPath;
+
+    console.log(
+      `\n🧠 Installing Cortex ${isGlobal ? 'globally' : `for project: ${projectPath}`}\n`
+    );
+
+    // Install for specific editor or all
+    if (options.editor) {
+      const editors = installer.detectInstalledEditors();
+      const editor = editors.find((e) => e.name === options.editor);
+      if (!editor) {
+        console.error(`❌ Unknown editor: ${options.editor}`);
+        console.log('Available: cursor, windsurf, claude, claude-desktop, vscode, zed');
+        process.exit(1);
+      }
+      const result = installer.installForEditor(editor, { global: isGlobal, projectPath });
+      console.log(result.message);
+      console.log(`   Path: ${result.path}\n`);
+    } else {
+      // Install for all detected editors
+      const { results, summary } = installer.installAll({ global: isGlobal, projectPath });
+
+      results.forEach((r) => {
+        console.log(r.message);
+        if (r.success) {
+          console.log(`   Path: ${r.path}`);
+        }
+        console.log('');
+      });
+
+      console.log(`\n📊 Summary: ${summary.success}/${summary.total} configured successfully\n`);
+    }
+
+    // Create AGENTS.md
+    if (options.agents || projectPath) {
+      const agentsPath = projectPath || process.cwd();
+      const result = installer.installAgentsFile(agentsPath);
+      console.log(result.message);
+      if (result.success) {
+        console.log(`   Path: ${result.path}`);
+      }
+      console.log('');
+    }
+
+    // Configure Claude hooks
+    if (options.hooks) {
+      const result = installer.installClaudeHooks({ global: isGlobal, projectPath });
+      console.log(result.message);
+      if (result.success) {
+        console.log(`   Path: ${result.path}`);
+      }
+      console.log('');
+    }
+
+    console.log('🎉 Done! Cortex is now integrated with your AI editors.\n');
+    console.log('💡 Tips:');
+    console.log('   • Restart your editors to load the new configuration');
+    console.log('   • Run `cortex scan` to analyze your project');
+    console.log('   • AI assistants can now use cortex_search, cortex_add, cortex_context\n');
+  });
+
+// Setup command - quick project initialization
+program
+  .command('setup')
+  .description('Quick setup: install + scan current project')
+  .option('--no-scan', 'Skip project scanning')
+  .action(async (options) => {
+    const installer = await import('./installer.js');
+    const projectPath = process.cwd();
+
+    console.log('\n🧠 Cortex Quick Setup\n');
+
+    // 1. Install for project
+    console.log('📦 Step 1: Configuring editors...\n');
+    const { results } = installer.installAll({ projectPath });
+    results.forEach((r) => {
+      if (r.success) console.log(`   ${r.message}`);
+    });
+
+    // 2. Create AGENTS.md
+    console.log('\n📝 Step 2: Creating AGENTS.md...');
+    const agentsResult = installer.installAgentsFile(projectPath);
+    console.log(`   ${agentsResult.message}`);
+
+    // 3. Scan project
+    if (options.scan !== false) {
+      console.log('\n🔍 Step 3: Scanning project...\n');
+      const { ProjectScanner } = await import('@ecuabyte/cortex-core');
+      const scanner = new ProjectScanner();
+      const result = await scanner.scan({ path: projectPath });
+
+      console.log(`   Files scanned: ${result.summary.filesScanned}`);
+      console.log(`   Memories found: ${result.summary.memoriesFound}`);
+
+      // Save memories
+      if (result.memories.length > 0) {
+        let saved = 0;
+        for (const memory of result.memories) {
+          try {
+            await store.add(memory);
+            saved++;
+          } catch {
+            // Skip duplicates
+          }
+        }
+        console.log(`   ✓ Saved ${saved} memories to Cortex\n`);
+      }
+    }
+
+    console.log('\n🎉 Setup complete!\n');
+    console.log('Your AI assistants can now access project context via Cortex.\n');
+    console.log('Try asking your AI: "What do you remember about this project?"\n');
   });
 
 program.parse();

@@ -28,13 +28,37 @@ export class MemoryStore implements IMemoryStore {
 
   private async initialize() {
     try {
-      // Get the path to sql-wasm.wasm file
-      const require = createRequire(import.meta.url);
-      const sqlJsPath = require.resolve('sql.js');
-      const wasmPath = join(sqlJsPath, '..', 'sql-wasm.wasm');
+      // Try to find sql-wasm.wasm in multiple locations
+      // 1. Same directory as the bundled extension.js (dist folder)
+      // 2. node_modules (for development)
+      const possiblePaths: string[] = [];
 
-      if (!existsSync(wasmPath)) {
-        throw new Error(`sql-wasm.wasm not found at ${wasmPath}`);
+      // Get the directory containing this file (works for both dev and bundled)
+      const currentDir = typeof __dirname !== 'undefined' ? __dirname : '.';
+      possiblePaths.push(join(currentDir, 'sql-wasm.wasm'));
+
+      // Try node_modules path via require.resolve
+      try {
+        const require = createRequire(import.meta.url);
+        const sqlJsPath = require.resolve('sql.js');
+        possiblePaths.push(join(sqlJsPath, '..', 'sql-wasm.wasm'));
+      } catch {
+        // require.resolve may fail in bundled context, continue with other paths
+      }
+
+      // Find the first existing WASM file
+      let wasmPath: string | null = null;
+      for (const path of possiblePaths) {
+        console.log(`[Cortex] Checking WASM path: ${path}`);
+        if (existsSync(path)) {
+          wasmPath = path;
+          console.log(`[Cortex] Found sql-wasm.wasm at: ${path}`);
+          break;
+        }
+      }
+
+      if (!wasmPath) {
+        throw new Error(`sql-wasm.wasm not found. Checked paths:\n${possiblePaths.join('\n')}`);
       }
 
       const wasmBuffer = readFileSync(wasmPath);

@@ -292,6 +292,92 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: 'cortex_auto_save',
+        description:
+          'ALWAYS call this at the end of conversations where important decisions, patterns, or facts were discussed. Automatically analyzes and saves relevant memories. Use this to build persistent context across sessions.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            conversation_summary: {
+              type: 'string',
+              description: 'Brief summary of what was discussed in this conversation',
+            },
+            memories: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  content: {
+                    type: 'string',
+                    description: 'The memory content to save',
+                  },
+                  type: {
+                    type: 'string',
+                    enum: ['fact', 'decision', 'code', 'config', 'note'],
+                    description: 'Type of memory',
+                  },
+                  tags: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Tags for categorization',
+                  },
+                },
+                required: ['content', 'type'],
+              },
+              description:
+                'Array of memories to save from this conversation. Include all important decisions, patterns, and facts discussed.',
+            },
+          },
+          required: ['conversation_summary', 'memories'],
+        },
+      },
+      {
+        name: 'cortex_remember',
+        description:
+          'Quick way to save a single important piece of information. Use when the user says something like "remember this" or when you encounter an important decision.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            content: {
+              type: 'string',
+              description: 'What to remember',
+            },
+            type: {
+              type: 'string',
+              enum: ['fact', 'decision', 'code', 'config', 'note'],
+              description: 'Type of memory (default: note)',
+              default: 'note',
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Optional tags',
+            },
+          },
+          required: ['content'],
+        },
+      },
+      {
+        name: 'cortex_recall',
+        description:
+          'Quickly recall relevant context for the current task. Call this at the START of conversations to load context from previous sessions.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'What to recall - describe your current task or topic',
+            },
+            limit: {
+              type: 'number',
+              description: 'Maximum memories to recall (default: 5)',
+              default: 5,
+            },
+          },
+          required: ['query'],
+        },
+      },
     ],
   };
 });
@@ -564,6 +650,119 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'cortex_auto_save': {
+        if (!args) throw new Error('Missing arguments');
+        const summary = args['conversation_summary'] as string;
+        const memories = args['memories'] as Array<{
+          content: string;
+          type: string;
+          tags?: string[];
+        }>;
+
+        if (!memories || memories.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: '📝 No memories to save from this conversation.',
+              },
+            ],
+          };
+        }
+
+        let savedCount = 0;
+        const errors: string[] = [];
+
+        for (const memory of memories) {
+          try {
+            await store.add({
+              content: memory.content,
+              type: memory.type as Memory['type'],
+              source: 'auto-save',
+              tags: memory.tags || ['auto-saved'],
+            });
+            savedCount++;
+          } catch (_e) {
+            errors.push(memory.content.slice(0, 50));
+          }
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text:
+                `🧠 Auto-Save Complete\n\n` +
+                `Conversation: ${summary.slice(0, 100)}${summary.length > 100 ? '...' : ''}\n` +
+                `Memories saved: ${savedCount}/${memories.length}\n` +
+                (errors.length > 0 ? `\n⚠️ Skipped ${errors.length} duplicates` : '') +
+                `\n\n✅ Context will be available in future sessions.`,
+            },
+          ],
+        };
+      }
+
+      case 'cortex_remember': {
+        if (!args) throw new Error('Missing arguments');
+        const content = args['content'] as string;
+        const type = (args['type'] as Memory['type']) || 'note';
+        const tags = args['tags'] as string[] | undefined;
+
+        const id = await store.add({
+          content,
+          type,
+          source: 'quick-remember',
+          tags: tags || ['remembered'],
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `✓ Remembered: "${content.slice(0, 100)}${content.length > 100 ? '...' : ''}" (ID: ${id})`,
+            },
+          ],
+        };
+      }
+
+      case 'cortex_recall': {
+        if (!args) throw new Error('Missing arguments');
+        const query = args['query'] as string;
+        const limit = (args['limit'] as number) || 5;
+
+        // Use router for intelligent context retrieval
+        const results = await router.routeWithScores({ task: query, limit });
+
+        if (results.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `🔍 No relevant memories found for "${query}". This might be a new topic.`,
+              },
+            ],
+          };
+        }
+
+        const contextText = results
+          .map(
+            (r, i) =>
+              `${i + 1}. [${r.memory.type}] ${r.memory.content}\n   Relevance: ${Math.round(r.score * 100)}%`
+          )
+          .join('\n\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text:
+                `🧠 Recalled ${results.length} memories for "${query}":\n\n${contextText}\n\n` +
+                `💡 Use this context to inform your responses.`,
+            },
+          ],
+        };
+      }
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
@@ -582,6 +781,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start server
 async function main() {
+  const args = process.argv.slice(2);
+
+  // Handle setup command (delegates to CLI)
+  if (args.includes('--setup')) {
+    console.log('🚀 Delegating to Cortex CLI for setup...');
+    const { execSync } = await import('node:child_process');
+    try {
+      execSync('npx -y @ecuabyte/cortex-cli setup', { stdio: 'inherit' });
+      process.exit(0);
+    } catch (e) {
+      console.error('❌ Setup failed:', e);
+      process.exit(1);
+    }
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Cortex MCP server running on stdio');

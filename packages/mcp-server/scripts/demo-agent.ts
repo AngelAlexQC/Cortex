@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
-import path from 'path';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
 
 async function runDemo() {
   console.log('🤖 \x1b[36mAI Agent (Simulated)\x1b[0m: Connecting to Cortex Memory Layer...');
@@ -15,7 +15,7 @@ async function runDemo() {
   // biome-ignore lint/suspicious/noExplicitAny: demo script
   const send = (method: string, params: any) => {
     const req = { jsonrpc: '2.0', id: msgId++, method, params };
-    server.stdin.write(JSON.stringify(req) + '\n');
+    server.stdin.write(`${JSON.stringify(req)}\n`);
     return req.id;
   };
 
@@ -43,7 +43,7 @@ async function runDemo() {
   function handleResponse(res: any) {
     if (res.result?.serverInfo) {
       console.log(
-        '✅ \x1b[32mCortex\x1b[0m: Connection Established (v' + res.result.serverInfo.version + ')'
+        `✅ \x1b[32mCortex\x1b[0m: Connection Established (v${res.result.serverInfo.version})`
       );
       nextStep();
     } else if (res.error) {

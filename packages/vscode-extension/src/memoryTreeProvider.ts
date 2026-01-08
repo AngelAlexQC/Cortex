@@ -8,10 +8,17 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
   >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+  private analysisStatus: 'idle' | 'running' = 'idle';
+
   constructor(private store: MemoryStore) {}
 
   refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  setAnalysisStatus(status: 'idle' | 'running') {
+    this.analysisStatus = status;
+    this.refresh();
   }
 
   getTreeItem(element: MemoryTreeItem): vscode.TreeItem {
@@ -20,9 +27,22 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
 
   async getChildren(element?: MemoryTreeItem): Promise<MemoryTreeItem[]> {
     if (!element) {
-      // Root level - show categories
+      // Root level - show dashboard link and categories
       const stats = await this.store.stats();
+
+      const dashboardItem = new MemoryTreeItem(
+        'AI Dashboard',
+        this.analysisStatus === 'running' ? 'Analysis running...' : 'Open Dashboard',
+        vscode.TreeItemCollapsibleState.None,
+        this.analysisStatus === 'running' ? 'dashboard_running' : 'dashboard'
+      );
+      dashboardItem.command = {
+        command: 'cortex.openDashboard',
+        title: 'Open Dashboard',
+      };
+
       const categories: MemoryTreeItem[] = [
+        dashboardItem,
         new MemoryTreeItem(
           'All Memories',
           `${stats.total} total`,
@@ -91,6 +111,8 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
  */
 const MEMORY_TYPE_ICONS: Record<string, { icon: string; color?: string }> = {
   all: { icon: 'library', color: 'charts.purple' },
+  dashboard: { icon: 'dashboard', color: 'charts.blue' },
+  dashboard_running: { icon: 'loading~spin', color: 'charts.yellow' },
   fact: { icon: 'lightbulb', color: 'charts.yellow' },
   decision: { icon: 'checklist', color: 'charts.green' },
   code: { icon: 'code', color: 'charts.blue' },
