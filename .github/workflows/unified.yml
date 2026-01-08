@@ -84,7 +84,11 @@ jobs:
 
       - name: Run tests with coverage
         if: matrix.task == 'test'
-        run: bun test --coverage --coverage-reporter=lcov
+        run: |
+          # Run isolated tests first (uses mock.module which contaminates process)
+          bun test packages/cli/src/installer.test.ts --coverage
+          # Run remaining tests
+          bun test packages/core packages/vscode-extension --coverage --coverage-reporter=lcov
 
       - name: Upload coverage to Codecov
         if: matrix.task == 'test'

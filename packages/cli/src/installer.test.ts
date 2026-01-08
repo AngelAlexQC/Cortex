@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 import {
   detectInstalledEditors,
   type EditorConfig,
@@ -28,13 +28,18 @@ mock.module('node:os', () => ({
 
 describe('Cortex Installer', () => {
   beforeEach(() => {
-    mock.restore();
     // Reset mocks default behavior
     fsMocks.existsSync.mockImplementation(() => false);
     fsMocks.readFileSync.mockImplementation(() => '{}');
     fsMocks.writeFileSync.mockClear();
     fsMocks.writeFileSync.mockImplementation(() => undefined);
     fsMocks.mkdirSync.mockClear();
+    fsMocks.mkdirSync.mockImplementation(() => undefined);
+  });
+
+  afterAll(() => {
+    // Restore all mocks to prevent contamination of other test files
+    mock.restore();
   });
 
   describe('detectInstalledEditors', () => {
