@@ -3,9 +3,14 @@
 /**
  * Custom publish script for Bun workspaces
  *
- * This script uses `bun publish` instead of `changeset publish` because:
- * - Changesets doesn't support Bun's workspace protocol
- * - `bun publish` properly resolves `workspace:^` to actual semver versions
+ * This script resolves workspace: protocol dependencies before publishing
+ * because changesets doesn't support Bun's workspace protocol.
+ *
+ * Strategy:
+ * 1. Read all package versions
+ * 2. Replace workspace:^ with actual ^version in package.json
+ * 3. Run npm publish
+ * 4. Restore original package.json
  *
  * @see https://github.com/oven-sh/bun/issues/24687
  * @see https://github.com/changesets/changesets/discussions/1389
@@ -19,37 +24,102 @@ const PACKAGES_DIR = join(import.meta.dir, '..', 'packages');
 // Order matters: dependencies must be published first
 const PUBLISH_ORDER = ['shared', 'core', 'cli', 'mcp-server', 'vscode-extension'];
 
+interface PackageInfo {
+  name: string;
+  version: string;
+  path: string;
+}
+
 interface PublishResult {
   package: string;
   success: boolean;
   message: string;
 }
 
-async function getPackageInfo(dir: string): Promise<{ name: string; version: string } | null> {
-  try {
+// Get all package info
+async function getAllPackages(): Promise<Map<string, PackageInfo>> {
+  const packages = new Map<string, PackageInfo>();
+
+  for (const dir of PUBLISH_ORDER) {
     const pkgPath = join(PACKAGES_DIR, dir, 'package.json');
-    const pkg = await Bun.file(pkgPath).json();
-    return { name: pkg.name, version: pkg.version };
-  } catch {
-    return null;
+    try {
+      const pkg = await Bun.file(pkgPath).json();
+      packages.set(pkg.name, {
+        name: pkg.name,
+        version: pkg.version,
+        path: join(PACKAGES_DIR, dir),
+      });
+    } catch {
+      console.error(`Could not read ${pkgPath}`);
+    }
   }
+
+  return packages;
+}
+
+// Resolve workspace: dependencies to actual versions
+async function resolveWorkspaceDeps(
+  pkgPath: string,
+  allPackages: Map<string, PackageInfo>
+): Promise<string> {
+  const pkgJsonPath = join(pkgPath, 'package.json');
+  const original = await Bun.file(pkgJsonPath).text();
+  const pkg = JSON.parse(original);
+
+  let modified = false;
+
+  // Check dependencies
+  for (const depType of ['dependencies', 'devDependencies', 'peerDependencies']) {
+    const deps = pkg[depType];
+    if (!deps) continue;
+
+    for (const [name, version] of Object.entries(deps)) {
+      if (typeof version === 'string' && version.startsWith('workspace:')) {
+        const targetPkg = allPackages.get(name);
+        if (targetPkg) {
+          // workspace:^ -> ^x.y.z, workspace:* -> x.y.z
+          const prefix = version === 'workspace:^' ? '^' : '';
+          deps[name] = `${prefix}${targetPkg.version}`;
+          modified = true;
+          console.log(`   Resolved ${name}: ${version} -> ${deps[name]}`);
+        }
+      }
+    }
+  }
+
+  if (modified) {
+    await Bun.write(pkgJsonPath, JSON.stringify(pkg, null, 2) + '\n');
+  }
+
+  return original;
+}
+
+// Restore original package.json
+async function restorePackageJson(pkgPath: string, original: string): Promise<void> {
+  const pkgJsonPath = join(pkgPath, 'package.json');
+  await Bun.write(pkgJsonPath, original);
 }
 
 async function isVersionPublished(name: string, version: string): Promise<boolean> {
   try {
-    const result = await $`npm view ${name}@${version} version`.quiet();
+    const result = await $`npm view ${name}@${version} version 2>/dev/null`.quiet().nothrow();
     return result.text().trim() === version;
   } catch {
     return false;
   }
 }
 
-async function publishPackage(dir: string): Promise<PublishResult> {
+async function publishPackage(
+  dir: string,
+  allPackages: Map<string, PackageInfo>
+): Promise<PublishResult> {
   const pkgPath = join(PACKAGES_DIR, dir);
-  const info = await getPackageInfo(dir);
+  const info = allPackages.get(
+    Array.from(allPackages.values()).find((p) => p.path === pkgPath)?.name || ''
+  );
 
   if (!info) {
-    return { package: dir, success: false, message: 'Could not read package.json' };
+    return { package: dir, success: false, message: 'Could not find package info' };
   }
 
   // Check if already published
@@ -63,9 +133,24 @@ async function publishPackage(dir: string): Promise<PublishResult> {
 
   console.log(`📦 Publishing ${info.name}@${info.version}...`);
 
+  // Resolve workspace dependencies
+  const original = await resolveWorkspaceDeps(pkgPath, allPackages);
+
   try {
-    // Use bun publish which properly resolves workspace: protocol
-    await $`cd ${pkgPath} && bun publish --access public`.quiet();
+    // Use npm publish (more reliable in CI than bun publish)
+    const result = await $`cd ${pkgPath} && npm publish --access public 2>&1`.nothrow();
+
+    if (result.exitCode !== 0) {
+      const output = result.text();
+      console.error(`❌ Failed to publish ${info.name}:`);
+      console.error(output);
+      return {
+        package: info.name,
+        success: false,
+        message: output.slice(0, 200),
+      };
+    }
+
     console.log(`✅ ${info.name}@${info.version} published successfully`);
     return {
       package: info.name,
@@ -80,16 +165,22 @@ async function publishPackage(dir: string): Promise<PublishResult> {
       success: false,
       message,
     };
+  } finally {
+    // Always restore original package.json
+    await restorePackageJson(pkgPath, original);
   }
 }
 
 async function main() {
-  console.log('🚀 Starting Bun workspace publish...\n');
+  console.log('🚀 Starting workspace publish...\n');
+
+  const allPackages = await getAllPackages();
+  console.log(`Found ${allPackages.size} packages to publish\n`);
 
   const results: PublishResult[] = [];
 
   for (const dir of PUBLISH_ORDER) {
-    const result = await publishPackage(dir);
+    const result = await publishPackage(dir, allPackages);
     results.push(result);
 
     // Stop on failure for dependent packages
@@ -120,13 +211,11 @@ async function main() {
   if (published.length > 0) {
     console.log('\n🏷️  Creating git tags...');
     for (const r of published) {
-      const info = await getPackageInfo(
-        PUBLISH_ORDER.find((d) => results.find((res) => res.package.includes(d) && res === r)) || ''
-      );
-      if (info) {
+      const pkgInfo = Array.from(allPackages.values()).find((p) => p.name === r.package);
+      if (pkgInfo) {
         try {
-          await $`git tag ${info.name}@${info.version}`.quiet();
-          console.log(`   Tagged: ${info.name}@${info.version}`);
+          await $`git tag ${pkgInfo.name}@${pkgInfo.version}`.quiet().nothrow();
+          console.log(`   Tagged: ${pkgInfo.name}@${pkgInfo.version}`);
         } catch {
           // Tag might already exist
         }
@@ -135,7 +224,7 @@ async function main() {
 
     // Push tags
     try {
-      await $`git push --tags`.quiet();
+      await $`git push --tags`.quiet().nothrow();
       console.log('   Pushed tags to remote');
     } catch {
       console.log('   Could not push tags (might need permissions)');
@@ -145,13 +234,12 @@ async function main() {
   // Output for GitHub Actions
   if (process.env.GITHUB_OUTPUT) {
     const publishedPackages = JSON.stringify(
-      await Promise.all(
-        published.map(async (r) => {
-          const dir = PUBLISH_ORDER.find((d) => r.package.includes(d.replace('-', ''))) || '';
-          const info = await getPackageInfo(dir);
-          return info ? { name: info.name, version: info.version } : null;
+      published
+        .map((r) => {
+          const pkgInfo = Array.from(allPackages.values()).find((p) => p.name === r.package);
+          return pkgInfo ? { name: pkgInfo.name, version: pkgInfo.version } : null;
         })
-      ).then((arr) => arr.filter(Boolean))
+        .filter(Boolean)
     );
 
     await Bun.write(
