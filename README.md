@@ -58,9 +58,7 @@ Cortex uses a hybrid approach for finding context:
 *   **FTS5 (Full Text Search):** Fast, exact matching for keywords/symbols.
 *   **Vectors (Semantic Search):** (Optional) If you provide an `OPENAI_API_KEY`, Cortex enables semantic understanding to find related concepts even if keywords don't match.
 
-## 🛠️ Installation & Setup
 
-## 🛠️ Installation & Setup
 
 ### ⚡ One-Command Install (Recommended)
 

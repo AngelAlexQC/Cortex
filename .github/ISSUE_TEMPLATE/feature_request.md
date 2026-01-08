@@ -1,19 +1,16 @@
 ---
 name: Feature Request
-about: Suggest a feature for Cortex
-title: "[Feature] "
-labels: "type: feature"
-assignees: ""
+about: Suggest an idea for this project
+title: '[FEAT] '
+labels: 'enhancement'
+assignees: ''
 ---
 
-## Problem
-Describe the problem or use case this feature would solve.
+## Problem Statement
+<!-- Is your feature request related to a problem? Please describe. -->
 
 ## Proposed Solution
-A clear description of what you want to happen.
+<!-- A clear and concise description of what you want to happen. -->
 
 ## Alternatives Considered
-Any alternative solutions you've considered.
-
-## Additional Context
-Any other context, mockups, or examples.
+<!-- A clear and concise description of any alternative solutions or features you've considered. -->

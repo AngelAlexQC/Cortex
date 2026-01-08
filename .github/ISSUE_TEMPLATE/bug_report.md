@@ -1,29 +1,26 @@
 ---
 name: Bug Report
-about: Report a bug in Cortex
-title: "[Bug] "
-labels: "type: bug"
-assignees: ""
+about: Create a report to help us improve Cortex
+title: '[BUG] '
+labels: 'bug, triage'
+assignees: ''
 ---
 
-## Description
-A clear and concise description of the bug.
+## Describe the Bug
+<!-- A clear and concise description of what the bug is. -->
 
-## Steps to Reproduce
-1. 
-2. 
-3. 
+## Reproduction Steps
+1. Run command '...'
+2. Edit file '...'
+3. See error
 
 ## Expected Behavior
-What you expected to happen.
-
-## Actual Behavior
-What actually happened.
+<!-- A clear and concise description of what you expected to happen. -->
 
 ## Environment
-- OS: [e.g., macOS, Linux, Windows]
-- Bun version: [e.g., 1.3.0]
-- Cortex version: [e.g., 0.3.0]
+- **OS**: [e.g. macOS, Linux, Windows]
+- **Editor**: [e.g. VS Code, Cursor]
+- **Cortex Version**: [e.g. 0.8.0]
 
-## Additional Context
-Any other context, logs, or screenshots.
+## Logs
+<!-- Attach relevant logs from output or console -->
