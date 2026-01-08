@@ -137,8 +137,8 @@ async function publishPackage(
   const original = await resolveWorkspaceDeps(pkgPath, allPackages);
 
   try {
-    // Use npm publish (more reliable in CI than bun publish)
-    const result = await $`cd ${pkgPath} && npm publish --access public 2>&1`.nothrow();
+    // Use bun publish (handles workspace: protocol and has better auth UX)
+    const result = await $`cd ${pkgPath} && bun publish --access public 2>&1`.nothrow();
 
     if (result.exitCode !== 0) {
       const output = result.text();

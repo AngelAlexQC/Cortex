@@ -1,6 +1,6 @@
 {
   "name": "cortex-monorepo",
-  "version": "0.3.0",
+  "version": "0.7.0",
   "description": "Cortex - The Universal Context Layer for AI",
   "private": true,
   "workspaces": [
@@ -26,7 +26,11 @@
     "lint:fix": "biome lint --write .",
     "check": "biome check --write .",
     "check:ci": "biome ci .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "version": "bunx changeset version",
+    "sync-versions": "bun run scripts/sync-versions.ts",
+    "release": "bun run build && bun run scripts/publish.ts",
+    "publish:all": "bun run scripts/publish.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,jsonc}": [
