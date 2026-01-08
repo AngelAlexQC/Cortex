@@ -7,6 +7,7 @@ import {
   installAgentsFile,
   installAll,
   installClaudeHooks,
+  installCursorRules,
   installForEditor,
 } from './installer';
 
@@ -194,6 +195,48 @@ describe('Cortex Installer', () => {
     });
   });
 
+  describe('installCursorRules', () => {
+    it('should create .cursorrules if missing', () => {
+      let writtenPath = '';
+      let writtenContent = '';
+      fsMocks.existsSync.mockImplementation(() => false);
+      fsMocks.writeFileSync.mockImplementation((p: string, c: string) => {
+        writtenPath = p;
+        writtenContent = c;
+      });
+
+      const result = installCursorRules('/test/project');
+
+      expect(result.success).toBe(true);
+      expect(writtenPath).toContain('.cursorrules');
+      expect(writtenContent).toContain('Context First');
+    });
+
+    it('should skip if exists and not forced', () => {
+      fsMocks.existsSync.mockImplementation(() => true);
+      const result = installCursorRules('/test/project');
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('already exists');
+    });
+
+    it('should overwrite if forced', () => {
+      fsMocks.existsSync.mockImplementation(() => true);
+      const result = installCursorRules('/test/project', { force: true });
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle write errors', () => {
+      fsMocks.existsSync.mockImplementation(() => false);
+      fsMocks.writeFileSync.mockImplementation(() => {
+        throw new Error('Write failed');
+      });
+
+      const result = installCursorRules('/test/project');
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Failed to create');
+    });
+  });
+
   describe('installClaudeHooks', () => {
     it('should add hooks to existing config', () => {
       let writtenContent = '';
@@ -282,7 +325,15 @@ describe('Cortex Installer', () => {
 
       const agentFile = results.find((r) => r.editor === 'AGENTS.md');
       expect(agentFile).toBeDefined();
-      expect(agentFile?.success, `Failed AGENTS.md: ${agentFile?.message}`).toBe(true);
+      expect(agentFile?.success).toBe(true);
+
+      const cursorRules = results.find((r) => r.editor === '.cursorrules');
+      expect(cursorRules).toBeDefined();
+      expect(cursorRules?.success).toBe(true);
+
+      const claudeMd = results.find((r) => r.editor === 'CLAUDE.md');
+      expect(claudeMd).toBeDefined();
+      expect(claudeMd?.success).toBe(true);
     });
   });
 
