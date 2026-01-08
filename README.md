@@ -46,6 +46,7 @@ Built on the **Model Context Protocol (MCP)**, Cortex works with *any* modern AI
 *   **Claude Desktop**: Full memory access.
 *   **JetBrains / Neovim**: Via MCP stdio.
 *   **Command Line Agents**: Works with Goose, Zed, and others.
+*   [See full list of supported tools](./docs/SUPPORTED_TOOLS.md)
 
 ### 3. 🔐 Privacy & Local-First
 *   **100% Local Storage:** Memories are stored in SQLite (`~/.cortex/memories.db`) on your machine.
@@ -59,44 +60,48 @@ Cortex uses a hybrid approach for finding context:
 
 ## 🛠️ Installation & Setup
 
-### A. VS Code / Cursor / Windsurf (Recommended)
+## 🛠️ Installation & Setup
 
-**Option 1: One-Click Install**
-*   **VS Code:** [Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
-*   **OpenVSX (VSCodium, etc.):** [Install from OpenVSX](https://open-vsx.org/extension/EcuaByte/cortex-vscode)
-*   **Google IDX:** Add `"EcuaByte.cortex-vscode"` to your `.idx/dev.nix`.
+### ⚡ One-Command Install (Recommended)
 
-**Option 2: Native MCP Integration (Advanced)**
-For editors like **Cursor** (Composer) or **Windsurf** that support MCP natively:
-
-Run this command to generate the configuration:
-```bash
-npx -y @ecuabyte/cortex-mcp-server generate-config --target cursor
-```
-*Then copy the output into your editor's MCP settings.*
-
-### B. Claude Desktop
-
-To give accessible memory to Claude:
+Cortex provides a universal installer that automatically configures **Cursor, Windsurf, Claude Code, VS Code, and Zed** in one go.
 
 ```bash
-# Generate config automatically
-npx -y @ecuabyte/cortex-mcp-server generate-config --target claude >> ~/Library/Application\ Support/Claude/claude_desktop_config.json
+npx @ecuabyte/cortex-cli setup
 ```
 
-*Or manually add:*
-```json
-{
-  "mcpServers": {
-    "cortex": {
-      "command": "npx",
-      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
-    }
-  }
-}
+This will:
+1.  Detect your installed AI editors.
+2.  Configure them to use the Cortex MCP Server.
+3.  Scan your current project for initial context.
+
+---
+
+### Manual Installation
+
+If you prefer to configure manually or use a specific editor:
+
+#### 1. Install CLI Globally
+```bash
+npm install -g @ecuabyte/cortex-cli
+# or
+bun add -g @ecuabyte/cortex-cli
 ```
 
-### C. Command Line Agents (Goose, etc.)
+#### 2. Configure Specific Editor
+```bash
+# For Cursor
+cortex install --editor cursor
+
+# For Claude Desktop
+cortex install --editor claude-desktop
+```
+
+#### 3. Manual Config Generation
+If you need the raw JSON configuration:
+```bash
+npx -y @ecuabyte/cortex-mcp-server generate-config
+```
 
 ```bash
 goose configure mcp add cortex "npx -y @ecuabyte/cortex-mcp-server"

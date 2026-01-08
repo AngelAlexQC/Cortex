@@ -6,9 +6,17 @@ Connects your AI tools (Claude Desktop, Cursor, Zed, etc.) to your project's per
 
 ## 🚀 Usage
 
-### Quick Start (npx)
+### Quick Start (Recommended)
 
-The easiest way to run the server is with `npx`:
+Use the CLI to auto-install for all your editors:
+
+```bash
+npx @ecuabyte/cortex-cli setup
+```
+
+### Manual Usage (npx)
+
+If you just want to run the server once or configure strictly manually:
 
 ```bash
 npx -y @ecuabyte/cortex-mcp-server

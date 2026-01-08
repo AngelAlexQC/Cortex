@@ -63,7 +63,8 @@ Cortex is an open platform for how AI systems store, retrieve, and share context
 ## Implementations
 
 - **Reference Implementation**: [Cortex](https://github.com/EcuaByte-lat/Cortex)
-- **MCP Server**: `@cortex/mcp-server`
+- **Universal CLI**: `@ecuabyte/cortex-cli` (Auto-Installer & Manager)
+- **MCP Server**: `@ecuabyte/cortex-mcp-server`
 - **VS Code Extension**: [Cortex](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode)
 
 ---
