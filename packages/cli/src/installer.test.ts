@@ -242,6 +242,74 @@ describe('Cortex Installer', () => {
     });
   });
 
+  describe('installUniversalRules', () => {
+    // Import function (since it might not be in the initial import set)
+    const { installUniversalRules } = require('./installer');
+
+    interface InstallResult {
+      tool: string;
+      success: boolean;
+      message: string;
+      path: string;
+    }
+
+    it('should create all native config files', () => {
+      const writtenFiles: string[] = [];
+      fsMocks.existsSync.mockImplementation(() => false);
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
+        writtenFiles.push(p.toString());
+      });
+      fsMocks.mkdirSync.mockImplementation(() => undefined);
+
+      const { results } = installUniversalRules('/test/project');
+
+      expect(results).toHaveLength(4);
+      expect(writtenFiles.some((f) => f.includes('copilot-instructions.md'))).toBe(true);
+      expect(writtenFiles.some((f) => f.includes('.windsurfrules'))).toBe(true);
+      expect(writtenFiles.some((f) => f.includes('cortex.mdc'))).toBe(true);
+      expect(writtenFiles.some((f) => f.includes('cody.json'))).toBe(true);
+      expect(results.every((r: InstallResult) => r.success)).toBe(true);
+    });
+
+    it('should handle write errors for Copilot', () => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
+        if (p.includes('copilot')) throw new Error('Copilot Write Fail');
+      });
+      const { results } = installUniversalRules('/test/project');
+      const copilot = results.find((r: InstallResult) => r.tool === 'Copilot');
+      expect(copilot.success).toBe(false);
+      expect(copilot.message).toContain('Failed');
+    });
+
+    it('should handle write errors for Windsurf', () => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
+        if (p.includes('windsurf')) throw new Error('Windsurf Write Fail');
+      });
+      const { results } = installUniversalRules('/test/project');
+      const windsurf = results.find((r: InstallResult) => r.tool === 'Windsurf');
+      expect(windsurf.success).toBe(false);
+    });
+
+    it('should handle write errors for Cursor MDC', () => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
+        if (p.includes('matches nothing')) return; // ignore others
+        if (p.includes('mdc')) throw new Error('MDC Write Fail');
+      });
+      const { results } = installUniversalRules('/test/project');
+      const mdc = results.find((r: InstallResult) => r.tool === 'Cursor MDC');
+      expect(mdc.success).toBe(false);
+    });
+
+    it('should handle write errors for Cody', () => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
+        if (p.includes('cody')) throw new Error('Cody Write Fail');
+      });
+      const { results } = installUniversalRules('/test/project');
+      const cody = results.find((r: InstallResult) => r.tool === 'Cody');
+      expect(cody.success).toBe(false);
+    });
+  });
+
   describe('installClaudeHooks', () => {
     it('should add hooks to existing config', () => {
       let writtenContent = '';
