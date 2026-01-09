@@ -163,11 +163,11 @@ describe('Cortex Installer', () => {
       expect(writtenPath).toContain('AGENTS.md');
     });
 
-    it('should skip if exists and not forced', () => {
+    it('should always overwrite existing files', () => {
       fsMocks.existsSync.mockImplementation(() => true);
       const result = installAgentsFile('/test/project');
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('already exists');
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('Created');
     });
 
     it('should overwrite if forced', () => {
@@ -214,14 +214,14 @@ describe('Cortex Installer', () => {
 
       expect(result.success).toBe(true);
       expect(writtenPath).toContain('.cursorrules');
-      expect(writtenContent).toContain('Context First');
+      expect(writtenContent).toContain('Memory-First');
     });
 
-    it('should skip if exists and not forced', () => {
+    it('should always overwrite existing files', () => {
       fsMocks.existsSync.mockImplementation(() => true);
       const result = installCursorRules('/test/project');
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('already exists');
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('Created');
     });
 
     it('should overwrite if forced', () => {

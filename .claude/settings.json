@@ -1,8 +1,19 @@
 {
   "mcpServers": {
     "cortex": {
-      "command": "npx",
-      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
+      "command": "bun",
+      "args": ["run", "--cwd", "packages/mcp-server", "src/index.ts"]
     }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bun:*)",
+      "Bash(bunx:*)",
+      "Bash(npm:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(ls:*)",
+      "mcp__cortex__*"
+    ]
   }
 }
