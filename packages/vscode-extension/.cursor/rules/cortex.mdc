@@ -1,0 +1,33 @@
+---
+description: Cortex Memory Integration for AI-assisted development
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Cortex Memory Protocol
+
+## Memory-First Development
+
+At session start: `cortex_context("task summary")`
+Save decisions: `cortex_add(content, type)`
+
+## Workflow
+
+```
+EXPLORE → PLAN → CODE → VERIFY → COMMIT
+```
+
+## Extended Thinking
+
+| Keyword | Use Case |
+|---------|----------|
+| think | Simple decisions |
+| think hard | Complex logic |
+| ultrathink | Architecture |
+
+## Rules
+
+- Query memory before implementing
+- Save architectural decisions
+- Use conventional commits
+- Never log secrets or PII

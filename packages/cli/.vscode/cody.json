@@ -1,0 +1,19 @@
+{
+  "commands": {
+    "cortex-context": {
+      "prompt": "Query Cortex memory for context relevant to: $ARGUMENTS",
+      "context": {
+        "selection": true
+      }
+    },
+    "cortex-save": {
+      "prompt": "Save this decision to Cortex memory with appropriate type and tags",
+      "context": {
+        "selection": true
+      }
+    }
+  },
+  "settings": {
+    "cody.chat.preInstruction": "This project uses Cortex for persistent AI memory. Start sessions with cortex_context(). Save decisions with cortex_add(). Follow: EXPLORE → PLAN → CODE → VERIFY → COMMIT workflow."
+  }
+}
