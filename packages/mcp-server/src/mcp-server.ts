@@ -385,6 +385,61 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['query'],
         },
       },
+      {
+        name: 'cortex_workflow',
+        description:
+          'Manage the development workflow state (EXPLORE → PLAN → CODE → VERIFY → COMMIT). Use this to track progress and ensure all steps are followed.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['start', 'next', 'jump', 'status'],
+              description: 'Action to perform on the workflow',
+            },
+            phase: {
+              type: 'string',
+              enum: ['explore', 'plan', 'code', 'verify', 'commit'],
+              description: 'Phase to jump to (only for "jump" action)',
+            },
+          },
+          required: ['action'],
+        },
+      },
+      {
+        name: 'cortex_constitution',
+        description:
+          'Retrieve the Constitutional Principles that guide agent behavior. Consult this when you are unsure about the ethical or architectural correctness of an action.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Specific principle to query (optional)',
+            },
+          },
+        },
+      },
+      {
+        name: 'cortex_think',
+        description:
+          'Log a deep reasoning process into persistent memory. Use this for "think hard" or "ultrathink" moments to document your decision path for future reference.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            thought: {
+              type: 'string',
+              description: 'The detailed reasoning content',
+            },
+            mode: {
+              type: 'string',
+              enum: ['think', 'think_hard', 'ultrathink'],
+              description: 'The depth of thinking',
+            },
+          },
+          required: ['thought'],
+        },
+      },
     ],
   };
 });
@@ -765,6 +820,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text:
                 `🧠 Recalled ${results.length} memories for "${query}":\n\n${contextText}\n\n` +
                 `💡 Use this context to inform your responses.`,
+            },
+          ],
+        };
+      }
+
+      case 'cortex_workflow': {
+        if (!args) throw new Error('Missing arguments');
+        const action = args['action'] as 'start' | 'next' | 'jump' | 'status';
+        const phase = args['phase'] as string | undefined;
+
+        const phases = ['EXPLORE', 'PLAN', 'CODE', 'VERIFY', 'COMMIT'];
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔄 Workflow Action: ${action.toUpperCase()}\n\nCurrent Phase: ${
+                phase ? phase.toUpperCase() : 'Determined by User'
+              }\n\nStandard Cycle:\n${phases.join(
+                ' → '
+              )}\n\nInstructions:\n1. EXPLORE: Read files, query memory\n2. PLAN: Design approach\n3. CODE: Implement changes\n4. VERIFY: Run tests\n5. COMMIT: Save changes`,
+            },
+          ],
+        };
+      }
+
+      case 'cortex_constitution': {
+        const query = args?.['query'] as string | undefined;
+
+        const principles = [
+          '1. Memory First - Always query cortex_context before decisions',
+          '2. Document Why - Save reasoning, not just choices',
+          '3. Verify Before Change - Check existing patterns first',
+          '4. Incremental Progress - Small commits, frequent checkpoints',
+          '5. Zero Secrets - Never log, commit, or transmit secrets/PII',
+          '6. Single Responsibility - One clear purpose per task',
+          '7. Plan Before Code - Outline approach, get approval, then implement',
+        ];
+
+        const filtered = query
+          ? principles.filter((p) => p.toLowerCase().includes(query.toLowerCase()))
+          : principles;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📜 Cortex Constitution\n\n${filtered.join('\n')}`,
+            },
+          ],
+        };
+      }
+
+      case 'cortex_think': {
+        if (!args) throw new Error('Missing arguments');
+        const thought = args['thought'] as string;
+        const mode = (args['mode'] as string) || 'think';
+
+        const id = await store.add({
+          content: thought,
+          type: 'note',
+          source: 'cortex_think',
+          tags: ['thinking', mode],
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `💭 Thought recorded (${mode}): "${thought.slice(0, 50)}..." (ID: ${id})`,
             },
           ],
         };
