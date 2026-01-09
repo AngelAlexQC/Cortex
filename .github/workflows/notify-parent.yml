@@ -3,6 +3,7 @@ name: Notify Parent Repository
 on:
   push:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   notify:
