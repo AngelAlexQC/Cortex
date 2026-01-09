@@ -237,7 +237,7 @@ export function installAgentsFile(
 
 ## Core Principle: Memory-First Development
 
-**At the start of EVERY session, invoke memory:**
+**At the start of EVERY session:**
 \`\`\`
 cortex_context("summary of current task")
 \`\`\`
@@ -252,42 +252,88 @@ EXPLORE → PLAN → CODE → VERIFY → COMMIT
 
 | Phase | Action |
 |-------|--------|
-| **Explore** | Read files, understand context deeply |
-| **Plan** | Use extended thinking for complex problems |
-| **Code** | Make changes incrementally with git checkpoints |
+| **Explore** | Read files, query memory, understand context |
+| **Plan** | Use \`think hard\` or \`ultrathink\` for complex problems |
+| **Code** | Incremental changes with \`git add -p\` checkpoints |
 | **Verify** | Run tests after each logical change |
-| **Commit** | Use conventional commits, document "why" |
+| **Commit** | Conventional commits, document "why" not "what" |
 
 ## Extended Thinking Modes
 
-- \`"think"\` → Basic deliberation
-- \`"think hard"\` → Deeper analysis
-- \`"ultrathink"\` → Maximum reasoning budget
+| Keyword | When to Use |
+|---------|-------------|
+| \`think\` | Simple decisions, quick reasoning |
+| \`think hard\` | Complex logic, multi-file changes |
+| \`ultrathink\` | Architecture decisions, security review |
+
+## Structured Debugging Workflow
+
+1. **Clear Bug Report**: Specific symptoms, not vague descriptions
+2. **Read Code Carefully**: Follow data flow, don't assume
+3. **List All Causes**: Generate hypotheses, not just fixes
+4. **Rank by Likelihood**: Prioritize investigation order
+5. **Test Fixes in Isolation**: One change at a time
+
+## Adversarial Code Review
+
+When reviewing, act as a critical senior developer:
+\`\`\`
+"Do a git diff and pretend you're a senior dev doing a code
+review and you HATE this implementation. What would you
+criticize? What edge cases am I missing?"
+\`\`\`
 
 ## Memory Integration
 
-| When | Action |
-|------|--------|
-| Architecture decision | \`cortex_add(content="...", type="decision")\` |
-| Discovered pattern | \`cortex_add(content="...", type="code")\` |
-| Configuration choice | \`cortex_add(content="...", type="config")\` |
-| Important fact | \`cortex_add(content="...", type="fact")\` |
+| Event | Action |
+|-------|--------|
+| Architecture decision | \`cortex_add(type="decision")\` |
+| Discovered pattern | \`cortex_add(type="code")\` |
+| Configuration choice | \`cortex_add(type="config")\` |
+| Important fact | \`cortex_add(type="fact")\` |
+| Potential risk | \`cortex_add(type="risk")\` |
 
-## XML Tags for Structured Prompts
+## File Imports (Monorepo Pattern)
+
+Reference other docs with \`@path/to/file.md\` syntax:
+\`\`\`markdown
+@docs/architecture.md
+@packages/core/README.md
+\`\`\`
+
+## Custom Commands
+
+Create reusable prompts in \`.claude/commands/\`:
+\`\`\`markdown
+<!-- .claude/commands/fix-issue.md -->
+Analyze issue #$ARGUMENTS and create a fix
+\`\`\`
+
+## XML Tags for Structure
 
 \`\`\`xml
 <context>Current task environment</context>
 <instructions>Step-by-step goals</instructions>
 <constraints>Must use existing patterns</constraints>
+<output_format>Desired response structure</output_format>
 \`\`\`
 
 ## Anti-Patterns (NEVER DO)
 
-- ❌ Never assume context that isn't in memory
+- ❌ Never assume context not in memory
 - ❌ Never skip \`cortex_context\` at session start
 - ❌ Never commit without running tests
 - ❌ Never use \`any\` type - use \`unknown\`
 - ❌ Never log secrets or PII
+- ❌ Never over-engineer - keep changes focused
+- ❌ Never refactor beyond what was asked
+
+## Security Practices
+
+- Use \`/security-review\` for vulnerability analysis
+- Block risky operations on \`.env\` and \`.git/\`
+- Validate inputs before processing
+- Never expose credentials in logs or errors
 `;
 
   const agentsContent = `# AI Agent Orchestration Protocol
@@ -301,17 +347,64 @@ EXPLORE → PLAN → CODE → VERIFY → COMMIT
 3. **Verify Before Change** - Check existing patterns first
 4. **Incremental Progress** - Small commits, frequent checkpoints
 5. **Zero Secrets** - Never log, commit, or transmit secrets/PII
+6. **Single Responsibility** - One clear purpose per task
+7. **Plan Before Code** - Outline approach, get approval, then implement
 
 ## Agent Personas
 
 ### 1. Onboarding Agent
-Queries Shared Knowledge Graph to explain *why* code is written a certain way.
+**Purpose:** Reduce developer ramp-up time from weeks to hours
+- Queries Shared Knowledge Graph to explain *why* code exists
+- References architectural decisions from memory
+- Points to relevant documentation
 
 ### 2. Code Review Agent
-Ensures PRs don't contradict architectural consensus.
+**Purpose:** Ensure PRs don't contradict architectural consensus
+- Queries Decision Trail before reviewing
+- Flags "Semantic Drift" when code evolves away from truths
+- Uses adversarial review: "What would a senior dev criticize?"
 
 ### 3. Tech Debt Radar
-Scans for patterns violating Architecture Guardrails.
+**Purpose:** Track and surface technical debt early
+- Scans for patterns violating Architecture Guardrails
+- Logs violations as \`cortex_add(type="risk")\`
+- Prioritizes by impact and effort
+
+### 4. Security Auditor
+**Purpose:** Identify vulnerabilities before deployment
+- Runs \`/security-review\` on changes
+- Checks for OWASP Top 10 issues
+- Validates input handling and auth flows
+
+## Subagent Orchestration
+
+Store subagent definitions in \`.claude/agents/\`:
+\`\`\`yaml
+# .claude/agents/reviewer.yaml
+name: Code Reviewer
+description: Reviews code for bugs and style
+tools: [Read, Search]
+\`\`\`
+
+**Pattern:** Lead Agent delegates to specialized Subagents
+
+## Hooks Configuration
+
+Configure in \`.claude/settings.json\`:
+\`\`\`json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit",
+      "command": "echo 'Validating...' && biome check"
+    }],
+    "PostToolUse": [{
+      "matcher": "Write",
+      "command": "biome format --write"
+    }]
+  }
+}
+\`\`\`
 
 ## Memory Protocol
 
@@ -319,17 +412,26 @@ Scans for patterns violating Architecture Guardrails.
 cortex_context("summary of current task")
 \`\`\`
 
-- Decisions → \`cortex_add(type="decision")\`
-- Patterns → \`cortex_add(type="code")\`
-- Facts → \`cortex_add(type="fact")\`
+| Event | Memory Type |
+|-------|-------------|
+| Decisions | \`decision\` |
+| Patterns | \`code\` |
+| Facts | \`fact\` |
+| Risks | \`risk\` |
+
+## Session Management
+
+- \`claude --resume\` to continue previous session
+- \`/clear\` to reset context for new task
+- Session history stored locally for retrospective
 
 ## MCP Tools
 
 | Tool | Purpose |
 |------|---------|
-| \`cortex_search\` | Search memories |
-| \`cortex_add\` | Add new memory |
-| \`cortex_context\` | Get task context |
+| \`cortex_context\` | Load task-relevant memories |
+| \`cortex_add\` | Save new memory |
+| \`cortex_search\` | Query existing memories |
 `;
 
   const content = options.type === 'claude' ? claudeContent : agentsContent;
