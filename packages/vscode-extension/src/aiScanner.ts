@@ -15,14 +15,21 @@
 
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, dirname, extname, join } from 'path';
 import type { Memory, MemoryType } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
+// import { AIScanResult, AIMemory, ProjectContext, ProjectArea } from './types';
+import { ModelAdapter } from './providers';
+import { CortexConfig, AIProvider } from './config';
 import type { AIScanWebview } from './aiScanWebview';
-import type { ModelAdapter } from './providers';
-import { AnthropicModelAdapter } from './providers/anthropic';
-import { GeminiModelAdapter } from './providers/gemini';
-import { OpenAIModelAdapter } from './providers/openai';
+import {
+  AnthropicModelAdapter,
+  GeminiModelAdapter,
+  OpenAIModelAdapter,
+  MistralModelAdapter,
+  DeepSeekModelAdapter,
+  OllamaModelAdapter
+} from './providers';
 import type { MemoryStore } from './storage';
 
 export interface AIMemory {
@@ -240,18 +247,21 @@ async function selectBestModel(
         channel.appendLine(`   - ${m.name || m.id}`);
       }
 
-      // Priority: most powerful models first
+      // Priority: most powerful models first (available in 2026)
       const priorityNames = [
-        'claude opus 4',
-        'opus 4.5',
-        'gpt-5',
-        'gemini 3 pro',
-        'claude sonnet 4',
-        'sonnet 4.5',
+        // Tier 1: Premium (if user has access)
         'o3',
-        'gemini 2.5 pro',
         'gpt-4o',
+        'claude 3.5 sonnet',
+        'claude sonnet',
+        // Tier 2: Gemini (free tier available)
+        'gemini 2.5 pro',
         'gemini 2.5 flash',
+        'gemini-2.5-pro',
+        'gemini-2.5-flash',
+        // Tier 3: Other available
+        'gpt-4',
+        'codestral',
       ];
 
       for (const priority of priorityNames) {
@@ -281,96 +291,121 @@ async function selectBestModel(
     }
   }
 
-  // 2. No native models - check for stored API keys (try most powerful first)
-  channel.appendLine('\n⚠️ No hay modelos nativos disponibles');
-  channel.appendLine('🔑 Buscando API keys guardadas...');
+  // 2. Check for configured provider
+  const configuredProvider = CortexConfig.provider;
 
-  if (secrets) {
-    // Try Anthropic first (most powerful)
-    const anthropicAdapter = await AnthropicModelAdapter.fromSecrets(secrets, 'claude-opus-4-5');
-    if (anthropicAdapter) {
-      channel.appendLine(`✓ Usando Anthropic API: ${anthropicAdapter.name}`);
-      return { adapter: anthropicAdapter };
-    }
+  if (configuredProvider !== AIProvider.Auto) {
+      channel.appendLine(`\n⚙️ Proveedor configurado: ${configuredProvider}`);
 
-    // Try OpenAI
-    const openaiAdapter = await OpenAIModelAdapter.fromSecrets(secrets, 'gpt-5');
-    if (openaiAdapter) {
-      channel.appendLine(`✓ Usando OpenAI API: ${openaiAdapter.name}`);
-      return { adapter: openaiAdapter };
-    }
+      let adapter: ModelAdapter | null = null;
 
-    // Try Gemini
-    const geminiAdapter = await GeminiModelAdapter.fromSecrets(secrets, 'gemini-2.5-pro');
-    if (geminiAdapter) {
-      channel.appendLine(`✓ Usando Gemini API: ${geminiAdapter.name}`);
-      return { adapter: geminiAdapter };
-    }
-
-    // 3. Prompt user to choose provider
-    channel.appendLine('❓ No hay API keys guardadas. Solicitando al usuario...');
-
-    const provider = await vscode.window.showQuickPick(
-      [
-        {
-          label: '$(sparkle) Google Gemini',
-          description: 'FREE API key available',
-          value: 'gemini',
-        },
-        {
-          label: '$(beaker) OpenAI GPT-5',
-          description: 'Most advanced reasoning',
-          value: 'openai',
-        },
-        { label: '$(robot) Anthropic Claude', description: 'Best for coding', value: 'anthropic' },
-      ],
-      {
-        title: 'Select AI Provider',
-        placeHolder: 'Choose your preferred AI provider (Gemini is FREE)',
+      if (secrets) {
+        switch (configuredProvider) {
+            case AIProvider.Gemini:
+                adapter = await GeminiModelAdapter.fromSecrets(secrets);
+                break;
+            case AIProvider.OpenAI:
+                adapter = await OpenAIModelAdapter.fromSecrets(secrets);
+                break;
+            case AIProvider.Anthropic:
+                adapter = await AnthropicModelAdapter.fromSecrets(secrets);
+                break;
+            case AIProvider.Mistral:
+                adapter = await MistralModelAdapter.fromSecrets(secrets);
+                break;
+            case AIProvider.DeepSeek:
+                adapter = await DeepSeekModelAdapter.fromSecrets(secrets);
+                break;
+            case AIProvider.Ollama:
+                adapter = await OllamaModelAdapter.fromSecrets(secrets);
+                break;
+        }
       }
-    );
 
-    if (!provider) {
-      throw new Error('No AI provider selected');
-    }
-
-    if (provider.value === 'gemini') {
-      const apiKey = await GeminiModelAdapter.promptForApiKey(secrets);
-      if (apiKey) {
-        const { GoogleGenerativeAI } = await import('@google/generative-ai');
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const adapter = new GeminiModelAdapter(genAI, 'gemini-2.5-pro');
-        channel.appendLine(`✓ Configurado: ${adapter.name}`);
-        return { adapter };
+      if (adapter) {
+          channel.appendLine(`✓ Usando ${adapter.name}`);
+          return { adapter };
+      } else {
+        channel.appendLine(`⚠️ Error: No se pudo configurar ${configuredProvider}. Revise API Key.`);
       }
-    } else if (provider.value === 'openai') {
-      const apiKey = await OpenAIModelAdapter.promptForApiKey(secrets);
-      if (apiKey) {
-        const adapter = new OpenAIModelAdapter(apiKey, 'gpt-5');
-        channel.appendLine(`✓ Configurado: ${adapter.name}`);
-        return { adapter };
-      }
-    } else if (provider.value === 'anthropic') {
-      const apiKey = await AnthropicModelAdapter.promptForApiKey(secrets);
-      if (apiKey) {
-        const adapter = new AnthropicModelAdapter(apiKey, 'claude-opus-4-5');
-        channel.appendLine(`✓ Configurado: ${adapter.name}`);
-        return { adapter };
-      }
-    }
   }
 
-  throw new Error(
-    'No AI models available. Install GitHub Copilot, Gemini Code Assist, or configure an API key.'
+  // 3. Fallback: Check for any stored keys (Auto Mode logic)
+  channel.appendLine('\n🔑 Buscando credenciales disponibles...');
+
+  // Try Configured Priority Order
+  const autoOrder = CortexConfig.autoProviderOrder; // Claude > OpenAI > Gemini etc
+
+  for (const provider of autoOrder) {
+      let adapter: ModelAdapter | null = null;
+      if (secrets) {
+          switch (provider) {
+              case AIProvider.Anthropic: adapter = await AnthropicModelAdapter.fromSecrets(secrets); break;
+              case AIProvider.OpenAI: adapter = await OpenAIModelAdapter.fromSecrets(secrets); break;
+              case AIProvider.Gemini: adapter = await GeminiModelAdapter.fromSecrets(secrets); break;
+              case AIProvider.DeepSeek: adapter = await DeepSeekModelAdapter.fromSecrets(secrets); break;
+              case AIProvider.Mistral: adapter = await MistralModelAdapter.fromSecrets(secrets); break;
+              case AIProvider.Ollama: adapter = await OllamaModelAdapter.fromSecrets(secrets); break;
+          }
+      }
+
+      if (adapter) {
+          channel.appendLine(`✓ Auto-detectado: ${adapter.name}`);
+          return { adapter };
+      }
+  }
+
+  // 4. Prompt User
+  channel.appendLine('❓ No se encontraron credenciales válidas. Solicitando al usuario...');
+
+  const selected = await vscode.window.showQuickPick(
+    [
+      { label: '$(sparkle) Google Gemini', description: 'FREE (Recommended)', detail: 'gemini-2.5-flash - get free key at aistudio.google.com', value: AIProvider.Gemini },
+      { label: '$(beaker) OpenAI', description: 'GPT-4o', value: AIProvider.OpenAI },
+      { label: '$(robot) Anthropic', description: 'Claude 3.5', value: AIProvider.Anthropic },
+      { label: '$(server) Ollama', description: 'Local Models', value: AIProvider.Ollama },
+      { label: '$(clippy) Copy Prompt to Clipboard', description: 'Use your own AI', detail: 'Paste in Antigravity, Cursor, or any AI chat', value: 'clipboard' as any },
+    ],
+    { title: 'Select AI Provider', placeHolder: 'Choose a provider to analyze this project' }
   );
+
+  if (!selected) throw new Error('No AI provider selected');
+
+  // Handle clipboard fallback option (user wants to copy prompt manually)
+  if ((selected.value as string) === 'clipboard') {
+    throw new Error('CLIPBOARD_FALLBACK');
+  }
+
+  // Trigger setup flow for selected provider
+  if (secrets) {
+      if (selected.value === AIProvider.Gemini) {
+          const key = await GeminiModelAdapter.promptForApiKey(secrets);
+          if (key) {
+            const { GoogleGenerativeAI } = await import('@google/generative-ai');
+            return { adapter: new GeminiModelAdapter(new GoogleGenerativeAI(key)) };
+          }
+      } else if (selected.value === AIProvider.OpenAI) {
+          const key = await OpenAIModelAdapter.promptForApiKey(secrets);
+          if (key) return { adapter: new OpenAIModelAdapter(key) };
+      } else if (selected.value === AIProvider.Anthropic) {
+          const key = await AnthropicModelAdapter.promptForApiKey(secrets);
+          if (key) return { adapter: new AnthropicModelAdapter(key) };
+      }
+  } else {
+     throw new Error('Secret storage not available');
+  }
+
+  throw new Error('AI Provider setup cancelled.');
 }
+
+
 
 // ============================================================================
 // PHASE 1: Build Project Context
 // ============================================================================
 
 async function buildProjectContext(
-  model: vscode.LanguageModelChat,
+  model: ModelAdapter,
   rootPath: string,
   treeStructure: string,
   existingMemories: string,
@@ -435,11 +470,11 @@ IMPORTANT:
 - needsDeepAnalysis=true only for areas with complex business logic requiring inspection
 - Be selective: better to deeply analyze 3-5 important areas than superficially 20`;
 
-  const messages = [vscode.LanguageModelChatMessage.User(prompt)];
-  const response = await model.sendRequest(messages, {}, token);
+  const messages = [{ role: 'user' as const, content: prompt }];
+  const responseStream = model.sendRequest(messages, token);
 
   let fullResponse = '';
-  for await (const chunk of response.text) {
+  for await (const chunk of responseStream) {
     fullResponse += chunk;
     channel.append(chunk);
   }
@@ -484,6 +519,8 @@ IMPORTANT:
 // MAIN ENTRY POINT
 // ============================================================================
 
+import { Logger } from './logger';
+
 export async function scanProjectWithAI(
   projectPath: string,
   token: vscode.CancellationToken,
@@ -493,11 +530,16 @@ export async function scanProjectWithAI(
   refreshTree?: () => void,
   secrets?: vscode.SecretStorage
 ): Promise<AIScanResult> {
+  const logger = Logger.getInstance();
   const channel = getOutputChannel();
   channel.clear();
-  channel.show(true); // Show output channel as requested
+  channel.show(true);
 
-  const log = (msg: string) => channel.appendLine(msg);
+  // Sync logger with UI channel
+  const log = (msg: string) => {
+    channel.appendLine(msg);
+    logger.info(msg);
+  };
 
   log('═══════════════════════════════════════════════════════════════');
   log('🧠 CORTEX AI SCAN - Análisis Contextual Jerárquico');
@@ -506,7 +548,67 @@ export async function scanProjectWithAI(
   // Select model (hybrid: native or Gemini API)
   webview?.setStatus('selecting', 'Seleccionando modelo AI...');
   log('🔍 Seleccionando mejor modelo...');
-  const { adapter, nativeModel } = await selectBestModel(channel, secrets);
+
+  let adapter: ModelAdapter;
+  let nativeModel: vscode.LanguageModelChat | undefined;
+
+  try {
+    const result = await selectBestModel(channel, secrets);
+    adapter = result.adapter;
+    nativeModel = result.nativeModel;
+  } catch (error: any) {
+    logger.error('Model selection failed', error);
+    // Handle clipboard fallback request
+    // Handle clipboard fallback request
+    if (error.message === 'CLIPBOARD_FALLBACK') {
+      log('\\n📋 Usuario solicitó copiar prompt al portapapeles...');
+      webview?.setStatus('selecting', 'Generando prompt para copiar...');
+
+      // Generate tree structure for the prompt
+      const treeStructure = generateTreeStructure(projectPath);
+      const anchors = readAnchorFiles(projectPath);
+      const anchorContents = anchors.map(a => `\\n─── ${a.name} ───\\n${a.content}`).join('\\n\\n');
+
+      const clipboardPrompt = `You are a senior software architect. Analyze this project and extract key knowledge as memories.
+
+## PROJECT STRUCTURE:
+\`\`\`
+${treeStructure.slice(0, 15000)}
+\`\`\`
+
+## KEY FILES:
+${anchorContents.slice(0, 30000)}
+
+## TASK:
+1. Understand the project's purpose, tech stack, and architecture
+2. Identify the main areas/modules
+3. Extract important memories about:
+   - Architecture decisions
+   - Key components and their responsibilities
+   - Important patterns and conventions
+   - Configuration and setup requirements
+   - API contracts and interfaces
+
+Respond with a list of memories in this format:
+[TYPE] Content of the memory
+- Tags: tag1, tag2
+- Source: file or area
+
+Types: architecture, component, pattern, decision, api, config, workflow`;
+
+      await vscode.env.clipboard.writeText(clipboardPrompt);
+      vscode.window.showInformationMessage(
+        '📋 Analysis prompt copied to clipboard! Paste it in Antigravity, Cursor, or any AI chat.'
+      );
+
+      log('✅ Prompt copiado al portapapeles');
+      webview?.setStatus('complete', 'Prompt copied - paste in your AI chat');
+
+      return { memories: [], filesAnalyzed: 0, modelUsed: 'clipboard', savedCount: 0 };
+    }
+    throw error;
+  }
+
   const modelName = adapter.name;
   const model = nativeModel; // For backward compatibility with existing code
 
@@ -520,11 +622,10 @@ export async function scanProjectWithAI(
 
   // For now, the internal functions require native vscode.LanguageModelChat
   // TODO: Refactor all internal functions to use ModelAdapter interface
-  if (!model) {
+  // No need to throw error if no native model, as we have fallback logic in selectBestModel
+  if (!adapter) {
     throw new Error(
-      `AI Scanner currently requires a native VS Code language model provider. ` +
-        `Please install one of: GitHub Copilot, Gemini Code Assist, or another VS Code LM extension. ` +
-        `Your Gemini API key has been saved and will be used once native model adapters are fully implemented.`
+      `No AI model adapter available. Please install a compatible extension or configure an API key.`
     );
   }
 
@@ -556,7 +657,7 @@ export async function scanProjectWithAI(
   webview?.setStatus('analyzing', 'Fase 1: Comprendiendo proyecto globalmente...');
 
   const context = await buildProjectContext(
-    model,
+    adapter,
     projectPath,
     treeStructure,
     existingContext,
@@ -622,36 +723,45 @@ export async function scanProjectWithAI(
     `Analizando ${areasNeedingAnalysis.length} áreas simultáneamente...`
   );
 
-  // Run analysis in PARALLEL
-  await Promise.all(
-    areasNeedingAnalysis.map(async (area) => {
-      // Update area status to analyzing
-      webview?.updateAreaStatus(area.name, 'analyzing');
+  // Run analysis SEQUENTIALLY to avoid rate limits (429)
+  // Especially important for Gemini Free Tier
+  for (const area of areasNeedingAnalysis) {
+    // Update area status to analyzing
+    webview?.updateAreaStatus(area.name, 'analyzing');
 
-      try {
-        const areaMemories = await analyzeAreaWithRealTimeSave(
-          model,
-          projectPath,
-          area,
-          context,
-          channel,
-          webview,
-          token,
-          saveMemoryRealTime
-        );
+    try {
+      if (token.isCancellationRequested) break;
 
-        allMemories.push(...areaMemories);
-        filesAnalyzed += area.keyFiles.length;
+      const areaMemories = await analyzeAreaWithRealTimeSave(
+        adapter,
+        projectPath,
+        area,
+        context,
+        channel,
+        webview,
+        token,
+        saveMemoryRealTime
+      );
 
-        // Update area status to complete
-        webview?.updateAreaStatus(area.name, 'complete', areaMemories.length);
-        log(`   ✓ ${area.name}: ${areaMemories.length} memorias`);
-      } catch (error) {
-        log(`   ❌ Error en área ${area.name}: ${error}`);
-        webview?.updateAreaStatus(area.name, 'error');
+      allMemories.push(...areaMemories);
+      filesAnalyzed += area.keyFiles.length;
+
+      // Update area status to complete
+      webview?.updateAreaStatus(area.name, 'complete', areaMemories.length);
+      log(`   ✓ ${area.name}: ${areaMemories.length} memorias`);
+
+      // Gentle pause between areas to let API breathe (Configurable)
+      // Defaults to 1000ms, effectively sequential processing
+      const delay = CortexConfig.scan.delayMs;
+      if (delay > 0) {
+          await new Promise(r => setTimeout(r, delay));
       }
-    })
-  );
+
+    } catch (error) {
+      log(`   ❌ Error en área ${area.name}: ${error}`);
+      webview?.updateAreaStatus(area.name, 'error');
+    }
+  }
 
   // ========== PHASE 3 ==========
   log('\n───────────────────────────────────────────────────────────────');
@@ -660,7 +770,7 @@ export async function scanProjectWithAI(
   webview?.setStatus('analyzing', 'Phase 3: Synthesis and consolidation...');
 
   const highLevelMemories = await synthesizeHighLevelMemoriesWithRealTimeSave(
-    model,
+    adapter,
     context,
     allMemories,
     channel,
@@ -688,7 +798,7 @@ export async function scanProjectWithAI(
 
 // Wrapper for analyzeArea that saves memories in real-time
 export async function analyzeAreaWithRealTimeSave(
-  model: vscode.LanguageModelChat,
+  model: ModelAdapter,
   rootPath: string,
   area: ProjectArea,
   context: ProjectContext,
@@ -720,12 +830,24 @@ export async function analyzeAreaWithRealTimeSave(
       if (content) resolvedPath = join(area.path, file);
     }
 
+    // Check inside src/ if standard structure
+    if (!content && area.path && !file.includes('src/')) {
+        const srcPath = join(rootPath, area.path, 'src', file);
+        content = readFileSafe(srcPath);
+        if (content) resolvedPath = join(area.path, 'src', file);
+    }
+
     if (content) {
       fileContents.push({ path: resolvedPath, content });
-      channel.appendLine(`   📄 ${resolvedPath} (${content.length} chars)`);
+      if (webview) {
+        webview.postMessage({ type: 'scanFile', file: resolvedPath });
+      }
     } else {
-      channel.appendLine(`   ⚠️ Not found: ${file}`);
+      // Don't show scary warning, just log info as we have directory fallback
+      // log(`   ⚠️ Not found: ${file}`);
     }
+
+
   }
 
   if (fileContents.length === 0 && area.path) {
@@ -800,13 +922,13 @@ CRITICAL REQUIREMENTS:
 
 Begin analysis:`;
 
-  const messages = [vscode.LanguageModelChatMessage.User(prompt)];
-  const response = await model.sendRequest(messages, {}, token);
+  const messages = [{ role: 'user' as const, content: prompt }];
+  const responseStream = model.sendRequest(messages, token);
 
   const memories: AIMemory[] = [];
   let currentLine = '';
 
-  for await (const chunk of response.text) {
+  for await (const chunk of responseStream) {
     channel.append(chunk);
     webview?.streamChunk(chunk);
 
@@ -872,7 +994,7 @@ Begin analysis:`;
 
 // Wrapper for synthesizeHighLevelMemories that saves in real-time
 async function synthesizeHighLevelMemoriesWithRealTimeSave(
-  model: vscode.LanguageModelChat,
+  model: ModelAdapter,
   context: ProjectContext,
   collectedMemories: AIMemory[],
   channel: vscode.OutputChannel,
@@ -911,13 +1033,13 @@ Output one JSON line per memory:
 
 Only generate truly new high-level memories (ALL IN ${context.language}):`;
 
-  const messages = [vscode.LanguageModelChatMessage.User(prompt)];
-  const response = await model.sendRequest(messages, {}, token);
+  const messages = [{ role: 'user' as const, content: prompt }];
+  const responseStream = model.sendRequest(messages, token);
 
   const highLevelMemories: AIMemory[] = [];
   let fullResponse = '';
 
-  for await (const chunk of response.text) {
+  for await (const chunk of responseStream) {
     fullResponse += chunk;
     channel.append(chunk);
   }

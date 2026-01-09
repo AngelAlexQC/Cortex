@@ -7,11 +7,13 @@
 import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import * as vscode from 'vscode';
 import type { ModelAdapter } from './index';
+import { CortexConfig, AIProvider } from '../config';
 
 // Available Gemini models (January 2026)
 export const GEMINI_MODELS = {
   // Gemini 3 Series (Latest - GA December 2025)
   'gemini-3-pro-preview': { name: 'Gemini 3 Pro', maxTokens: 1000000 },
+  'gemini-2.0-flash-thinking-exp-1219': { name: 'Gemini 2.0 Flash Thinking', maxTokens: 1000000 },
   'gemini-3-flash-preview': { name: 'Gemini 3 Flash', maxTokens: 1000000 },
   // Gemini 2.5 Series (Stable - retire June 2026)
   'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', maxTokens: 1000000 },
@@ -21,8 +23,18 @@ export const GEMINI_MODELS = {
 
 export type GeminiModelId = keyof typeof GEMINI_MODELS;
 
-// Default to the most powerful stable model
-export const DEFAULT_GEMINI_MODEL: GeminiModelId = 'gemini-2.5-pro';
+// Default to the most powerful stable model (FREE TIER)
+export const DEFAULT_GEMINI_MODEL: GeminiModelId = 'gemini-2.5-flash';
+
+/**
+ * Model fallback chain - try these in order if primary model fails
+ * All models here are available in Gemini API free tier (Jan 2026)
+ */
+export const GEMINI_MODEL_FALLBACK_CHAIN: GeminiModelId[] = [
+  'gemini-2.5-flash',      // Primary: Fast, 250 req/day free
+  'gemini-2.5-flash-lite', // Fallback 1: Economy, high rate limits
+  'gemini-2.5-pro',        // Fallback 2: Powerful, 100 req/day free
+];
 
 const SECRET_KEY = 'cortex.geminiApiKey';
 
@@ -35,7 +47,7 @@ export class GeminiModelAdapter implements ModelAdapter {
   private model: GenerativeModel;
 
   constructor(
-    private genAI: GoogleGenerativeAI,
+    genAI: GoogleGenerativeAI,
     private modelId: GeminiModelId = DEFAULT_GEMINI_MODEL
   ) {
     this.name = GEMINI_MODELS[modelId]?.name || modelId;
@@ -53,15 +65,89 @@ export class GeminiModelAdapter implements ModelAdapter {
     }));
 
     const lastMessage = messages[messages.length - 1];
-
     const chat = this.model.startChat({ history });
 
-    const result = await chat.sendMessageStream(lastMessage.content);
+    let retries = 0;
+    const MAX_RETRIES = 3;
+    const INITIAL_BACKOFF_MS = 2000;
 
-    for await (const chunk of result.stream) {
+    while (true) {
       if (token.isCancellationRequested) break;
-      const text = chunk.text();
-      if (text) yield text;
+      try {
+        const result = await chat.sendMessageStream(lastMessage.content);
+        for await (const chunk of result.stream) {
+          if (token.isCancellationRequested) break;
+          const text = chunk.text();
+          if (text) yield text;
+        }
+        break; // Success, exit loop
+      } catch (error: unknown) {
+         if (token.isCancellationRequested) break;
+
+         const err = error as any;
+         const errorMessage = err.message || String(error);
+
+         // Check for network errors
+         const isNetworkError =
+           errorMessage.includes('fetch failed') ||
+           errorMessage.includes('ECONNREFUSED') ||
+           errorMessage.includes('ENOTFOUND') ||
+           errorMessage.includes('network') ||
+           error.code === 'ECONNRESET';
+
+         // Check for 429 or Quota Exceeded
+         const isQuotaError =
+           errorMessage.includes('429') ||
+           errorMessage.includes('Quota exceeded') ||
+           error.status === 429;
+
+         // Check for 403 Forbidden (model access issues)
+         const isAccessError =
+           errorMessage.includes('403') ||
+           errorMessage.includes('Forbidden') ||
+           errorMessage.includes('unregistered callers');
+
+         if ((isQuotaError || isNetworkError) && retries < MAX_RETRIES) {
+           retries++;
+           let delayMs = INITIAL_BACKOFF_MS * Math.pow(2, retries - 1);
+
+           // Parse retry delay from error message if available
+           const match = errorMessage.match(/retry in (\d+(\.\d+)?)s/);
+           if (match && match[1]) {
+             delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 1000;
+           }
+
+           delayMs = Math.min(delayMs, 60000);
+
+           const errorType = isNetworkError ? 'Network error' : 'Rate limit';
+           console.warn(`[Gemini] ${errorType}. Retrying in ${delayMs}ms (Attempt ${retries}/${MAX_RETRIES})`);
+
+           await new Promise(resolve => setTimeout(resolve, delayMs));
+           continue;
+         }
+
+         // For 403/access errors, throw with helpful message
+         if (isAccessError) {
+           throw new Error(
+             `Gemini API access denied. Please check:\n` +
+             `1. Your API key is valid (get free key at aistudio.google.com)\n` +
+             `2. The Generative Language API is enabled in Google Cloud Console\n` +
+             `3. The model '${this.modelId}' is available for your account`
+           );
+         }
+
+         // For persistent network errors, throw with helpful message
+         if (isNetworkError) {
+           throw new Error(
+             `Network error connecting to Gemini API. Please check:\n` +
+             `1. Your internet connection\n` +
+             `2. Firewall/proxy settings\n` +
+             `3. Try again in a few moments`
+           );
+         }
+
+         throw error;
+      }
     }
   }
 
@@ -70,13 +156,23 @@ export class GeminiModelAdapter implements ModelAdapter {
    */
   static async fromSecrets(
     secrets: vscode.SecretStorage,
-    modelId: GeminiModelId = DEFAULT_GEMINI_MODEL
+    modelId?: GeminiModelId
   ): Promise<GeminiModelAdapter | null> {
-    const apiKey = await secrets.get(SECRET_KEY);
+    // Priority: 1. VS Code Settings, 2. Secret Storage
+    let apiKey = CortexConfig.getApiKey(AIProvider.Gemini);
+
+    if (!apiKey) {
+        apiKey = await secrets.get(SECRET_KEY) || '';
+    }
+
     if (!apiKey) return null;
 
+    // determine model: argument > config > default
+    const configuredModel = CortexConfig.getModel(AIProvider.Gemini) as GeminiModelId;
+    const finalModelId = modelId || configuredModel || DEFAULT_GEMINI_MODEL;
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    return new GeminiModelAdapter(genAI, modelId);
+    return new GeminiModelAdapter(genAI, finalModelId);
   }
 
   /**
@@ -105,6 +201,7 @@ export class GeminiModelAdapter implements ModelAdapter {
   static async validateApiKey(apiKey: string): Promise<boolean> {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
+      // Use flash for validation as it is cheapest/fastest
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       await model.generateContent('Hello');
       return true;

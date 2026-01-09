@@ -11,6 +11,7 @@ import { MemoryStore } from './storage';
 import { CortexTaskProvider } from './taskProvider';
 import type { Tool } from './toolScanner';
 import { ToolTreeProvider } from './toolTreeProvider';
+import { VSCodeModelAdapter } from './providers';
 
 const execAsync = promisify(exec);
 
@@ -52,17 +53,26 @@ export async function activate(context: vscode.ExtensionContext) {
             try {
               // Try to run npx cortex-cli install --global
               // Using npx -y to avoid prompts and force install if needed
+              // Adding --no-install to npx is NOT wanted here, we WANT it to install/run.
               await execAsync('npx -y @ecuabyte/cortex-cli install --global');
               vscode.window.showInformationMessage(
                 '🎉 Cortex configured for all detected editors!'
               );
-            } catch (error) {
-              // Fallback or error message
+            } catch (error: any) {
               console.error('Failed to run global install:', error);
-              // Try local bin if likely (monorepo dev)
-              vscode.window.showErrorMessage(
-                'Failed to run global configuration. Please run `npx @ecuabyte/cortex-cli install` in your terminal.'
-              );
+
+              // Second attempt without --global (might be permission issue)
+              try {
+                await execAsync('npx -y @ecuabyte/cortex-cli install');
+                vscode.window.showInformationMessage(
+                  '✅ Cortex configured for your project editors.'
+                );
+              } catch (fallbackError) {
+                console.error('Failed to run local install:', fallbackError);
+                vscode.window.showErrorMessage(
+                  `Failed to run global configuration: ${error.message || error}. Please run \`npx @ecuabyte/cortex-cli install\` manually in your terminal.`
+                );
+              }
             }
           }
         );
@@ -75,7 +85,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Initialize memory store
     console.log('[Cortex] Initializing MemoryStore...');
-    const store = new MemoryStore();
+    const store = new MemoryStore(undefined, context.extensionPath);
 
     // Initialize context observer
     console.log('[Cortex] Initializing ContextObserver...');
@@ -110,6 +120,30 @@ export async function activate(context: vscode.ExtensionContext) {
     const { AIScanWebview } = await import('./aiScanWebview');
     const dashboardWebview = new AIScanWebview(context.extensionUri, context);
 
+    // --- Connect Components (Iron Man Wiring) ---
+    observer.setWebview(dashboardWebview);
+
+    // Sync dashboard state with database - clear stale data if DB is empty
+    try {
+      const stats = await store.stats();
+      if (stats.total === 0) {
+        console.log('[Cortex] Database empty, clearing stale dashboard state...');
+        dashboardWebview.clearState();
+      }
+    } catch (e) {
+      console.warn('[Cortex] Failed to sync dashboard state with database:', e);
+      // If we can't read the DB, clear state to be safe
+      dashboardWebview.clearState();
+    }
+
+    // Stream new memories to dashboard
+    context.subscriptions.push(
+      store.onDidAdd((memory) => {
+        // Automatically add to the live feed
+        dashboardWebview.addMemory({ ...memory, tags: memory.tags || [] });
+      })
+    );
+
     // Command to open the dashboard
     context.subscriptions.push(
       vscode.commands.registerCommand('cortex.openDashboard', () => {
@@ -117,9 +151,20 @@ export async function activate(context: vscode.ExtensionContext) {
       })
     );
 
-    // Auto-show dashboard on activation
-    // Auto-show dashboard on activation
-    dashboardWebview.show(context);
+    // Register Webview Serializer for persistence
+    vscode.window.registerWebviewPanelSerializer('cortexAIScan', {
+      async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: any) {
+        dashboardWebview.attach(webviewPanel, context);
+      },
+    });
+
+    // Auto-show dashboard on activation if not already restored by serializer
+    // (Serializers run before activation completes usually, but we can check if panel is set)
+    // For now, keeping it proactive but safe.
+    if (!context.globalState.get('cortex.dashboardOpened')) {
+      dashboardWebview.show(context);
+      context.globalState.update('cortex.dashboardOpened', true);
+    }
 
     // Register commands
     console.log('[Cortex] Registering Commands...');
@@ -515,7 +560,7 @@ export async function activate(context: vscode.ExtensionContext) {
               };
 
               await analyzeAreaWithRealTimeSave(
-                model,
+                new VSCodeModelAdapter(model),
                 workspaceFolder.uri.fsPath,
                 area,
                 minimalContext,
@@ -547,6 +592,140 @@ export async function activate(context: vscode.ExtensionContext) {
         );
       }
     });
+
+    // Reset Extension - Clear all API keys and settings
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.resetExtension', async () => {
+        const confirm = await vscode.window.showWarningMessage(
+          '⚠️ This will clear all stored API keys and reset Cortex settings. Continue?',
+          { modal: true },
+          'Reset Everything',
+          'Cancel'
+        );
+
+        if (confirm !== 'Reset Everything') return;
+
+        try {
+          // Clear secret storage (API keys)
+          const secretKeys = [
+            'cortex.geminiApiKey',
+            'cortex.openaiApiKey',
+            'cortex.anthropicApiKey',
+            'cortex.mistralApiKey',
+            'cortex.deepseekApiKey',
+          ];
+
+          for (const key of secretKeys) {
+            await context.secrets.delete(key);
+          }
+
+          // Clear API keys from settings
+          const cortexConfig = vscode.workspace.getConfiguration('cortex');
+          await cortexConfig.update('gemini.apiKey', undefined, vscode.ConfigurationTarget.Global);
+          await cortexConfig.update('openai.apiKey', undefined, vscode.ConfigurationTarget.Global);
+          await cortexConfig.update('anthropic.apiKey', undefined, vscode.ConfigurationTarget.Global);
+          await cortexConfig.update('mistral.apiKey', undefined, vscode.ConfigurationTarget.Global);
+          await cortexConfig.update('deepseek.apiKey', undefined, vscode.ConfigurationTarget.Global);
+
+          // Reset global state
+          await context.globalState.update('cortex.configured', undefined);
+          await context.globalState.update('cortex.dashboardOpened', undefined);
+
+          vscode.window.showInformationMessage('✅ Cortex reset complete. API keys cleared.');
+
+          const reload = await vscode.window.showInformationMessage(
+            'Reload window to apply changes?',
+            'Reload Now',
+            'Later'
+          );
+
+          if (reload === 'Reload Now') {
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(`Failed to reset: ${error}`);
+        }
+      })
+    );
+
+    // Network Diagnostics Command
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.debugNetwork', async () => {
+        try {
+          const { NetworkDiagnostics } = await import('./diagnostics');
+          const diagnostics = new NetworkDiagnostics();
+
+          await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: 'Cortex: Running network diagnostics...',
+              cancellable: false
+            },
+            async () => {
+              await diagnostics.runDiagnostics();
+            }
+          );
+
+          vscode.window.showInformationMessage('Diagnostics complete. Check "Cortex Debug" output channel.');
+        } catch (error) {
+          vscode.window.showErrorMessage(`Diagnostics failed: ${error}`);
+        }
+      })
+    );
+
+    // Helper to install VSIX (Developer Convenience)
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.installVSIX', async (uri: vscode.Uri) => {
+        // If triggered from command palette, ask for file
+        if (!uri) {
+           const selection = await vscode.window.showOpenDialog({
+             canSelectFiles: true,
+             filters: { 'VSIX': ['vsix'] },
+             title: 'Select VSIX to Install'
+           });
+           if (selection && selection[0]) uri = selection[0];
+        }
+
+        if (uri) {
+          // Use terminal to execute install (visual feedback)
+          const terminal = vscode.window.createTerminal('Cortex Installer');
+          terminal.show();
+          terminal.sendText(`code --install-extension "${uri.fsPath}" --force`);
+
+          const selection = await vscode.window.showInformationMessage(
+            'Installing VSIX... Reload window to apply changes.',
+            'Reload Window'
+          );
+          if (selection === 'Reload Window') {
+             vscode.commands.executeCommand('workbench.action.reloadWindow');
+          }
+        }
+      })
+    );
+
+    // --- Auto-Scan Project on Startup ---
+    // Only verify if requested AND no memories exist (fresh start)
+    const config = vscode.workspace.getConfiguration('cortex');
+    if (config.get<boolean>('autoScanOnStartup', true)) {
+        setTimeout(async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (workspaceFolder) {
+                // Check if we already have context
+                try {
+                  const stats = await store.stats();
+                  if (stats.total === 0) {
+                    console.log('[Cortex] No memories found. Triggering intelligent auto-scan on startup...');
+                    vscode.commands.executeCommand('cortex.scanWithAI');
+                  } else {
+                    console.log(`[Cortex] Startup scan skipped: ${stats.total} memories found.`);
+                  }
+                } catch (e) {
+                  console.error('[Cortex] Failed to check memory stats on startup:', e);
+                }
+            }
+        }, 1500); // Small delay to let VS Code settle
+    }
+
   } catch (error) {
     console.error('Failed to activate Cortex extension:', error);
     vscode.window.showErrorMessage(

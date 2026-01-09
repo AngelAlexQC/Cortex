@@ -18,6 +18,25 @@ async function buildExtension() {
 
   if (result.success) {
     console.log('✅ Extension built successfully');
+
+    // Copy sql-wasm.wasm to dist
+    try {
+      const { copyFileSync, existsSync, mkdirSync } = await import('node:fs');
+      const { join } = await import('node:path');
+      const { createRequire } = await import('node:module');
+
+      const require = createRequire(import.meta.url);
+      const sqlJsPath = require.resolve('sql.js');
+      const wasmPath = join(sqlJsPath, '..', 'sql-wasm.wasm');
+
+      if (existsSync(wasmPath)) {
+        if (!existsSync('./dist')) mkdirSync('./dist');
+        copyFileSync(wasmPath, './dist/sql-wasm.wasm');
+        console.log('✅ sql-wasm.wasm copied to dist');
+      }
+    } catch (e) {
+      console.warn('⚠️ Could not copy sql-wasm.wasm automatically:', e);
+    }
   } else {
     console.error('❌ Build failed:');
     result.logs.forEach((log) => console.error(log));

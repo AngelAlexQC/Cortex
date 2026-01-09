@@ -14,8 +14,58 @@ const store = new MemoryStore();
 const router = new ContextRouter(store);
 const guard = new ContextGuard();
 
-// CLI Argument Handling for `generate-config`
+// CLI Argument Handling
 import { parseArgs } from 'node:util';
+
+// Handle --auto-save flag (Standalone Mode)
+if (process.argv.includes('--auto-save')) {
+  (async () => {
+    try {
+      // Read JSON from stdin
+      const input = await new Promise<string>((resolve) => {
+        let data = '';
+        process.stdin.setEncoding('utf8');
+        process.stdin.on('data', (chunk) => { data += chunk; });
+        process.stdin.on('end', () => resolve(data));
+      });
+
+      if (!input.trim()) {
+        console.error('No input provided to --auto-save');
+        process.exit(0);
+      }
+
+      const payload = JSON.parse(input);
+      // Expected structure matches cortex_auto_save tool input:
+      // { conversation_summary: string, memories: [] }
+
+      const memories = payload.memories || [];
+      if (Array.isArray(memories) && memories.length > 0) {
+        console.error(`[Cortex] Auto-saving ${memories.length} memories...`);
+        let count = 0;
+        for (const m of memories) {
+            try {
+               await store.add({
+                 content: m.content,
+                 type: m.type || 'note',
+                 source: 'auto-save',
+                 tags: m.tags || ['auto-saved']
+               });
+               count++;
+            } catch (err) {
+               console.error('[Cortex] Failed to save memory:', err);
+            }
+        }
+        console.log(`Saved ${count} memories.`);
+      } else {
+        console.log('No memories to save.');
+      }
+      process.exit(0);
+    } catch (error) {
+      console.error('[Cortex] Auto-save error:', error);
+      process.exit(1);
+    }
+  })();
+}
 
 try {
   const args = process.argv.slice(2);

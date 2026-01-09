@@ -4,14 +4,17 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { IMemoryStore, Memory } from '@ecuabyte/cortex-shared';
 import initSqlJs, { type Database, type SqlValue } from 'sql.js';
+import * as vscode from 'vscode';
 
 export class MemoryStore implements IMemoryStore {
   private db: Database | null = null;
   private dbPath: string;
   private initPromise: Promise<void>;
   private initError: Error | null = null;
+  private _onDidAdd = new vscode.EventEmitter<Memory>();
+  public readonly onDidAdd = this._onDidAdd.event;
 
-  constructor(dbPath?: string) {
+  constructor(dbPath?: string, extensionPath?: string) {
     const defaultPath = join(homedir(), '.cortex', 'memories.db');
     const dir = join(homedir(), '.cortex');
 
@@ -20,7 +23,7 @@ export class MemoryStore implements IMemoryStore {
     }
 
     this.dbPath = dbPath || defaultPath;
-    this.initPromise = this.initialize().catch((error) => {
+    this.initPromise = this.initialize(extensionPath).catch((error) => {
       console.error('[Cortex] MemoryStore initialization failed:', error);
       this.initError = error instanceof Error ? error : new Error(String(error));
       // Re-throw so ensureInitialized can catch it
@@ -28,24 +31,33 @@ export class MemoryStore implements IMemoryStore {
     });
   }
 
-  private async initialize() {
+  private async initialize(extensionPath?: string) {
     try {
       // Try to find sql-wasm.wasm in multiple locations
-      // 1. Same directory as the bundled extension.js (dist folder)
-      // 2. node_modules (for development)
       const possiblePaths: string[] = [];
 
-      // Get the directory containing this file (works for both dev and bundled)
+      // 1. If extensionPath is provided (reliable VS Code way)
+      if (extensionPath) {
+        possiblePaths.push(join(extensionPath, 'dist', 'sql-wasm.wasm'));
+        possiblePaths.push(join(extensionPath, 'sql-wasm.wasm'));
+      }
+
+      // 2. Same directory as the bundled extension.js (dist folder usually)
       const currentDir = typeof __dirname !== 'undefined' ? __dirname : '.';
       possiblePaths.push(join(currentDir, 'sql-wasm.wasm'));
 
-      // Try node_modules path via require.resolve
+      // 3. Fallback: if we are in 'src', check 'dist' sibling
+      if (currentDir.endsWith('/src') || currentDir.endsWith('\\src')) {
+        possiblePaths.push(join(currentDir, '..', 'dist', 'sql-wasm.wasm'));
+      }
+
+      // 4. Try node_modules path via require.resolve (for development)
       try {
         const require = createRequire(import.meta.url);
         const sqlJsPath = require.resolve('sql.js');
         possiblePaths.push(join(sqlJsPath, '..', 'sql-wasm.wasm'));
       } catch {
-        // require.resolve may fail in bundled context, continue with other paths
+        // require.resolve may fail in bundled context
       }
 
       // Find the first existing WASM file
@@ -76,14 +88,16 @@ export class MemoryStore implements IMemoryStore {
 
       // Load existing database or create new one
       if (existsSync(this.dbPath)) {
+        const buffer = readFileSync(this.dbPath);
         try {
-          const buffer = readFileSync(this.dbPath);
           this.db = new SQL.Database(buffer);
+          console.log(`[Cortex] Loaded database from ${this.dbPath}`);
         } catch (error) {
-          console.error('[Cortex] Failed to load existing database, creating new one:', error);
-          this.db = new SQL.Database();
+          console.error('[Cortex] Failed to load existing database:', error);
+          throw new Error(`Failed to load database: ${error instanceof Error ? error.message : String(error)}`);
         }
       } else {
+        console.log(`[Cortex] Creating new database at ${this.dbPath}`);
         this.db = new SQL.Database();
       }
 
@@ -116,6 +130,7 @@ export class MemoryStore implements IMemoryStore {
       this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)');
       this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_source ON memories(source)');
       this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at)');
+      this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_project_id ON memories(project_id)');
 
       this.db.run(`
         CREATE TRIGGER IF NOT EXISTS update_memories_timestamp
@@ -199,6 +214,20 @@ export class MemoryStore implements IMemoryStore {
     const id = result[0].values[0][0] as number;
 
     this.saveToFile();
+
+    // Notify listeners
+    this._onDidAdd.fire({
+      id,
+      content: memory.content,
+      type: memory.type,
+      source: memory.source,
+      projectId: memory.projectId,
+      tags: memory.tags,
+      metadata: memory.metadata,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
     return id;
   }
 
@@ -350,6 +379,10 @@ export class MemoryStore implements IMemoryStore {
       return { total, byType };
     } catch (error) {
       console.error('[Cortex] Error getting stats:', error);
+      // Re-throw if it's an initialization error so the UI can show it
+      if (this.initError) {
+        throw this.initError;
+      }
       return defaultStats;
     }
   }

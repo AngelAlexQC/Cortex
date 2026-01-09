@@ -3,7 +3,10 @@
     "cortex-memory": {
       "command": {
         "path": "npx",
-        "args": ["-y", "@ecuabyte/cortex-mcp-server"]
+        "args": [
+          "-y",
+          "@ecuabyte/cortex-mcp-server"
+        ]
       },
       "settings": {}
     }

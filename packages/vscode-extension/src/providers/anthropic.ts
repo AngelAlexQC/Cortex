@@ -5,17 +5,20 @@
  */
 
 import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 import type { ModelAdapter } from './index';
+import { CortexConfig, AIProvider } from '../config';
 
 // Available Anthropic models (January 2026)
 export const ANTHROPIC_MODELS = {
-  // Claude 4.5 Series (Latest)
-  'claude-opus-4-5': { name: 'Claude Opus 4.5', maxTokens: 200000 },
-  'claude-sonnet-4-5': { name: 'Claude Sonnet 4.5', maxTokens: 200000 },
-  'claude-haiku-4-5': { name: 'Claude Haiku 4.5', maxTokens: 200000 },
-  // Claude 4 Series
-  'claude-opus-4-1': { name: 'Claude Opus 4.1', maxTokens: 200000 },
-  'claude-sonnet-4': { name: 'Claude Sonnet 4', maxTokens: 200000 },
+  // Claude 4.5 Series (2025/2026)
+  'claude-4.5-opus': { name: 'Claude 4.5 Opus', maxTokens: 200000 },
+  'claude-4.5-sonnet': { name: 'Claude 4.5 Sonnet', maxTokens: 200000 },
+  // Claude 3.5/3.7 Updates
+  'claude-3-7-sonnet-20250219': { name: 'Claude 3.7 Sonnet', maxTokens: 200000 },
+  'claude-3-5-sonnet-20241022': { name: 'Claude 3.5 Sonnet (v2)', maxTokens: 200000 },
+  'claude-3-opus-20240229': { name: 'Claude 3 Opus', maxTokens: 200000 },
+  'claude-3-haiku-20240307': { name: 'Claude 3 Haiku', maxTokens: 200000 },
 } as const;
 
 export type AnthropicModelId = keyof typeof ANTHROPIC_MODELS;
@@ -41,7 +44,7 @@ export class AnthropicModelAdapter implements ModelAdapter {
 
   constructor(
     private apiKey: string,
-    private modelId: AnthropicModelId = 'claude-sonnet-4-5'
+    private modelId: AnthropicModelId = 'claude-4.5-sonnet'
   ) {
     this.name = ANTHROPIC_MODELS[modelId]?.name || modelId;
   }
@@ -111,11 +114,22 @@ export class AnthropicModelAdapter implements ModelAdapter {
    */
   static async fromSecrets(
     secrets: vscode.SecretStorage,
-    modelId: AnthropicModelId = 'claude-sonnet-4-5'
+    modelId?: AnthropicModelId
   ): Promise<AnthropicModelAdapter | null> {
-    const apiKey = await secrets.get(SECRET_KEY);
+    // Priority: 1. VS Code Settings, 2. Secret Storage
+    let apiKey = CortexConfig.getApiKey(AIProvider.Anthropic);
+
+    if (!apiKey) {
+        apiKey = await secrets.get(SECRET_KEY) || '';
+    }
+
     if (!apiKey) return null;
-    return new AnthropicModelAdapter(apiKey, modelId);
+
+    // determine model: argument > config > default
+    const configuredModel = CortexConfig.getModel(AIProvider.Anthropic) as AnthropicModelId;
+    const finalModelId = modelId || configuredModel || 'claude-3-5-sonnet-20241022';
+
+    return new AnthropicModelAdapter(apiKey, finalModelId);
   }
 
   /**

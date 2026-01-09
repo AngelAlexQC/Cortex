@@ -2,7 +2,10 @@
   "mcpServers": {
     "cortex": {
       "command": "npx",
-      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
+      "args": [
+        "-y",
+        "@ecuabyte/cortex-mcp-server"
+      ]
     }
   }
 }

@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/EcuaByte-lat/Cortex#readme",
   "engines": {
-    "vscode": "^1.107.0"
+    "vscode": "^1.104.0"
   },
   "categories": [
     "AI",
@@ -44,7 +44,10 @@
     "developer-tools"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onView:cortex.memoryTree",
+    "onView:cortex.toolsTree",
+    "onWebviewPanel:cortexAIScan"
   ],
   "files": [
     "dist",
@@ -56,7 +59,7 @@
   ],
   "devDependencies": {
     "@types/sql.js": "^1.4.9",
-    "@types/vscode": "^1.107.0",
+    "@types/vscode": "^1.104.0",
     "@vscode/vsce": "^3.7.1",
     "@ecuabyte/cortex-shared": "workspace:^"
   },
@@ -168,14 +171,14 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "cortex-explorer",
+          "id": "cortex-sidebar",
           "title": "Cortex Memory",
           "icon": "resources/icon.svg"
         }
       ]
     },
     "views": {
-      "cortex-explorer": [
+      "cortex-sidebar": [
         {
           "id": "cortex.memoryTree",
           "name": "Memories"
@@ -258,6 +261,23 @@
         "title": "Open Cortex Dashboard",
         "icon": "$(dashboard)",
         "category": "Cortex"
+      },
+      {
+        "command": "cortex.resetExtension",
+        "title": "Cortex: Reset Extension (Clear API Keys)",
+        "icon": "$(clear-all)",
+        "category": "Cortex"
+      },
+      {
+        "command": "cortex.debugNetwork",
+        "title": "Cortex: Debug Network Connection",
+        "icon": "$(debug)",
+        "category": "Cortex"
+      },
+      {
+        "command": "cortex.installVSIX",
+        "title": "Install VSIX Extension",
+        "category": "Cortex"
       }
     ],
     "keybindings": [
@@ -335,6 +355,13 @@
           "group": "cortex@1"
         }
       ],
+      "explorer/context": [
+        {
+          "command": "cortex.installVSIX",
+          "when": "resourceExtname == .vsix",
+          "group": "navigation"
+        }
+      ],
       "editor/title": [
         {
           "command": "cortex.openDashboard",
@@ -345,10 +372,168 @@
     "configuration": {
       "title": "Cortex",
       "properties": {
+        "cortex.provider": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "gemini",
+            "openai",
+            "anthropic",
+            "ollama"
+          ],
+          "default": "auto",
+          "markdownDescription": "Select the AI Provider.\n- **auto**: Detects available keys (Claude > GPT-5 > Gemini).\n- **gemini**: Google Gemini (Recommended for Free Tier).\n- **openai**: OpenAI (GPT-5/4o).\n- **anthropic**: Anthropic (Claude 3.5/4.5).\n- **ollama**: Local/Ollama models."
+        },
+        "cortex.model.custom": {
+          "type": "string",
+          "default": "",
+          "description": "Override the model ID (e.g., 'gpt-6-preview'). Leave empty to use provider default."
+        },
+        "cortex.gemini.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for Google Gemini. If empty, uses stored secret."
+        },
+        "cortex.gemini.model": {
+          "type": "string",
+          "enum": [
+            "gemini-2.5-pro",
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash",
+            "gemini-2.0-flash-thinking-exp-01-21"
+          ],
+          "default": "gemini-2.5-flash",
+          "description": "Select Gemini model version."
+        },
+        "cortex.openai.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for OpenAI. If empty, uses stored secret."
+        },
+        "cortex.openai.model": {
+          "type": "string",
+          "enum": [
+            "gpt-5.2-codex",
+            "gpt-5-turbo",
+            "gpt-4o",
+            "gpt-4o-mini",
+            "o1-pro",
+            "o1-preview",
+            "o1-mini",
+            "gpt-4-turbo"
+          ],
+          "default": "gpt-4o",
+          "description": "Select OpenAI model."
+        },
+        "cortex.anthropic.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for Anthropic. If empty, uses stored secret."
+        },
+        "cortex.anthropic.model": {
+          "type": "string",
+          "enum": [
+            "claude-4.5-opus",
+            "claude-4.5-sonnet",
+            "claude-3-7-sonnet-20250219",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-opus-20240229",
+            "claude-3-haiku-20240307"
+          ],
+          "default": "claude-3-5-sonnet-20241022",
+          "description": "Select Anthropic model."
+        },
+        "cortex.mistral.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for Mistral AI."
+        },
+        "cortex.mistral.model": {
+          "type": "string",
+          "enum": [
+            "mistral-large-latest",
+            "codestral-latest",
+            "mistral-medium",
+            "mistral-small"
+          ],
+          "default": "codestral-latest",
+          "description": "Select Mistral model."
+        },
+        "cortex.deepseek.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for DeepSeek."
+        },
+        "cortex.deepseek.model": {
+          "type": "string",
+          "enum": [
+            "deepseek-coder-v4",
+            "deepseek-v3",
+            "deepseek-coder-v2"
+          ],
+          "default": "deepseek-v3",
+          "description": "Select DeepSeek model."
+        },
+        "cortex.ollama.baseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Base URL for Ollama/Local API."
+        },
+        "cortex.ollama.model": {
+          "type": "string",
+          "default": "deepseek-coder:latest",
+          "description": "Name of the local model to use in Ollama."
+        },
+        "cortex.analysis.depth": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum directory depth for AI analysis."
+        },
+        "cortex.analysis.maxFiles": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of files to analyze per area."
+        },
+        "cortex.analysis.chunkSize": {
+          "type": "number",
+          "default": 50000,
+          "description": "Safe context window chunk size."
+        },
+        "cortex.analysis.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/coverage/**",
+            "**/.git/**"
+          ],
+          "description": "Glob patterns to exclude from AI analysis."
+        },
         "cortex.proactiveCapture.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable or disable proactive context capture (tagging, suggestions)."
+        },
+        "cortex.autoScanOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan the entire project for context when opening VS Code."
+        },
+        "cortex.scan.sequential": {
+          "type": "boolean",
+          "default": true,
+          "description": "Force sequential scanning to avoid API rate limits (recommended for Free Tier)."
+        },
+        "cortex.scan.delayMs": {
+          "type": "number",
+          "default": 1000,
+          "description": "Delay in milliseconds between requests during sequential scan."
         }
       }
     },

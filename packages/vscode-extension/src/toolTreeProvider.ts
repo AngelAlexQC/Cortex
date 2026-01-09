@@ -12,6 +12,9 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ToolTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<ToolTreeItem | undefined | null>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+  // TODO:
+  // password
+
   private cachedTools: Map<string, Tool[]> = new Map();
   private currentWorkspacePath: string | null = null;
 

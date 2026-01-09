@@ -5,20 +5,21 @@
  */
 
 import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 import type { ModelAdapter } from './index';
+import { CortexConfig, AIProvider } from '../config';
 
 // Available OpenAI models (January 2026)
 export const OPENAI_MODELS = {
-  // GPT-5 Series (Released August 2025)
-  'gpt-5': { name: 'GPT-5', maxTokens: 128000 },
-  'gpt-5.2': { name: 'GPT-5.2 (Best Coding)', maxTokens: 128000 },
-  'gpt-5-mini': { name: 'GPT-5 Mini', maxTokens: 128000 },
-  'gpt-5-nano': { name: 'GPT-5 Nano', maxTokens: 32000 },
-  // Reasoning
-  o3: { name: 'o3 (Reasoning)', maxTokens: 128000 },
-  // Legacy
+  // GPT-5 Series (2025/2026)
+  'gpt-5.2-codex': { name: 'GPT-5.2 Codex', maxTokens: 128000 },
+  'gpt-5-turbo': { name: 'GPT-5 Turbo', maxTokens: 128000 },
   'gpt-4o': { name: 'GPT-4o', maxTokens: 128000 },
   'gpt-4o-mini': { name: 'GPT-4o Mini', maxTokens: 128000 },
+  // Reasoning
+  'o1-pro': { name: 'o1 Pro', maxTokens: 128000 },
+  'o1-preview': { name: 'o1 Preview', maxTokens: 128000 },
+  'o1-mini': { name: 'o1 Mini', maxTokens: 128000 },
 } as const;
 
 export type OpenAIModelId = keyof typeof OPENAI_MODELS;
@@ -46,7 +47,7 @@ export class OpenAIModelAdapter implements ModelAdapter {
 
   constructor(
     private apiKey: string,
-    private modelId: OpenAIModelId = 'gpt-5-mini'
+    private modelId: OpenAIModelId = 'gpt-4o-mini'
   ) {
     this.name = OPENAI_MODELS[modelId]?.name || modelId;
   }
@@ -113,11 +114,22 @@ export class OpenAIModelAdapter implements ModelAdapter {
    */
   static async fromSecrets(
     secrets: vscode.SecretStorage,
-    modelId: OpenAIModelId = 'gpt-5-mini'
+    modelId?: OpenAIModelId
   ): Promise<OpenAIModelAdapter | null> {
-    const apiKey = await secrets.get(SECRET_KEY);
+    // Priority: 1. VS Code Settings, 2. Secret Storage
+    let apiKey = CortexConfig.getApiKey(AIProvider.OpenAI);
+
+    if (!apiKey) {
+        apiKey = await secrets.get(SECRET_KEY) || '';
+    }
+
     if (!apiKey) return null;
-    return new OpenAIModelAdapter(apiKey, modelId);
+
+    // determine model: argument > config > default
+    const configuredModel = CortexConfig.getModel(AIProvider.OpenAI) as OpenAIModelId;
+    const finalModelId = modelId || configuredModel || 'gpt-4o';
+
+    return new OpenAIModelAdapter(apiKey, finalModelId);
   }
 
   /**
