@@ -252,10 +252,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Parent Sync
+        if: ${{ vars.PARENT_REPOSITORY != '' }}
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GH_TOKEN || secrets.SUBMODULE_PAT }}
-          repository: EcuaByte-lat/cortex-cloud
+          repository: ${{ vars.PARENT_REPOSITORY }}
           event-type: submodule-update
           client-payload: '{"submodule": "cortex"}'
 
