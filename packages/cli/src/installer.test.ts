@@ -282,7 +282,7 @@ describe('Cortex Installer', () => {
     });
 
     it('should handle write errors for Windsurf', () => {
-      fsMocks.writeFileSync.mockImplementationOnce((p: string) => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
         if (p.includes('windsurf')) throw new Error('Windsurf Write Fail');
       });
       const { results } = installUniversalRules('/test/project');
@@ -291,7 +291,7 @@ describe('Cortex Installer', () => {
     });
 
     it('should handle write errors for Cursor MDC', () => {
-      fsMocks.writeFileSync.mockImplementationOnce((p: string) => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
         if (p.includes('matches nothing')) return; // ignore others
         if (p.includes('mdc')) throw new Error('MDC Write Fail');
       });
@@ -301,7 +301,7 @@ describe('Cortex Installer', () => {
     });
 
     it('should handle write errors for Cody', () => {
-      fsMocks.writeFileSync.mockImplementationOnce((p: string) => {
+      fsMocks.writeFileSync.mockImplementation((p: string) => {
         if (p.includes('cody')) throw new Error('Cody Write Fail');
       });
       const { results } = installUniversalRules('/test/project');

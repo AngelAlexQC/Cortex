@@ -88,10 +88,10 @@ jobs:
         if: matrix.task == 'test'
         run: bun test packages/core packages/vscode-extension packages/shared packages/mcp-server --reporter=junit --reporter-outfile=reports/junit.xml --coverage --coverage-reporter=lcov --coverage-dir=reports/coverage
 
-      # CLI tests temporarily excluded due to CI environment mocking issues
-      # - name: Run CLI tests (isolated)
-      #   if: matrix.task == 'test'
-      #   run: bun test packages/cli
+      # CLI tests separated for isolation
+      - name: Run CLI tests (isolated)
+        if: matrix.task == 'test'
+        run: bun test packages/cli
 
       - name: Publish Test Results
         if: matrix.task == 'test' && (success() || failure())
