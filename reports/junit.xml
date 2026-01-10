@@ -1,315 +1,320 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="bun test" tests="169" assertions="307" failures="0" skipped="0" time="10.85173935">
+<testsuites name="bun test" tests="170" assertions="311" failures="0" skipped="0" time="9.136528113">
+  <testsuite name="packages/mcp-server/src/mcp-server.test.ts" file="packages/mcp-server/src/mcp-server.test.ts" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="lex-PC">
+    <testsuite name="MCP Server Smoke Test" file="packages/mcp-server/src/mcp-server.test.ts" line="8" tests="1" assertions="4" failures="0" skipped="0" time="0.096" hostname="lex-PC">
+      <testcase name="should start and respond to JSON-RPC" classname="MCP Server Smoke Test" time="0.096012" file="packages/mcp-server/src/mcp-server.test.ts" line="29" assertions="4" />
+    </testsuite>
+  </testsuite>
   <testsuite name="packages/core/src/embeddings.test.ts" file="packages/core/src/embeddings.test.ts" tests="19" assertions="28" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="Embeddings" file="packages/core/src/embeddings.test.ts" line="16" tests="19" assertions="28" failures="0" skipped="0" time="0" hostname="lex-PC">
       <testsuite name="cosineSimilarity" file="packages/core/src/embeddings.test.ts" line="17" tests="6" assertions="6" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should return 1 for identical vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000309" file="packages/core/src/embeddings.test.ts" line="18" assertions="1" />
-        <testcase name="should return 0 for orthogonal vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000052" file="packages/core/src/embeddings.test.ts" line="22" assertions="1" />
-        <testcase name="should return -1 for opposite vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000023" file="packages/core/src/embeddings.test.ts" line="26" assertions="1" />
-        <testcase name="should handle normalized vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000057" file="packages/core/src/embeddings.test.ts" line="30" assertions="1" />
-        <testcase name="should throw for vectors of different lengths" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000108" file="packages/core/src/embeddings.test.ts" line="36" assertions="1" />
-        <testcase name="should handle zero vectors gracefully" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000022" file="packages/core/src/embeddings.test.ts" line="40" assertions="1" />
+        <testcase name="should return 1 for identical vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000098" file="packages/core/src/embeddings.test.ts" line="18" assertions="1" />
+        <testcase name="should return 0 for orthogonal vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000047" file="packages/core/src/embeddings.test.ts" line="22" assertions="1" />
+        <testcase name="should return -1 for opposite vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000021" file="packages/core/src/embeddings.test.ts" line="26" assertions="1" />
+        <testcase name="should handle normalized vectors" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000033" file="packages/core/src/embeddings.test.ts" line="30" assertions="1" />
+        <testcase name="should throw for vectors of different lengths" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000073" file="packages/core/src/embeddings.test.ts" line="36" assertions="1" />
+        <testcase name="should handle zero vectors gracefully" classname="cosineSimilarity &amp;gt; Embeddings" time="0.000016" file="packages/core/src/embeddings.test.ts" line="40" assertions="1" />
       </testsuite>
       <testsuite name="serializeEmbedding / deserializeEmbedding" file="packages/core/src/embeddings.test.ts" line="45" tests="3" assertions="7" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should serialize and deserialize correctly" classname="serializeEmbedding / deserializeEmbedding &amp;gt; Embeddings" time="0.000288" file="packages/core/src/embeddings.test.ts" line="46" assertions="5" />
-        <testcase name="should handle empty embedding" classname="serializeEmbedding / deserializeEmbedding &amp;gt; Embeddings" time="0.000097" file="packages/core/src/embeddings.test.ts" line="57" assertions="1" />
-        <testcase name="should produce correct byte length" classname="serializeEmbedding / deserializeEmbedding &amp;gt; Embeddings" time="0.00004" file="packages/core/src/embeddings.test.ts" line="63" assertions="1" />
+        <testcase name="should serialize and deserialize correctly" classname="serializeEmbedding / deserializeEmbedding &amp;gt; Embeddings" time="0.000158" file="packages/core/src/embeddings.test.ts" line="46" assertions="5" />
+        <testcase name="should handle empty embedding" classname="serializeEmbedding / deserializeEmbedding &amp;gt; Embeddings" time="0.000038" file="packages/core/src/embeddings.test.ts" line="57" assertions="1" />
+        <testcase name="should produce correct byte length" classname="serializeEmbedding / deserializeEmbedding &amp;gt; Embeddings" time="0.000017" file="packages/core/src/embeddings.test.ts" line="63" assertions="1" />
       </testsuite>
       <testsuite name="OllamaEmbeddings" file="packages/core/src/embeddings.test.ts" line="70" tests="6" assertions="8" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should create instance with default config" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000334" file="packages/core/src/embeddings.test.ts" line="81" assertions="2" />
-        <testcase name="should create instance with custom config" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.00012" file="packages/core/src/embeddings.test.ts" line="87" assertions="2" />
-        <testcase name="should return false for isAvailable when Ollama is not running" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000827" file="packages/core/src/embeddings.test.ts" line="93" assertions="1" />
-        <testcase name="should return match when model is available" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000898" file="packages/core/src/embeddings.test.ts" line="103" assertions="1" />
-        <testcase name="should embed batch successfully" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000748" file="packages/core/src/embeddings.test.ts" line="118" assertions="1" />
-        <testcase name="should throw on embed error" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000533" file="packages/core/src/embeddings.test.ts" line="137" assertions="1" />
+        <testcase name="should create instance with default config" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000079" file="packages/core/src/embeddings.test.ts" line="81" assertions="2" />
+        <testcase name="should create instance with custom config" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000056" file="packages/core/src/embeddings.test.ts" line="87" assertions="2" />
+        <testcase name="should return false for isAvailable when Ollama is not running" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000465" file="packages/core/src/embeddings.test.ts" line="93" assertions="1" />
+        <testcase name="should return match when model is available" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000308" file="packages/core/src/embeddings.test.ts" line="103" assertions="1" />
+        <testcase name="should embed batch successfully" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.00032" file="packages/core/src/embeddings.test.ts" line="118" assertions="1" />
+        <testcase name="should throw on embed error" classname="OllamaEmbeddings &amp;gt; Embeddings" time="0.000265" file="packages/core/src/embeddings.test.ts" line="137" assertions="1" />
       </testsuite>
-      <testsuite name="OpenAIEmbeddings" file="packages/core/src/embeddings.test.ts" line="144" tests="2" assertions="5" failures="0" skipped="0" time="0.001" hostname="lex-PC">
-        <testcase name="should initialize with API key" classname="OpenAIEmbeddings &amp;gt; Embeddings" time="0.000476" file="packages/core/src/embeddings.test.ts" line="155" assertions="2" />
-        <testcase name="should embed batch using OpenAI API" classname="OpenAIEmbeddings &amp;gt; Embeddings" time="0.001585" file="packages/core/src/embeddings.test.ts" line="161" assertions="3" />
+      <testsuite name="OpenAIEmbeddings" file="packages/core/src/embeddings.test.ts" line="144" tests="2" assertions="5" failures="0" skipped="0" time="0" hostname="lex-PC">
+        <testcase name="should initialize with API key" classname="OpenAIEmbeddings &amp;gt; Embeddings" time="0.000094" file="packages/core/src/embeddings.test.ts" line="155" assertions="2" />
+        <testcase name="should embed batch using OpenAI API" classname="OpenAIEmbeddings &amp;gt; Embeddings" time="0.000379" file="packages/core/src/embeddings.test.ts" line="161" assertions="3" />
       </testsuite>
       <testsuite name="createEmbeddingProvider" file="packages/core/src/embeddings.test.ts" line="184" tests="2" assertions="2" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should prefer Ollama if available" classname="createEmbeddingProvider &amp;gt; Embeddings" time="0.000577" file="packages/core/src/embeddings.test.ts" line="195" assertions="1" />
-        <testcase name="should fallback to OpenAI if Ollama unavailable" classname="createEmbeddingProvider &amp;gt; Embeddings" time="0.000336" file="packages/core/src/embeddings.test.ts" line="207" assertions="1" />
+        <testcase name="should prefer Ollama if available" classname="createEmbeddingProvider &amp;gt; Embeddings" time="0.000308" file="packages/core/src/embeddings.test.ts" line="195" assertions="1" />
+        <testcase name="should fallback to OpenAI if Ollama unavailable" classname="createEmbeddingProvider &amp;gt; Embeddings" time="0.000199" file="packages/core/src/embeddings.test.ts" line="207" assertions="1" />
       </testsuite>
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/src/crypto.test.ts" file="packages/core/src/crypto.test.ts" tests="3" assertions="4" failures="0" skipped="0" time="0" hostname="lex-PC">
-    <testsuite name="Crypto" file="packages/core/src/crypto.test.ts" line="4" tests="3" assertions="4" failures="0" skipped="0" time="0.068" hostname="lex-PC">
-      <testcase name="should encrypt and decrypt correctly" classname="Crypto" time="0.035459" file="packages/core/src/crypto.test.ts" line="8" assertions="2" />
-      <testcase name="should fail to decrypt with wrong password" classname="Crypto" time="0.033119" file="packages/core/src/crypto.test.ts" line="16" assertions="1" />
-      <testcase name="should fail with invalid format" classname="Crypto" time="0.000201" file="packages/core/src/crypto.test.ts" line="22" assertions="1" />
+    <testsuite name="Crypto" file="packages/core/src/crypto.test.ts" line="4" tests="3" assertions="4" failures="0" skipped="0" time="0.05" hostname="lex-PC">
+      <testcase name="should encrypt and decrypt correctly" classname="Crypto" time="0.025921" file="packages/core/src/crypto.test.ts" line="8" assertions="2" />
+      <testcase name="should fail to decrypt with wrong password" classname="Crypto" time="0.025179" file="packages/core/src/crypto.test.ts" line="16" assertions="1" />
+      <testcase name="should fail with invalid format" classname="Crypto" time="0.000196" file="packages/core/src/crypto.test.ts" line="22" assertions="1" />
     </testsuite>
   </testsuite>
   <testsuite name="packages/vscode-extension/src/__tests__/toolScanner.test.ts" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" tests="19" assertions="39" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="ToolScanner" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="8" tests="19" assertions="39" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testsuite name="scanNpmScripts" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="22" tests="5" assertions="9" failures="0" skipped="0" time="0.015" hostname="lex-PC">
-        <testcase name="should detect npm scripts from package.json" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.008202" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="23" assertions="4" />
-        <testcase name="should generate correct npm run commands" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.001629" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="43" assertions="2" />
-        <testcase name="should handle missing package.json gracefully" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.001353" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="56" assertions="1" />
-        <testcase name="should handle invalid JSON gracefully" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.004743" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="63" assertions="1" />
-        <testcase name="should handle package.json without scripts" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.001149" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="72" assertions="1" />
+      <testsuite name="scanNpmScripts" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="22" tests="5" assertions="9" failures="0" skipped="0" time="0.006" hostname="lex-PC">
+        <testcase name="should detect npm scripts from package.json" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.004774" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="23" assertions="4" />
+        <testcase name="should generate correct npm run commands" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.001208" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="43" assertions="2" />
+        <testcase name="should handle missing package.json gracefully" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.000782" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="56" assertions="1" />
+        <testcase name="should handle invalid JSON gracefully" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.001414" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="63" assertions="1" />
+        <testcase name="should handle package.json without scripts" classname="scanNpmScripts &amp;gt; ToolScanner" time="0.000789" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="72" assertions="1" />
       </testsuite>
-      <testsuite name="scanMakefile" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="82" tests="4" assertions="7" failures="0" skipped="0" time="0.002" hostname="lex-PC">
-        <testcase name="should detect Makefile targets" classname="scanMakefile &amp;gt; ToolScanner" time="0.001373" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="83" assertions="3" />
-        <testcase name="should skip internal targets starting with dot" classname="scanMakefile &amp;gt; ToolScanner" time="0.001037" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="106" assertions="1" />
-        <testcase name="should generate correct make commands" classname="scanMakefile &amp;gt; ToolScanner" time="0.000882" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="123" assertions="2" />
-        <testcase name="should handle missing Makefile gracefully" classname="scanMakefile &amp;gt; ToolScanner" time="0.00073" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="133" assertions="1" />
+      <testsuite name="scanMakefile" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="82" tests="4" assertions="7" failures="0" skipped="0" time="0.001" hostname="lex-PC">
+        <testcase name="should detect Makefile targets" classname="scanMakefile &amp;gt; ToolScanner" time="0.001562" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="83" assertions="3" />
+        <testcase name="should skip internal targets starting with dot" classname="scanMakefile &amp;gt; ToolScanner" time="0.000769" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="106" assertions="1" />
+        <testcase name="should generate correct make commands" classname="scanMakefile &amp;gt; ToolScanner" time="0.000682" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="123" assertions="2" />
+        <testcase name="should handle missing Makefile gracefully" classname="scanMakefile &amp;gt; ToolScanner" time="0.000609" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="133" assertions="1" />
       </testsuite>
       <testsuite name="scanDockerCompose" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="141" tests="3" assertions="9" failures="0" skipped="0" time="0.002" hostname="lex-PC">
-        <testcase name="should detect docker-compose.yml" classname="scanDockerCompose &amp;gt; ToolScanner" time="0.000861" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="142" assertions="3" />
-        <testcase name="should detect compose.yaml" classname="scanDockerCompose &amp;gt; ToolScanner" time="0.001609" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="153" assertions="2" />
-        <testcase name="should add standard docker-compose commands" classname="scanDockerCompose &amp;gt; ToolScanner" time="0.001251" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="163" assertions="4" />
+        <testcase name="should detect docker-compose.yml" classname="scanDockerCompose &amp;gt; ToolScanner" time="0.000628" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="142" assertions="3" />
+        <testcase name="should detect compose.yaml" classname="scanDockerCompose &amp;gt; ToolScanner" time="0.00117" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="153" assertions="2" />
+        <testcase name="should add standard docker-compose commands" classname="scanDockerCompose &amp;gt; ToolScanner" time="0.001289" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="163" assertions="4" />
       </testsuite>
-      <testsuite name="scanScripts" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="177" tests="5" assertions="7" failures="0" skipped="0" time="0.006" hostname="lex-PC">
-        <testcase name="should detect shell scripts in scripts directory" classname="scanScripts &amp;gt; ToolScanner" time="0.001832" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="178" assertions="2" />
-        <testcase name="should detect scripts in bin directory" classname="scanScripts &amp;gt; ToolScanner" time="0.002451" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="190" assertions="1" />
-        <testcase name="should detect PowerShell scripts" classname="scanScripts &amp;gt; ToolScanner" time="0.001707" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="200" assertions="2" />
-        <testcase name="should detect batch files" classname="scanScripts &amp;gt; ToolScanner" time="0.001429" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="211" assertions="1" />
-        <testcase name="should handle missing script directories gracefully" classname="scanScripts &amp;gt; ToolScanner" time="0.001781" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="221" assertions="1" />
+      <testsuite name="scanScripts" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="177" tests="5" assertions="7" failures="0" skipped="0" time="0.004" hostname="lex-PC">
+        <testcase name="should detect shell scripts in scripts directory" classname="scanScripts &amp;gt; ToolScanner" time="0.001271" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="178" assertions="2" />
+        <testcase name="should detect scripts in bin directory" classname="scanScripts &amp;gt; ToolScanner" time="0.001835" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="190" assertions="1" />
+        <testcase name="should detect PowerShell scripts" classname="scanScripts &amp;gt; ToolScanner" time="0.002221" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="200" assertions="2" />
+        <testcase name="should detect batch files" classname="scanScripts &amp;gt; ToolScanner" time="0.000997" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="211" assertions="1" />
+        <testcase name="should handle missing script directories gracefully" classname="scanScripts &amp;gt; ToolScanner" time="0.000613" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="221" assertions="1" />
       </testsuite>
-      <testsuite name="scan (integration)" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="229" tests="2" assertions="7" failures="0" skipped="0" time="0.004" hostname="lex-PC">
-        <testcase name="should combine all tool types" classname="scan (integration) &amp;gt; ToolScanner" time="0.003518" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="230" assertions="5" />
-        <testcase name="should return empty result for empty workspace" classname="scan (integration) &amp;gt; ToolScanner" time="0.001372" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="259" assertions="2" />
+      <testsuite name="scan (integration)" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="229" tests="2" assertions="7" failures="0" skipped="0" time="0.001" hostname="lex-PC">
+        <testcase name="should combine all tool types" classname="scan (integration) &amp;gt; ToolScanner" time="0.001612" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="230" assertions="5" />
+        <testcase name="should return empty result for empty workspace" classname="scan (integration) &amp;gt; ToolScanner" time="0.000522" file="packages/vscode-extension/src/__tests__/toolScanner.test.ts" line="259" assertions="2" />
       </testsuite>
     </testsuite>
   </testsuite>
   <testsuite name="packages/vscode-extension/src/test/dashboard.test.ts" file="packages/vscode-extension/src/test/dashboard.test.ts" tests="3" assertions="5" failures="0" skipped="0" time="0" hostname="lex-PC">
-    <testsuite name="Dashboard Logic Tests" file="packages/vscode-extension/src/test/dashboard.test.ts" line="3" tests="3" assertions="5" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testcase name="Deduplication on Hydrate" classname="Dashboard Logic Tests" time="0.00028" file="packages/vscode-extension/src/test/dashboard.test.ts" line="4" assertions="3" />
-      <testcase name="Project Name Cleaning" classname="Dashboard Logic Tests" time="0.000259" file="packages/vscode-extension/src/test/dashboard.test.ts" line="45" assertions="1" />
-      <testcase name="Filter Logic Mapping" classname="Dashboard Logic Tests" time="0.000129" file="packages/vscode-extension/src/test/dashboard.test.ts" line="55" assertions="1" />
+    <testsuite name="Dashboard Logic Tests" file="packages/vscode-extension/src/test/dashboard.test.ts" line="3" tests="3" assertions="5" failures="0" skipped="0" time="0.001" hostname="lex-PC">
+      <testcase name="Deduplication on Hydrate" classname="Dashboard Logic Tests" time="0.001295" file="packages/vscode-extension/src/test/dashboard.test.ts" line="4" assertions="3" />
+      <testcase name="Project Name Cleaning" classname="Dashboard Logic Tests" time="0.000229" file="packages/vscode-extension/src/test/dashboard.test.ts" line="45" assertions="1" />
+      <testcase name="Filter Logic Mapping" classname="Dashboard Logic Tests" time="0.000083" file="packages/vscode-extension/src/test/dashboard.test.ts" line="55" assertions="1" />
     </testsuite>
   </testsuite>
   <testsuite name="packages/vscode-extension/src/test/dashboard_handshake.test.ts" file="packages/vscode-extension/src/test/dashboard_handshake.test.ts" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="Dashboard Handshake Regression" file="packages/vscode-extension/src/test/dashboard_handshake.test.ts" line="3" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testcase name="Extension Receives Ready and Responds with System Status" classname="Dashboard Handshake Regression" time="0.000532" file="packages/vscode-extension/src/test/dashboard_handshake.test.ts" line="22" assertions="3" />
+      <testcase name="Extension Receives Ready and Responds with System Status" classname="Dashboard Handshake Regression" time="0.000189" file="packages/vscode-extension/src/test/dashboard_handshake.test.ts" line="22" assertions="3" />
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/src/__tests__/storage.test.ts" file="packages/core/src/__tests__/storage.test.ts" tests="64" assertions="99" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="MemoryStore" file="packages/core/src/__tests__/storage.test.ts" line="7" tests="64" assertions="99" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testsuite name="add" file="packages/core/src/__tests__/storage.test.ts" line="26" tests="3" assertions="5" failures="0" skipped="0" time="0.308" hostname="lex-PC">
-        <testcase name="should add a memory and return its ID" classname="add &amp;gt; MemoryStore" time="0.122273" file="packages/core/src/__tests__/storage.test.ts" line="27" assertions="1" />
-        <testcase name="should add a memory with tags and metadata" classname="add &amp;gt; MemoryStore" time="0.092288" file="packages/core/src/__tests__/storage.test.ts" line="37" assertions="3" />
-        <testcase name="should automatically set projectId" classname="add &amp;gt; MemoryStore" time="0.094767" file="packages/core/src/__tests__/storage.test.ts" line="52" assertions="1" />
+      <testsuite name="add" file="packages/core/src/__tests__/storage.test.ts" line="26" tests="3" assertions="5" failures="0" skipped="0" time="0.262" hostname="lex-PC">
+        <testcase name="should add a memory and return its ID" classname="add &amp;gt; MemoryStore" time="0.101637" file="packages/core/src/__tests__/storage.test.ts" line="27" assertions="1" />
+        <testcase name="should add a memory with tags and metadata" classname="add &amp;gt; MemoryStore" time="0.092817" file="packages/core/src/__tests__/storage.test.ts" line="37" assertions="3" />
+        <testcase name="should automatically set projectId" classname="add &amp;gt; MemoryStore" time="0.069439" file="packages/core/src/__tests__/storage.test.ts" line="52" assertions="1" />
       </testsuite>
-      <testsuite name="get" file="packages/core/src/__tests__/storage.test.ts" line="64" tests="3" assertions="5" failures="0" skipped="0" time="0.298" hostname="lex-PC">
-        <testcase name="should retrieve a memory by ID" classname="get &amp;gt; MemoryStore" time="0.111725" file="packages/core/src/__tests__/storage.test.ts" line="65" assertions="3" />
-        <testcase name="should return null for non-existent ID" classname="get &amp;gt; MemoryStore" time="0.093627" file="packages/core/src/__tests__/storage.test.ts" line="78" assertions="1" />
-        <testcase name="should not retrieve memories from other projects" classname="get &amp;gt; MemoryStore" time="0.094156" file="packages/core/src/__tests__/storage.test.ts" line="83" assertions="1" />
+      <testsuite name="get" file="packages/core/src/__tests__/storage.test.ts" line="64" tests="3" assertions="5" failures="0" skipped="0" time="0.221" hostname="lex-PC">
+        <testcase name="should retrieve a memory by ID" classname="get &amp;gt; MemoryStore" time="0.081053" file="packages/core/src/__tests__/storage.test.ts" line="65" assertions="3" />
+        <testcase name="should return null for non-existent ID" classname="get &amp;gt; MemoryStore" time="0.068703" file="packages/core/src/__tests__/storage.test.ts" line="78" assertions="1" />
+        <testcase name="should not retrieve memories from other projects" classname="get &amp;gt; MemoryStore" time="0.072858" file="packages/core/src/__tests__/storage.test.ts" line="83" assertions="1" />
       </testsuite>
-      <testsuite name="search" file="packages/core/src/__tests__/storage.test.ts" line="100" tests="6" assertions="7" failures="0" skipped="0" time="0.706" hostname="lex-PC">
-        <testcase name="should find memories by content" classname="search &amp;gt; MemoryStore" time="0.113597" file="packages/core/src/__tests__/storage.test.ts" line="112" assertions="1" />
-        <testcase name="should be case-insensitive" classname="search &amp;gt; MemoryStore" time="0.119059" file="packages/core/src/__tests__/storage.test.ts" line="117" assertions="1" />
-        <testcase name="should filter by type" classname="search &amp;gt; MemoryStore" time="0.124412" file="packages/core/src/__tests__/storage.test.ts" line="122" assertions="2" />
-        <testcase name="should limit results" classname="search &amp;gt; MemoryStore" time="0.112741" file="packages/core/src/__tests__/storage.test.ts" line="128" assertions="1" />
-        <testcase name="should return empty array when no matches" classname="search &amp;gt; MemoryStore" time="0.118931" file="packages/core/src/__tests__/storage.test.ts" line="133" assertions="1" />
-        <testcase name="should only search within current project" classname="search &amp;gt; MemoryStore" time="0.120734" file="packages/core/src/__tests__/storage.test.ts" line="138" assertions="1" />
+      <testsuite name="search" file="packages/core/src/__tests__/storage.test.ts" line="100" tests="6" assertions="7" failures="0" skipped="0" time="0.59" hostname="lex-PC">
+        <testcase name="should find memories by content" classname="search &amp;gt; MemoryStore" time="0.087004" file="packages/core/src/__tests__/storage.test.ts" line="112" assertions="1" />
+        <testcase name="should be case-insensitive" classname="search &amp;gt; MemoryStore" time="0.094678" file="packages/core/src/__tests__/storage.test.ts" line="117" assertions="1" />
+        <testcase name="should filter by type" classname="search &amp;gt; MemoryStore" time="0.095651" file="packages/core/src/__tests__/storage.test.ts" line="122" assertions="2" />
+        <testcase name="should limit results" classname="search &amp;gt; MemoryStore" time="0.092522" file="packages/core/src/__tests__/storage.test.ts" line="128" assertions="1" />
+        <testcase name="should return empty array when no matches" classname="search &amp;gt; MemoryStore" time="0.093152" file="packages/core/src/__tests__/storage.test.ts" line="133" assertions="1" />
+        <testcase name="should only search within current project" classname="search &amp;gt; MemoryStore" time="0.129805" file="packages/core/src/__tests__/storage.test.ts" line="138" assertions="1" />
       </testsuite>
-      <testsuite name="list" file="packages/core/src/__tests__/storage.test.ts" line="150" tests="4" assertions="7" failures="0" skipped="0" time="0.456" hostname="lex-PC">
-        <testcase name="should list all memories" classname="list &amp;gt; MemoryStore" time="0.112749" file="packages/core/src/__tests__/storage.test.ts" line="151" assertions="1" />
-        <testcase name="should filter by type" classname="list &amp;gt; MemoryStore" time="0.107956" file="packages/core/src/__tests__/storage.test.ts" line="160" assertions="2" />
-        <testcase name="should limit results" classname="list &amp;gt; MemoryStore" time="0.131316" file="packages/core/src/__tests__/storage.test.ts" line="169" assertions="1" />
-        <testcase name="should return all memories ordered by creation time" classname="list &amp;gt; MemoryStore" time="0.106184" file="packages/core/src/__tests__/storage.test.ts" line="178" assertions="3" />
+      <testsuite name="list" file="packages/core/src/__tests__/storage.test.ts" line="150" tests="4" assertions="7" failures="0" skipped="0" time="0.346" hostname="lex-PC">
+        <testcase name="should list all memories" classname="list &amp;gt; MemoryStore" time="0.088352" file="packages/core/src/__tests__/storage.test.ts" line="151" assertions="1" />
+        <testcase name="should filter by type" classname="list &amp;gt; MemoryStore" time="0.081394" file="packages/core/src/__tests__/storage.test.ts" line="160" assertions="2" />
+        <testcase name="should limit results" classname="list &amp;gt; MemoryStore" time="0.096676" file="packages/core/src/__tests__/storage.test.ts" line="169" assertions="1" />
+        <testcase name="should return all memories ordered by creation time" classname="list &amp;gt; MemoryStore" time="0.081663" file="packages/core/src/__tests__/storage.test.ts" line="178" assertions="3" />
       </testsuite>
-      <testsuite name="update" file="packages/core/src/__tests__/storage.test.ts" line="190" tests="13" assertions="23" failures="0" skipped="0" time="2.468" hostname="lex-PC">
-        <testcase name="should update memory content" classname="update &amp;gt; MemoryStore" time="0.09988" file="packages/core/src/__tests__/storage.test.ts" line="191" assertions="4" />
-        <testcase name="should update memory type" classname="update &amp;gt; MemoryStore" time="0.10699" file="packages/core/src/__tests__/storage.test.ts" line="207" assertions="1" />
-        <testcase name="should update tags" classname="update &amp;gt; MemoryStore" time="0.101845" file="packages/core/src/__tests__/storage.test.ts" line="220" assertions="1" />
-        <testcase name="should update metadata" classname="update &amp;gt; MemoryStore" time="0.10134" file="packages/core/src/__tests__/storage.test.ts" line="234" assertions="1" />
-        <testcase name="should update multiple fields at once" classname="update &amp;gt; MemoryStore" time="0.105348" file="packages/core/src/__tests__/storage.test.ts" line="248" assertions="5" />
-        <testcase name="should return false for non-existent memory" classname="update &amp;gt; MemoryStore" time="0.085052" file="packages/core/src/__tests__/storage.test.ts" line="272" assertions="1" />
-        <testcase name="should return false when no updates provided" classname="update &amp;gt; MemoryStore" time="0.097929" file="packages/core/src/__tests__/storage.test.ts" line="277" assertions="1" />
-        <testcase name="should not update memories from other projects" classname="update &amp;gt; MemoryStore" time="0.095692" file="packages/core/src/__tests__/storage.test.ts" line="288" assertions="2" />
-        <testcase name="should update the updated_at timestamp" classname="update &amp;gt; MemoryStore" time="1.270791" file="packages/core/src/__tests__/storage.test.ts" line="308" assertions="2" />
-        <testcase name="should handle clearing tags and metadata" classname="update &amp;gt; MemoryStore" time="0.114149" file="packages/core/src/__tests__/storage.test.ts" line="328" assertions="2" />
-        <testcase name="should throw error when updating with invalid type" classname="update &amp;gt; MemoryStore" time="0.104778" file="packages/core/src/__tests__/storage.test.ts" line="344" assertions="1" />
-        <testcase name="should throw error when updating with empty content" classname="update &amp;gt; MemoryStore" time="0.091157" file="packages/core/src/__tests__/storage.test.ts" line="356" assertions="1" />
-        <testcase name="should throw error when updating with empty source" classname="update &amp;gt; MemoryStore" time="0.10014" file="packages/core/src/__tests__/storage.test.ts" line="368" assertions="1" />
+      <testsuite name="update" file="packages/core/src/__tests__/storage.test.ts" line="190" tests="13" assertions="23" failures="0" skipped="0" time="2.159" hostname="lex-PC">
+        <testcase name="should update memory content" classname="update &amp;gt; MemoryStore" time="0.07974" file="packages/core/src/__tests__/storage.test.ts" line="191" assertions="4" />
+        <testcase name="should update memory type" classname="update &amp;gt; MemoryStore" time="0.079418" file="packages/core/src/__tests__/storage.test.ts" line="207" assertions="1" />
+        <testcase name="should update tags" classname="update &amp;gt; MemoryStore" time="0.084763" file="packages/core/src/__tests__/storage.test.ts" line="220" assertions="1" />
+        <testcase name="should update metadata" classname="update &amp;gt; MemoryStore" time="0.079677" file="packages/core/src/__tests__/storage.test.ts" line="234" assertions="1" />
+        <testcase name="should update multiple fields at once" classname="update &amp;gt; MemoryStore" time="0.098961" file="packages/core/src/__tests__/storage.test.ts" line="248" assertions="5" />
+        <testcase name="should return false for non-existent memory" classname="update &amp;gt; MemoryStore" time="0.071902" file="packages/core/src/__tests__/storage.test.ts" line="272" assertions="1" />
+        <testcase name="should return false when no updates provided" classname="update &amp;gt; MemoryStore" time="0.07045" file="packages/core/src/__tests__/storage.test.ts" line="277" assertions="1" />
+        <testcase name="should not update memories from other projects" classname="update &amp;gt; MemoryStore" time="0.073197" file="packages/core/src/__tests__/storage.test.ts" line="288" assertions="2" />
+        <testcase name="should update the updated_at timestamp" classname="update &amp;gt; MemoryStore" time="1.1923" file="packages/core/src/__tests__/storage.test.ts" line="308" assertions="2" />
+        <testcase name="should handle clearing tags and metadata" classname="update &amp;gt; MemoryStore" time="0.084677" file="packages/core/src/__tests__/storage.test.ts" line="328" assertions="2" />
+        <testcase name="should throw error when updating with invalid type" classname="update &amp;gt; MemoryStore" time="0.087237" file="packages/core/src/__tests__/storage.test.ts" line="344" assertions="1" />
+        <testcase name="should throw error when updating with empty content" classname="update &amp;gt; MemoryStore" time="0.082063" file="packages/core/src/__tests__/storage.test.ts" line="356" assertions="1" />
+        <testcase name="should throw error when updating with empty source" classname="update &amp;gt; MemoryStore" time="0.081082" file="packages/core/src/__tests__/storage.test.ts" line="368" assertions="1" />
       </testsuite>
-      <testsuite name="validation" file="packages/core/src/__tests__/storage.test.ts" line="381" tests="4" assertions="4" failures="0" skipped="0" time="0.339" hostname="lex-PC">
-        <testcase name="should throw error when adding with invalid type" classname="validation &amp;gt; MemoryStore" time="0.081024" file="packages/core/src/__tests__/storage.test.ts" line="382" assertions="1" />
-        <testcase name="should throw error when adding with empty content" classname="validation &amp;gt; MemoryStore" time="0.08232" file="packages/core/src/__tests__/storage.test.ts" line="392" assertions="1" />
-        <testcase name="should throw error when adding with whitespace-only content" classname="validation &amp;gt; MemoryStore" time="0.087877" file="packages/core/src/__tests__/storage.test.ts" line="402" assertions="1" />
-        <testcase name="should throw error when adding with empty source" classname="validation &amp;gt; MemoryStore" time="0.089767" file="packages/core/src/__tests__/storage.test.ts" line="412" assertions="1" />
+      <testsuite name="validation" file="packages/core/src/__tests__/storage.test.ts" line="381" tests="4" assertions="4" failures="0" skipped="0" time="0.269" hostname="lex-PC">
+        <testcase name="should throw error when adding with invalid type" classname="validation &amp;gt; MemoryStore" time="0.06758" file="packages/core/src/__tests__/storage.test.ts" line="382" assertions="1" />
+        <testcase name="should throw error when adding with empty content" classname="validation &amp;gt; MemoryStore" time="0.064023" file="packages/core/src/__tests__/storage.test.ts" line="392" assertions="1" />
+        <testcase name="should throw error when adding with whitespace-only content" classname="validation &amp;gt; MemoryStore" time="0.07384" file="packages/core/src/__tests__/storage.test.ts" line="402" assertions="1" />
+        <testcase name="should throw error when adding with empty source" classname="validation &amp;gt; MemoryStore" time="0.065504" file="packages/core/src/__tests__/storage.test.ts" line="412" assertions="1" />
       </testsuite>
-      <testsuite name="delete" file="packages/core/src/__tests__/storage.test.ts" line="423" tests="2" assertions="3" failures="0" skipped="0" time="0.201" hostname="lex-PC">
-        <testcase name="should delete a memory" classname="delete &amp;gt; MemoryStore" time="0.103291" file="packages/core/src/__tests__/storage.test.ts" line="424" assertions="2" />
-        <testcase name="should not delete memories from other projects" classname="delete &amp;gt; MemoryStore" time="0.098102" file="packages/core/src/__tests__/storage.test.ts" line="438" assertions="1" />
+      <testsuite name="delete" file="packages/core/src/__tests__/storage.test.ts" line="423" tests="2" assertions="3" failures="0" skipped="0" time="0.255" hostname="lex-PC">
+        <testcase name="should delete a memory" classname="delete &amp;gt; MemoryStore" time="0.124693" file="packages/core/src/__tests__/storage.test.ts" line="424" assertions="2" />
+        <testcase name="should not delete memories from other projects" classname="delete &amp;gt; MemoryStore" time="0.13179" file="packages/core/src/__tests__/storage.test.ts" line="438" assertions="1" />
       </testsuite>
-      <testsuite name="clear" file="packages/core/src/__tests__/storage.test.ts" line="454" tests="2" assertions="3" failures="0" skipped="0" time="0.222" hostname="lex-PC">
-        <testcase name="should clear all memories for current project" classname="clear &amp;gt; MemoryStore" time="0.11321" file="packages/core/src/__tests__/storage.test.ts" line="455" assertions="2" />
-        <testcase name="should not clear memories from other projects" classname="clear &amp;gt; MemoryStore" time="0.109596" file="packages/core/src/__tests__/storage.test.ts" line="466" assertions="1" />
+      <testsuite name="clear" file="packages/core/src/__tests__/storage.test.ts" line="454" tests="2" assertions="3" failures="0" skipped="0" time="0.182" hostname="lex-PC">
+        <testcase name="should clear all memories for current project" classname="clear &amp;gt; MemoryStore" time="0.098013" file="packages/core/src/__tests__/storage.test.ts" line="455" assertions="2" />
+        <testcase name="should not clear memories from other projects" classname="clear &amp;gt; MemoryStore" time="0.084279" file="packages/core/src/__tests__/storage.test.ts" line="466" assertions="1" />
       </testsuite>
-      <testsuite name="stats" file="packages/core/src/__tests__/storage.test.ts" line="481" tests="2" assertions="5" failures="0" skipped="0" time="0.248" hostname="lex-PC">
-        <testcase name="should return correct statistics" classname="stats &amp;gt; MemoryStore" time="0.121153" file="packages/core/src/__tests__/storage.test.ts" line="488" assertions="4" />
-        <testcase name="should only count memories from current project" classname="stats &amp;gt; MemoryStore" time="0.127129" file="packages/core/src/__tests__/storage.test.ts" line="497" assertions="1" />
+      <testsuite name="stats" file="packages/core/src/__tests__/storage.test.ts" line="481" tests="2" assertions="5" failures="0" skipped="0" time="0.197" hostname="lex-PC">
+        <testcase name="should return correct statistics" classname="stats &amp;gt; MemoryStore" time="0.092473" file="packages/core/src/__tests__/storage.test.ts" line="488" assertions="4" />
+        <testcase name="should only count memories from current project" classname="stats &amp;gt; MemoryStore" time="0.10553" file="packages/core/src/__tests__/storage.test.ts" line="497" assertions="1" />
       </testsuite>
-      <testsuite name="project isolation" file="packages/core/src/__tests__/storage.test.ts" line="508" tests="2" assertions="5" failures="0" skipped="0" time="0.206" hostname="lex-PC">
-        <testcase name="should isolate memories between projects" classname="project isolation &amp;gt; MemoryStore" time="0.100305" file="packages/core/src/__tests__/storage.test.ts" line="509" assertions="4" />
-        <testcase name="should support global mode to access all projects" classname="project isolation &amp;gt; MemoryStore" time="0.106396" file="packages/core/src/__tests__/storage.test.ts" line="526" assertions="1" />
+      <testsuite name="project isolation" file="packages/core/src/__tests__/storage.test.ts" line="508" tests="2" assertions="5" failures="0" skipped="0" time="0.171" hostname="lex-PC">
+        <testcase name="should isolate memories between projects" classname="project isolation &amp;gt; MemoryStore" time="0.087001" file="packages/core/src/__tests__/storage.test.ts" line="509" assertions="4" />
+        <testcase name="should support global mode to access all projects" classname="project isolation &amp;gt; MemoryStore" time="0.084423" file="packages/core/src/__tests__/storage.test.ts" line="526" assertions="1" />
       </testsuite>
-      <testsuite name="getAllProjects" file="packages/core/src/__tests__/storage.test.ts" line="543" tests="1" assertions="3" failures="0" skipped="0" time="0.113" hostname="lex-PC">
-        <testcase name="should return all unique project IDs" classname="getAllProjects &amp;gt; MemoryStore" time="0.113899" file="packages/core/src/__tests__/storage.test.ts" line="544" assertions="3" />
+      <testsuite name="getAllProjects" file="packages/core/src/__tests__/storage.test.ts" line="543" tests="1" assertions="3" failures="0" skipped="0" time="0.094" hostname="lex-PC">
+        <testcase name="should return all unique project IDs" classname="getAllProjects &amp;gt; MemoryStore" time="0.094167" file="packages/core/src/__tests__/storage.test.ts" line="544" assertions="3" />
       </testsuite>
-      <testsuite name="getProjectId" file="packages/core/src/__tests__/storage.test.ts" line="562" tests="2" assertions="2" failures="0" skipped="0" time="0.177" hostname="lex-PC">
-        <testcase name="should return the current project ID" classname="getProjectId &amp;gt; MemoryStore" time="0.090596" file="packages/core/src/__tests__/storage.test.ts" line="563" assertions="1" />
-        <testcase name="should return null in global mode" classname="getProjectId &amp;gt; MemoryStore" time="0.087393" file="packages/core/src/__tests__/storage.test.ts" line="568" assertions="1" />
+      <testsuite name="getProjectId" file="packages/core/src/__tests__/storage.test.ts" line="562" tests="2" assertions="2" failures="0" skipped="0" time="0.132" hostname="lex-PC">
+        <testcase name="should return the current project ID" classname="getProjectId &amp;gt; MemoryStore" time="0.067147" file="packages/core/src/__tests__/storage.test.ts" line="563" assertions="1" />
+        <testcase name="should return null in global mode" classname="getProjectId &amp;gt; MemoryStore" time="0.065967" file="packages/core/src/__tests__/storage.test.ts" line="568" assertions="1" />
       </testsuite>
-      <testsuite name="legacy constructor" file="packages/core/src/__tests__/storage.test.ts" line="576" tests="1" assertions="1" failures="0" skipped="0" time="0.096" hostname="lex-PC">
-        <testcase name="should support string parameter for backwards compatibility" classname="legacy constructor &amp;gt; MemoryStore" time="0.096888" file="packages/core/src/__tests__/storage.test.ts" line="577" assertions="1" />
+      <testsuite name="legacy constructor" file="packages/core/src/__tests__/storage.test.ts" line="576" tests="1" assertions="1" failures="0" skipped="0" time="0.085" hostname="lex-PC">
+        <testcase name="should support string parameter for backwards compatibility" classname="legacy constructor &amp;gt; MemoryStore" time="0.085346" file="packages/core/src/__tests__/storage.test.ts" line="577" assertions="1" />
       </testsuite>
-      <testsuite name="edge cases" file="packages/core/src/__tests__/storage.test.ts" line="590" tests="5" assertions="5" failures="0" skipped="0" time="0.498" hostname="lex-PC">
-        <testcase name="should handle memory with custom projectId" classname="edge cases &amp;gt; MemoryStore" time="0.08998" file="packages/core/src/__tests__/storage.test.ts" line="591" assertions="1" />
-        <testcase name="should handle memories without tags" classname="edge cases &amp;gt; MemoryStore" time="0.095883" file="packages/core/src/__tests__/storage.test.ts" line="608" assertions="1" />
-        <testcase name="should handle memories without metadata" classname="edge cases &amp;gt; MemoryStore" time="0.119102" file="packages/core/src/__tests__/storage.test.ts" line="619" assertions="1" />
-        <testcase name="should handle empty search query" classname="edge cases &amp;gt; MemoryStore" time="0.111791" file="packages/core/src/__tests__/storage.test.ts" line="630" assertions="1" />
-        <testcase name="should return true when deleting non-existent memory" classname="edge cases &amp;gt; MemoryStore" time="0.084849" file="packages/core/src/__tests__/storage.test.ts" line="638" assertions="1" />
+      <testsuite name="edge cases" file="packages/core/src/__tests__/storage.test.ts" line="590" tests="5" assertions="5" failures="0" skipped="0" time="0.406" hostname="lex-PC">
+        <testcase name="should handle memory with custom projectId" classname="edge cases &amp;gt; MemoryStore" time="0.081006" file="packages/core/src/__tests__/storage.test.ts" line="591" assertions="1" />
+        <testcase name="should handle memories without tags" classname="edge cases &amp;gt; MemoryStore" time="0.097442" file="packages/core/src/__tests__/storage.test.ts" line="608" assertions="1" />
+        <testcase name="should handle memories without metadata" classname="edge cases &amp;gt; MemoryStore" time="0.074975" file="packages/core/src/__tests__/storage.test.ts" line="619" assertions="1" />
+        <testcase name="should handle empty search query" classname="edge cases &amp;gt; MemoryStore" time="0.085038" file="packages/core/src/__tests__/storage.test.ts" line="630" assertions="1" />
+        <testcase name="should return true when deleting non-existent memory" classname="edge cases &amp;gt; MemoryStore" time="0.069636" file="packages/core/src/__tests__/storage.test.ts" line="638" assertions="1" />
       </testsuite>
-      <testsuite name="global mode operations" file="packages/core/src/__tests__/storage.test.ts" line="645" tests="5" assertions="8" failures="0" skipped="0" time="0.535" hostname="lex-PC">
-        <testcase name="should allow getting memories from any project in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.104996" file="packages/core/src/__tests__/storage.test.ts" line="646" assertions="2" />
-        <testcase name="should allow searching across all projects in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.105378" file="packages/core/src/__tests__/storage.test.ts" line="665" assertions="1" />
-        <testcase name="should allow deleting memories from any project in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.111761" file="packages/core/src/__tests__/storage.test.ts" line="681" assertions="1" />
-        <testcase name="should clear all memories in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.114303" file="packages/core/src/__tests__/storage.test.ts" line="696" assertions="2" />
-        <testcase name="should return stats for all projects in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.101872" file="packages/core/src/__tests__/storage.test.ts" line="715" assertions="2" />
+      <testsuite name="global mode operations" file="packages/core/src/__tests__/storage.test.ts" line="645" tests="5" assertions="8" failures="0" skipped="0" time="0.44" hostname="lex-PC">
+        <testcase name="should allow getting memories from any project in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.082601" file="packages/core/src/__tests__/storage.test.ts" line="646" assertions="2" />
+        <testcase name="should allow searching across all projects in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.089274" file="packages/core/src/__tests__/storage.test.ts" line="665" assertions="1" />
+        <testcase name="should allow deleting memories from any project in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.091153" file="packages/core/src/__tests__/storage.test.ts" line="681" assertions="1" />
+        <testcase name="should clear all memories in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.097705" file="packages/core/src/__tests__/storage.test.ts" line="696" assertions="2" />
+        <testcase name="should return stats for all projects in global mode" classname="global mode operations &amp;gt; MemoryStore" time="0.081841" file="packages/core/src/__tests__/storage.test.ts" line="715" assertions="2" />
       </testsuite>
-      <testsuite name="encryption" file="packages/core/src/__tests__/storage.test.ts" line="733" tests="5" assertions="7" failures="0" skipped="0" time="0.758" hostname="lex-PC">
-        <testcase name="should encrypt and decrypt memory content" classname="encryption &amp;gt; MemoryStore" time="0.143022" file="packages/core/src/__tests__/storage.test.ts" line="741" assertions="1" />
-        <testcase name="should encrypt and decrypt metadata" classname="encryption &amp;gt; MemoryStore" time="0.161485" file="packages/core/src/__tests__/storage.test.ts" line="753" assertions="1" />
-        <testcase name="should not be able to decrypt with wrong password" classname="encryption &amp;gt; MemoryStore" time="0.1258" file="packages/core/src/__tests__/storage.test.ts" line="766" assertions="2" />
-        <testcase name="should handle updating encrypted memories" classname="encryption &amp;gt; MemoryStore" time="0.18167" file="packages/core/src/__tests__/storage.test.ts" line="787" assertions="1" />
-        <testcase name="should search in-memory for encrypted content" classname="encryption &amp;gt; MemoryStore" time="0.148108" file="packages/core/src/__tests__/storage.test.ts" line="799" assertions="2" />
+      <testsuite name="encryption" file="packages/core/src/__tests__/storage.test.ts" line="733" tests="5" assertions="7" failures="0" skipped="0" time="0.591" hostname="lex-PC">
+        <testcase name="should encrypt and decrypt memory content" classname="encryption &amp;gt; MemoryStore" time="0.100581" file="packages/core/src/__tests__/storage.test.ts" line="741" assertions="1" />
+        <testcase name="should encrypt and decrypt metadata" classname="encryption &amp;gt; MemoryStore" time="0.131759" file="packages/core/src/__tests__/storage.test.ts" line="753" assertions="1" />
+        <testcase name="should not be able to decrypt with wrong password" classname="encryption &amp;gt; MemoryStore" time="0.103417" file="packages/core/src/__tests__/storage.test.ts" line="766" assertions="2" />
+        <testcase name="should handle updating encrypted memories" classname="encryption &amp;gt; MemoryStore" time="0.140287" file="packages/core/src/__tests__/storage.test.ts" line="787" assertions="1" />
+        <testcase name="should search in-memory for encrypted content" classname="encryption &amp;gt; MemoryStore" time="0.117809" file="packages/core/src/__tests__/storage.test.ts" line="799" assertions="2" />
       </testsuite>
-      <testsuite name="embeddings" file="packages/core/src/__tests__/storage.test.ts" line="809" tests="4" assertions="6" failures="0" skipped="0" time="0.452" hostname="lex-PC">
-        <testcase name="should store and retrieve embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.110484" file="packages/core/src/__tests__/storage.test.ts" line="810" assertions="2" />
-        <testcase name="should update all embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.128648" file="packages/core/src/__tests__/storage.test.ts" line="838" assertions="1" />
-        <testcase name="should store and retrieve embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.104567" file="packages/core/src/__tests__/storage.test.ts" line="859" assertions="2" />
-        <testcase name="should update all embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.110093" file="packages/core/src/__tests__/storage.test.ts" line="882" assertions="1" />
+      <testsuite name="embeddings" file="packages/core/src/__tests__/storage.test.ts" line="809" tests="4" assertions="6" failures="0" skipped="0" time="0.369" hostname="lex-PC">
+        <testcase name="should store and retrieve embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.088668" file="packages/core/src/__tests__/storage.test.ts" line="810" assertions="2" />
+        <testcase name="should update all embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.102579" file="packages/core/src/__tests__/storage.test.ts" line="838" assertions="1" />
+        <testcase name="should store and retrieve embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.087575" file="packages/core/src/__tests__/storage.test.ts" line="859" assertions="2" />
+        <testcase name="should update all embeddings" classname="embeddings &amp;gt; MemoryStore" time="0.092011" file="packages/core/src/__tests__/storage.test.ts" line="882" assertions="1" />
       </testsuite>
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/src/__tests__/guard.test.ts" file="packages/core/src/__tests__/guard.test.ts" tests="21" assertions="58" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="ContextGuard" file="packages/core/src/__tests__/guard.test.ts" line="4" tests="21" assertions="58" failures="0" skipped="0" time="0" hostname="lex-PC">
       <testsuite name="guard with redact mode" file="packages/core/src/__tests__/guard.test.ts" line="11" tests="11" assertions="32" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should redact API keys" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000464" file="packages/core/src/__tests__/guard.test.ts" line="12" assertions="3" />
-        <testcase name="should redact email addresses" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000152" file="packages/core/src/__tests__/guard.test.ts" line="25" assertions="4" />
-        <testcase name="should redact URLs with credentials" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000086" file="packages/core/src/__tests__/guard.test.ts" line="38" assertions="3" />
-        <testcase name="should redact credit card numbers" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000095" file="packages/core/src/__tests__/guard.test.ts" line="50" assertions="3" />
-        <testcase name="should redact phone numbers" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000073" file="packages/core/src/__tests__/guard.test.ts" line="62" assertions="2" />
-        <testcase name="should redact IP addresses" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000198" file="packages/core/src/__tests__/guard.test.ts" line="73" assertions="3" />
-        <testcase name="should redact secrets and passwords" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000142" file="packages/core/src/__tests__/guard.test.ts" line="85" assertions="2" />
-        <testcase name="should redact PII (SSN patterns)" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000077" file="packages/core/src/__tests__/guard.test.ts" line="96" assertions="2" />
-        <testcase name="should apply multiple filters at once" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000101" file="packages/core/src/__tests__/guard.test.ts" line="107" assertions="5" />
-        <testcase name="should use custom replacement text" classname="guard with redact mode &amp;gt; ContextGuard" time="0.00008" file="packages/core/src/__tests__/guard.test.ts" line="121" assertions="2" />
-        <testcase name="should return original content when no sensitive data found" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000046" file="packages/core/src/__tests__/guard.test.ts" line="133" assertions="3" />
+        <testcase name="should redact API keys" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000341" file="packages/core/src/__tests__/guard.test.ts" line="12" assertions="3" />
+        <testcase name="should redact email addresses" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000101" file="packages/core/src/__tests__/guard.test.ts" line="25" assertions="4" />
+        <testcase name="should redact URLs with credentials" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000057" file="packages/core/src/__tests__/guard.test.ts" line="38" assertions="3" />
+        <testcase name="should redact credit card numbers" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000077" file="packages/core/src/__tests__/guard.test.ts" line="50" assertions="3" />
+        <testcase name="should redact phone numbers" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000053" file="packages/core/src/__tests__/guard.test.ts" line="62" assertions="2" />
+        <testcase name="should redact IP addresses" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000111" file="packages/core/src/__tests__/guard.test.ts" line="73" assertions="3" />
+        <testcase name="should redact secrets and passwords" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000106" file="packages/core/src/__tests__/guard.test.ts" line="85" assertions="2" />
+        <testcase name="should redact PII (SSN patterns)" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000069" file="packages/core/src/__tests__/guard.test.ts" line="96" assertions="2" />
+        <testcase name="should apply multiple filters at once" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000068" file="packages/core/src/__tests__/guard.test.ts" line="107" assertions="5" />
+        <testcase name="should use custom replacement text" classname="guard with redact mode &amp;gt; ContextGuard" time="0.00004" file="packages/core/src/__tests__/guard.test.ts" line="121" assertions="2" />
+        <testcase name="should return original content when no sensitive data found" classname="guard with redact mode &amp;gt; ContextGuard" time="0.000037" file="packages/core/src/__tests__/guard.test.ts" line="133" assertions="3" />
       </testsuite>
       <testsuite name="guard with block mode" file="packages/core/src/__tests__/guard.test.ts" line="146" tests="2" assertions="4" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should return empty content when sensitive data found" classname="guard with block mode &amp;gt; ContextGuard" time="0.000078" file="packages/core/src/__tests__/guard.test.ts" line="147" assertions="2" />
-        <testcase name="should return original content when no sensitive data found" classname="guard with block mode &amp;gt; ContextGuard" time="0.000035" file="packages/core/src/__tests__/guard.test.ts" line="158" assertions="2" />
+        <testcase name="should return empty content when sensitive data found" classname="guard with block mode &amp;gt; ContextGuard" time="0.00005" file="packages/core/src/__tests__/guard.test.ts" line="147" assertions="2" />
+        <testcase name="should return original content when no sensitive data found" classname="guard with block mode &amp;gt; ContextGuard" time="0.000028" file="packages/core/src/__tests__/guard.test.ts" line="158" assertions="2" />
       </testsuite>
       <testsuite name="guard with warn mode" file="packages/core/src/__tests__/guard.test.ts" line="170" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="lex-PC">
         <testcase name="should return original content but flag sensitive data" classname="guard with warn mode &amp;gt; ContextGuard" time="0.00005" file="packages/core/src/__tests__/guard.test.ts" line="171" assertions="3" />
       </testsuite>
       <testsuite name="scan" file="packages/core/src/__tests__/guard.test.ts" line="184" tests="2" assertions="4" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should detect sensitive data without modifying content" classname="scan &amp;gt; ContextGuard" time="0.000083" file="packages/core/src/__tests__/guard.test.ts" line="185" assertions="3" />
-        <testcase name="should return zero matches for clean content" classname="scan &amp;gt; ContextGuard" time="0.000098" file="packages/core/src/__tests__/guard.test.ts" line="194" assertions="1" />
+        <testcase name="should detect sensitive data without modifying content" classname="scan &amp;gt; ContextGuard" time="0.00006" file="packages/core/src/__tests__/guard.test.ts" line="185" assertions="3" />
+        <testcase name="should return zero matches for clean content" classname="scan &amp;gt; ContextGuard" time="0.000099" file="packages/core/src/__tests__/guard.test.ts" line="194" assertions="1" />
       </testsuite>
       <testsuite name="hasSensitiveData" file="packages/core/src/__tests__/guard.test.ts" line="202" tests="2" assertions="2" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should return true when sensitive data exists" classname="hasSensitiveData &amp;gt; ContextGuard" time="0.000054" file="packages/core/src/__tests__/guard.test.ts" line="203" assertions="1" />
-        <testcase name="should return false when no sensitive data exists" classname="hasSensitiveData &amp;gt; ContextGuard" time="0.000027" file="packages/core/src/__tests__/guard.test.ts" line="208" assertions="1" />
+        <testcase name="should return true when sensitive data exists" classname="hasSensitiveData &amp;gt; ContextGuard" time="0.00004" file="packages/core/src/__tests__/guard.test.ts" line="203" assertions="1" />
+        <testcase name="should return false when no sensitive data exists" classname="hasSensitiveData &amp;gt; ContextGuard" time="0.000017" file="packages/core/src/__tests__/guard.test.ts" line="208" assertions="1" />
       </testsuite>
       <testsuite name="guardBatch" file="packages/core/src/__tests__/guard.test.ts" line="214" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should guard multiple contents at once" classname="guardBatch &amp;gt; ContextGuard" time="0.000129" file="packages/core/src/__tests__/guard.test.ts" line="215" assertions="4" />
+        <testcase name="should guard multiple contents at once" classname="guardBatch &amp;gt; ContextGuard" time="0.000077" file="packages/core/src/__tests__/guard.test.ts" line="215" assertions="4" />
       </testsuite>
       <testsuite name="getAvailableFilters" file="packages/core/src/__tests__/guard.test.ts" line="229" tests="1" assertions="8" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should return all available filter types" classname="getAvailableFilters &amp;gt; ContextGuard" time="0.000099" file="packages/core/src/__tests__/guard.test.ts" line="230" assertions="8" />
+        <testcase name="should return all available filter types" classname="getAvailableFilters &amp;gt; ContextGuard" time="0.000079" file="packages/core/src/__tests__/guard.test.ts" line="230" assertions="8" />
       </testsuite>
       <testsuite name="custom default replacement" file="packages/core/src/__tests__/guard.test.ts" line="244" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should use custom default replacement" classname="custom default replacement &amp;gt; ContextGuard" time="0.000047" file="packages/core/src/__tests__/guard.test.ts" line="245" assertions="1" />
+        <testcase name="should use custom default replacement" classname="custom default replacement &amp;gt; ContextGuard" time="0.000037" file="packages/core/src/__tests__/guard.test.ts" line="245" assertions="1" />
       </testsuite>
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/src/__tests__/fuser.test.ts" file="packages/core/src/__tests__/fuser.test.ts" tests="15" assertions="25" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="ContextFuser" file="packages/core/src/__tests__/fuser.test.ts" line="8" tests="15" assertions="25" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testsuite name="fuse with memory source" file="packages/core/src/__tests__/fuser.test.ts" line="40" tests="2" assertions="5" failures="0" skipped="0" time="0.178" hostname="lex-PC">
-        <testcase name="should fetch and combine memories" classname="fuse with memory source &amp;gt; ContextFuser" time="0.101829" file="packages/core/src/__tests__/fuser.test.ts" line="41" assertions="3" />
-        <testcase name="should handle empty memory results" classname="fuse with memory source &amp;gt; ContextFuser" time="0.077181" file="packages/core/src/__tests__/fuser.test.ts" line="64" assertions="2" />
+      <testsuite name="fuse with memory source" file="packages/core/src/__tests__/fuser.test.ts" line="40" tests="2" assertions="5" failures="0" skipped="0" time="0.157" hostname="lex-PC">
+        <testcase name="should fetch and combine memories" classname="fuse with memory source &amp;gt; ContextFuser" time="0.086819" file="packages/core/src/__tests__/fuser.test.ts" line="41" assertions="3" />
+        <testcase name="should handle empty memory results" classname="fuse with memory source &amp;gt; ContextFuser" time="0.071697" file="packages/core/src/__tests__/fuser.test.ts" line="64" assertions="2" />
       </testsuite>
-      <testsuite name="fuse with file source" file="packages/core/src/__tests__/fuser.test.ts" line="74" tests="2" assertions="3" failures="0" skipped="0" time="0.174" hostname="lex-PC">
-        <testcase name="should read file content" classname="fuse with file source &amp;gt; ContextFuser" time="0.090942" file="packages/core/src/__tests__/fuser.test.ts" line="75" assertions="2" />
-        <testcase name="should handle non-existent files gracefully" classname="fuse with file source &amp;gt; ContextFuser" time="0.084574" file="packages/core/src/__tests__/fuser.test.ts" line="87" assertions="1" />
+      <testsuite name="fuse with file source" file="packages/core/src/__tests__/fuser.test.ts" line="74" tests="2" assertions="3" failures="0" skipped="0" time="0.147" hostname="lex-PC">
+        <testcase name="should read file content" classname="fuse with file source &amp;gt; ContextFuser" time="0.080391" file="packages/core/src/__tests__/fuser.test.ts" line="75" assertions="2" />
+        <testcase name="should handle non-existent files gracefully" classname="fuse with file source &amp;gt; ContextFuser" time="0.067234" file="packages/core/src/__tests__/fuser.test.ts" line="87" assertions="1" />
       </testsuite>
-      <testsuite name="fuse with session source" file="packages/core/src/__tests__/fuser.test.ts" line="96" tests="1" assertions="2" failures="0" skipped="0" time="0.082" hostname="lex-PC">
-        <testcase name="should include session data directly" classname="fuse with session source &amp;gt; ContextFuser" time="0.082917" file="packages/core/src/__tests__/fuser.test.ts" line="97" assertions="2" />
+      <testsuite name="fuse with session source" file="packages/core/src/__tests__/fuser.test.ts" line="96" tests="1" assertions="2" failures="0" skipped="0" time="0.071" hostname="lex-PC">
+        <testcase name="should include session data directly" classname="fuse with session source &amp;gt; ContextFuser" time="0.071831" file="packages/core/src/__tests__/fuser.test.ts" line="97" assertions="2" />
       </testsuite>
-      <testsuite name="fuse with multiple sources" file="packages/core/src/__tests__/fuser.test.ts" line="107" tests="2" assertions="5" failures="0" skipped="0" time="0.174" hostname="lex-PC">
-        <testcase name="should combine multiple source types" classname="fuse with multiple sources &amp;gt; ContextFuser" time="0.087611" file="packages/core/src/__tests__/fuser.test.ts" line="108" assertions="4" />
-        <testcase name="should respect source weights" classname="fuse with multiple sources &amp;gt; ContextFuser" time="0.08796" file="packages/core/src/__tests__/fuser.test.ts" line="132" assertions="1" />
+      <testsuite name="fuse with multiple sources" file="packages/core/src/__tests__/fuser.test.ts" line="107" tests="2" assertions="5" failures="0" skipped="0" time="0.155" hostname="lex-PC">
+        <testcase name="should combine multiple source types" classname="fuse with multiple sources &amp;gt; ContextFuser" time="0.0762" file="packages/core/src/__tests__/fuser.test.ts" line="108" assertions="4" />
+        <testcase name="should respect source weights" classname="fuse with multiple sources &amp;gt; ContextFuser" time="0.079606" file="packages/core/src/__tests__/fuser.test.ts" line="132" assertions="1" />
       </testsuite>
-      <testsuite name="deduplication" file="packages/core/src/__tests__/fuser.test.ts" line="148" tests="3" assertions="3" failures="0" skipped="0" time="0.257" hostname="lex-PC">
-        <testcase name="should remove exact duplicates" classname="deduplication &amp;gt; ContextFuser" time="0.08515" file="packages/core/src/__tests__/fuser.test.ts" line="149" assertions="1" />
-        <testcase name="should detect semantically similar content" classname="deduplication &amp;gt; ContextFuser" time="0.089723" file="packages/core/src/__tests__/fuser.test.ts" line="163" assertions="1" />
-        <testcase name="should keep all content when dedupe is none" classname="deduplication &amp;gt; ContextFuser" time="0.083341" file="packages/core/src/__tests__/fuser.test.ts" line="176" assertions="1" />
+      <testsuite name="deduplication" file="packages/core/src/__tests__/fuser.test.ts" line="148" tests="3" assertions="3" failures="0" skipped="0" time="0.216" hostname="lex-PC">
+        <testcase name="should remove exact duplicates" classname="deduplication &amp;gt; ContextFuser" time="0.072205" file="packages/core/src/__tests__/fuser.test.ts" line="149" assertions="1" />
+        <testcase name="should detect semantically similar content" classname="deduplication &amp;gt; ContextFuser" time="0.07428" file="packages/core/src/__tests__/fuser.test.ts" line="163" assertions="1" />
+        <testcase name="should keep all content when dedupe is none" classname="deduplication &amp;gt; ContextFuser" time="0.070659" file="packages/core/src/__tests__/fuser.test.ts" line="176" assertions="1" />
       </testsuite>
-      <testsuite name="output formats" file="packages/core/src/__tests__/fuser.test.ts" line="189" tests="3" assertions="5" failures="0" skipped="0" time="0.29" hostname="lex-PC">
-        <testcase name="should output plain text by default" classname="output formats &amp;gt; ContextFuser" time="0.096875" file="packages/core/src/__tests__/fuser.test.ts" line="190" assertions="1" />
-        <testcase name="should output markdown format" classname="output formats &amp;gt; ContextFuser" time="0.093841" file="packages/core/src/__tests__/fuser.test.ts" line="199" assertions="2" />
-        <testcase name="should output JSON format" classname="output formats &amp;gt; ContextFuser" time="0.101462" file="packages/core/src/__tests__/fuser.test.ts" line="209" assertions="2" />
+      <testsuite name="output formats" file="packages/core/src/__tests__/fuser.test.ts" line="189" tests="3" assertions="5" failures="0" skipped="0" time="0.217" hostname="lex-PC">
+        <testcase name="should output plain text by default" classname="output formats &amp;gt; ContextFuser" time="0.077893" file="packages/core/src/__tests__/fuser.test.ts" line="190" assertions="1" />
+        <testcase name="should output markdown format" classname="output formats &amp;gt; ContextFuser" time="0.069533" file="packages/core/src/__tests__/fuser.test.ts" line="199" assertions="2" />
+        <testcase name="should output JSON format" classname="output formats &amp;gt; ContextFuser" time="0.071035" file="packages/core/src/__tests__/fuser.test.ts" line="209" assertions="2" />
       </testsuite>
-      <testsuite name="token limiting" file="packages/core/src/__tests__/fuser.test.ts" line="221" tests="2" assertions="2" failures="0" skipped="0" time="0.228" hostname="lex-PC">
-        <testcase name="should respect maxTokens limit" classname="token limiting &amp;gt; ContextFuser" time="0.118559" file="packages/core/src/__tests__/fuser.test.ts" line="222" assertions="1" />
-        <testcase name="should truncate with ellipsis when exceeding limit" classname="token limiting &amp;gt; ContextFuser" time="0.110487" file="packages/core/src/__tests__/fuser.test.ts" line="234" assertions="1" />
+      <testsuite name="token limiting" file="packages/core/src/__tests__/fuser.test.ts" line="221" tests="2" assertions="2" failures="0" skipped="0" time="0.137" hostname="lex-PC">
+        <testcase name="should respect maxTokens limit" classname="token limiting &amp;gt; ContextFuser" time="0.071198" file="packages/core/src/__tests__/fuser.test.ts" line="222" assertions="1" />
+        <testcase name="should truncate with ellipsis when exceeding limit" classname="token limiting &amp;gt; ContextFuser" time="0.066416" file="packages/core/src/__tests__/fuser.test.ts" line="234" assertions="1" />
       </testsuite>
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/src/__tests__/context.test.ts" file="packages/core/src/__tests__/context.test.ts" tests="12" assertions="17" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="ProjectContext" file="packages/core/src/__tests__/context.test.ts" line="7" tests="12" assertions="17" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testsuite name="getProjectId" file="packages/core/src/__tests__/context.test.ts" line="17" tests="5" assertions="7" failures="0" skipped="0" time="0.005" hostname="lex-PC">
-        <testcase name="should return a consistent hash for the same directory" classname="getProjectId &amp;gt; ProjectContext" time="0.00118" file="packages/core/src/__tests__/context.test.ts" line="18" assertions="2" />
-        <testcase name="should return different hashes for different directories" classname="getProjectId &amp;gt; ProjectContext" time="0.001999" file="packages/core/src/__tests__/context.test.ts" line="26" assertions="1" />
-        <testcase name="should detect git repository root" classname="getProjectId &amp;gt; ProjectContext" time="0.001405" file="packages/core/src/__tests__/context.test.ts" line="39" assertions="1" />
-        <testcase name="should use package.json for project identification" classname="getProjectId &amp;gt; ProjectContext" time="0.001248" file="packages/core/src/__tests__/context.test.ts" line="53" assertions="2" />
-        <testcase name="should find package.json in parent directories" classname="getProjectId &amp;gt; ProjectContext" time="0.001569" file="packages/core/src/__tests__/context.test.ts" line="67" assertions="1" />
+      <testsuite name="getProjectId" file="packages/core/src/__tests__/context.test.ts" line="17" tests="5" assertions="7" failures="0" skipped="0" time="0" hostname="lex-PC">
+        <testcase name="should return a consistent hash for the same directory" classname="getProjectId &amp;gt; ProjectContext" time="0.00068" file="packages/core/src/__tests__/context.test.ts" line="18" assertions="2" />
+        <testcase name="should return different hashes for different directories" classname="getProjectId &amp;gt; ProjectContext" time="0.000529" file="packages/core/src/__tests__/context.test.ts" line="26" assertions="1" />
+        <testcase name="should detect git repository root" classname="getProjectId &amp;gt; ProjectContext" time="0.000408" file="packages/core/src/__tests__/context.test.ts" line="39" assertions="1" />
+        <testcase name="should use package.json for project identification" classname="getProjectId &amp;gt; ProjectContext" time="0.000293" file="packages/core/src/__tests__/context.test.ts" line="53" assertions="2" />
+        <testcase name="should find package.json in parent directories" classname="getProjectId &amp;gt; ProjectContext" time="0.000391" file="packages/core/src/__tests__/context.test.ts" line="67" assertions="1" />
       </testsuite>
       <testsuite name="getProjectName" file="packages/core/src/__tests__/context.test.ts" line="85" tests="5" assertions="8" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should return package name when available" classname="getProjectName &amp;gt; ProjectContext" time="0.000702" file="packages/core/src/__tests__/context.test.ts" line="86" assertions="1" />
-        <testcase name="should return directory name when no package.json" classname="getProjectName &amp;gt; ProjectContext" time="0.000472" file="packages/core/src/__tests__/context.test.ts" line="98" assertions="2" />
-        <testcase name="should return git root directory name" classname="getProjectName &amp;gt; ProjectContext" time="0.000316" file="packages/core/src/__tests__/context.test.ts" line="104" assertions="2" />
-        <testcase name="should handle invalid JSON in package.json gracefully" classname="getProjectName &amp;gt; ProjectContext" time="0.000509" file="packages/core/src/__tests__/context.test.ts" line="113" assertions="2" />
-        <testcase name="should handle package.json without name field" classname="getProjectName &amp;gt; ProjectContext" time="0.000225" file="packages/core/src/__tests__/context.test.ts" line="121" assertions="1" />
+        <testcase name="should return package name when available" classname="getProjectName &amp;gt; ProjectContext" time="0.000457" file="packages/core/src/__tests__/context.test.ts" line="86" assertions="1" />
+        <testcase name="should return directory name when no package.json" classname="getProjectName &amp;gt; ProjectContext" time="0.000057" file="packages/core/src/__tests__/context.test.ts" line="98" assertions="2" />
+        <testcase name="should return git root directory name" classname="getProjectName &amp;gt; ProjectContext" time="0.000162" file="packages/core/src/__tests__/context.test.ts" line="104" assertions="2" />
+        <testcase name="should handle invalid JSON in package.json gracefully" classname="getProjectName &amp;gt; ProjectContext" time="0.000158" file="packages/core/src/__tests__/context.test.ts" line="113" assertions="2" />
+        <testcase name="should handle package.json without name field" classname="getProjectName &amp;gt; ProjectContext" time="0.000085" file="packages/core/src/__tests__/context.test.ts" line="121" assertions="1" />
       </testsuite>
       <testsuite name="caching" file="packages/core/src/__tests__/context.test.ts" line="134" tests="2" assertions="2" failures="0" skipped="0" time="0" hostname="lex-PC">
-        <testcase name="should cache project IDs" classname="caching &amp;gt; ProjectContext" time="0.000398" file="packages/core/src/__tests__/context.test.ts" line="135" assertions="1" />
-        <testcase name="should clear cache when requested" classname="caching &amp;gt; ProjectContext" time="0.000486" file="packages/core/src/__tests__/context.test.ts" line="147" assertions="1" />
+        <testcase name="should cache project IDs" classname="caching &amp;gt; ProjectContext" time="0.000297" file="packages/core/src/__tests__/context.test.ts" line="135" assertions="1" />
+        <testcase name="should clear cache when requested" classname="caching &amp;gt; ProjectContext" time="0.000077" file="packages/core/src/__tests__/context.test.ts" line="147" assertions="1" />
       </testsuite>
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/src/__tests__/router.test.ts" file="packages/core/src/__tests__/router.test.ts" tests="12" assertions="29" failures="0" skipped="0" time="0" hostname="lex-PC">
     <testsuite name="ContextRouter" file="packages/core/src/__tests__/router.test.ts" line="8" tests="12" assertions="29" failures="0" skipped="0" time="0" hostname="lex-PC">
-      <testsuite name="route" file="packages/core/src/__tests__/router.test.ts" line="30" tests="4" assertions="6" failures="0" skipped="0" time="0.567" hostname="lex-PC">
-        <testcase name="should return memories relevant to the task" classname="route &amp;gt; ContextRouter" time="0.161097" file="packages/core/src/__tests__/router.test.ts" line="31" assertions="2" />
-        <testcase name="should return empty array when no memories exist" classname="route &amp;gt; ContextRouter" time="0.103206" file="packages/core/src/__tests__/router.test.ts" line="63" assertions="1" />
-        <testcase name="should respect limit parameter" classname="route &amp;gt; ContextRouter" time="0.200309" file="packages/core/src/__tests__/router.test.ts" line="72" assertions="1" />
-        <testcase name="should filter by type when specified" classname="route &amp;gt; ContextRouter" time="0.1038" file="packages/core/src/__tests__/router.test.ts" line="90" assertions="2" />
+      <testsuite name="route" file="packages/core/src/__tests__/router.test.ts" line="30" tests="4" assertions="6" failures="0" skipped="0" time="0.441" hostname="lex-PC">
+        <testcase name="should return memories relevant to the task" classname="route &amp;gt; ContextRouter" time="0.1005" file="packages/core/src/__tests__/router.test.ts" line="31" assertions="2" />
+        <testcase name="should return empty array when no memories exist" classname="route &amp;gt; ContextRouter" time="0.077226" file="packages/core/src/__tests__/router.test.ts" line="63" assertions="1" />
+        <testcase name="should respect limit parameter" classname="route &amp;gt; ContextRouter" time="0.172131" file="packages/core/src/__tests__/router.test.ts" line="72" assertions="1" />
+        <testcase name="should filter by type when specified" classname="route &amp;gt; ContextRouter" time="0.092895" file="packages/core/src/__tests__/router.test.ts" line="90" assertions="2" />
       </testsuite>
-      <testsuite name="routeWithScores" file="packages/core/src/__tests__/router.test.ts" line="113" tests="3" assertions="13" failures="0" skipped="0" time="0.306" hostname="lex-PC">
-        <testcase name="should return memories with scores and reasons" classname="routeWithScores &amp;gt; ContextRouter" time="0.097471" file="packages/core/src/__tests__/router.test.ts" line="114" assertions="7" />
-        <testcase name="should score decisions higher than notes" classname="routeWithScores &amp;gt; ContextRouter" time="0.105396" file="packages/core/src/__tests__/router.test.ts" line="136" assertions="3" />
-        <testcase name="should include reason explaining the score" classname="routeWithScores &amp;gt; ContextRouter" time="0.104043" file="packages/core/src/__tests__/router.test.ts" line="165" assertions="3" />
+      <testsuite name="routeWithScores" file="packages/core/src/__tests__/router.test.ts" line="113" tests="3" assertions="13" failures="0" skipped="0" time="0.259" hostname="lex-PC">
+        <testcase name="should return memories with scores and reasons" classname="routeWithScores &amp;gt; ContextRouter" time="0.078424" file="packages/core/src/__tests__/router.test.ts" line="114" assertions="7" />
+        <testcase name="should score decisions higher than notes" classname="routeWithScores &amp;gt; ContextRouter" time="0.090655" file="packages/core/src/__tests__/router.test.ts" line="136" assertions="3" />
+        <testcase name="should include reason explaining the score" classname="routeWithScores &amp;gt; ContextRouter" time="0.091915" file="packages/core/src/__tests__/router.test.ts" line="165" assertions="3" />
       </testsuite>
-      <testsuite name="keyword extraction" file="packages/core/src/__tests__/router.test.ts" line="185" tests="1" assertions="2" failures="0" skipped="0" time="0.1" hostname="lex-PC">
-        <testcase name="should extract meaningful keywords and filter stop words" classname="keyword extraction &amp;gt; ContextRouter" time="0.100212" file="packages/core/src/__tests__/router.test.ts" line="186" assertions="2" />
+      <testsuite name="keyword extraction" file="packages/core/src/__tests__/router.test.ts" line="185" tests="1" assertions="2" failures="0" skipped="0" time="0.077" hostname="lex-PC">
+        <testcase name="should extract meaningful keywords and filter stop words" classname="keyword extraction &amp;gt; ContextRouter" time="0.077371" file="packages/core/src/__tests__/router.test.ts" line="186" assertions="2" />
       </testsuite>
-      <testsuite name="tag matching" file="packages/core/src/__tests__/router.test.ts" line="205" tests="1" assertions="3" failures="0" skipped="0" time="0.102" hostname="lex-PC">
-        <testcase name="should boost memories with matching tags" classname="tag matching &amp;gt; ContextRouter" time="0.102434" file="packages/core/src/__tests__/router.test.ts" line="206" assertions="3" />
+      <testsuite name="tag matching" file="packages/core/src/__tests__/router.test.ts" line="205" tests="1" assertions="3" failures="0" skipped="0" time="0.091" hostname="lex-PC">
+        <testcase name="should boost memories with matching tags" classname="tag matching &amp;gt; ContextRouter" time="0.09106" file="packages/core/src/__tests__/router.test.ts" line="206" assertions="3" />
       </testsuite>
-      <testsuite name="file relevance" file="packages/core/src/__tests__/router.test.ts" line="238" tests="1" assertions="3" failures="0" skipped="0" time="0.102" hostname="lex-PC">
-        <testcase name="should boost memories from related paths" classname="file relevance &amp;gt; ContextRouter" time="0.102999" file="packages/core/src/__tests__/router.test.ts" line="239" assertions="3" />
+      <testsuite name="file relevance" file="packages/core/src/__tests__/router.test.ts" line="238" tests="1" assertions="3" failures="0" skipped="0" time="0.082" hostname="lex-PC">
+        <testcase name="should boost memories from related paths" classname="file relevance &amp;gt; ContextRouter" time="0.082029" file="packages/core/src/__tests__/router.test.ts" line="239" assertions="3" />
       </testsuite>
-      <testsuite name="custom weights" file="packages/core/src/__tests__/router.test.ts" line="269" tests="1" assertions="1" failures="0" skipped="0" time="0.106" hostname="lex-PC">
-        <testcase name="should allow custom scoring weights" classname="custom weights &amp;gt; ContextRouter" time="0.106112" file="packages/core/src/__tests__/router.test.ts" line="270" assertions="1" />
+      <testsuite name="custom weights" file="packages/core/src/__tests__/router.test.ts" line="269" tests="1" assertions="1" failures="0" skipped="0" time="0.084" hostname="lex-PC">
+        <testcase name="should allow custom scoring weights" classname="custom weights &amp;gt; ContextRouter" time="0.084781" file="packages/core/src/__tests__/router.test.ts" line="270" assertions="1" />
       </testsuite>
-      <testsuite name="fallback to list" file="packages/core/src/__tests__/router.test.ts" line="297" tests="1" assertions="1" failures="0" skipped="0" time="0.101" hostname="lex-PC">
-        <testcase name="should list recent memories when search returns no results" classname="fallback to list &amp;gt; ContextRouter" time="0.101305" file="packages/core/src/__tests__/router.test.ts" line="298" assertions="1" />
+      <testsuite name="fallback to list" file="packages/core/src/__tests__/router.test.ts" line="297" tests="1" assertions="1" failures="0" skipped="0" time="0.077" hostname="lex-PC">
+        <testcase name="should list recent memories when search returns no results" classname="fallback to list &amp;gt; ContextRouter" time="0.077736" file="packages/core/src/__tests__/router.test.ts" line="298" assertions="1" />
       </testsuite>
     </testsuite>
   </testsuite>

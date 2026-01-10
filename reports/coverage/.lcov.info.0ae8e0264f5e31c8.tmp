@@ -18,10 +18,10 @@ DA:65,17
 DA:66,24
 DA:67,2
 DA:70,47
-DA:71,25
-DA:72,75
-DA:74,77
-DA:75,29
+DA:71,20
+DA:72,0
+DA:74,0
+DA:75,0
 DA:76,2
 DA:80,29
 DA:86,15
@@ -67,7 +67,7 @@ DA:168,1
 DA:181,11
 DA:182,24
 LF:64
-LH:63
+LH:60
 end_of_record
 TN:
 SF:packages/core/src/crypto.ts

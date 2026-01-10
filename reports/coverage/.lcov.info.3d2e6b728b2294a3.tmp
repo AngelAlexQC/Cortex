@@ -62,12 +62,12 @@ DA:159,2
 DA:162,35
 DA:163,17
 DA:164,56
-DA:165,0
-DA:168,1
+DA:165,2
+DA:168,53
 DA:181,11
 DA:182,24
 LF:64
-LH:63
+LH:64
 end_of_record
 TN:
 SF:packages/core/src/crypto.ts

@@ -3,10 +3,20 @@
  * Tests initialization, CRUD operations, and error handling
  */
 
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test, mock } from 'bun:test';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+// Mock vscode module
+mock.module('vscode', () => ({
+  EventEmitter: class {
+    fire() {}
+    event = () => {};
+    dispose() {}
+  },
+}));
+
 import { MemoryStore } from '../storage';
 
 describe('MemoryStore', () => {
