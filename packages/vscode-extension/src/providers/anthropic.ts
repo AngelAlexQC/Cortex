@@ -11,14 +11,16 @@ import { CortexConfig, AIProvider } from '../config';
 
 // Available Anthropic models (January 2026)
 export const ANTHROPIC_MODELS = {
-  // Claude 4.5 Series (2025/2026)
+  // Claude 4.5 Series (2026 Flagship)
   'claude-4.5-opus': { name: 'Claude 4.5 Opus', maxTokens: 200000 },
   'claude-4.5-sonnet': { name: 'Claude 4.5 Sonnet', maxTokens: 200000 },
-  // Claude 3.5/3.7 Updates
-  'claude-3-7-sonnet-20250219': { name: 'Claude 3.7 Sonnet', maxTokens: 200000 },
+
+  // Legacy High-Performance
+  'claude-3-7-sonnet': { name: 'Claude 3.7 Sonnet', maxTokens: 200000 },
   'claude-3-5-sonnet-20241022': { name: 'Claude 3.5 Sonnet (v2)', maxTokens: 200000 },
-  'claude-3-opus-20240229': { name: 'Claude 3 Opus', maxTokens: 200000 },
-  'claude-3-haiku-20240307': { name: 'Claude 3 Haiku', maxTokens: 200000 },
+
+  // Specialized
+  'claude-3-5-haiku': { name: 'Claude 3.5 Haiku', maxTokens: 200000 },
 } as const;
 
 export type AnthropicModelId = keyof typeof ANTHROPIC_MODELS;

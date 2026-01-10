@@ -135,10 +135,35 @@ export class OllamaModelAdapter implements ModelAdapter {
     secrets: vscode.SecretStorage,
     modelId?: string
   ): Promise<OllamaModelAdapter | null> {
-    const configuredUrl = CortexConfig.config.get<string>('ollama.baseUrl');
-    const configuredModel = CortexConfig.config.get<string>('ollama.model');
+    const configuredUrl = CortexConfig.config.get<string>('ollama.baseUrl') || 'http://localhost:11434';
+    const configuredModel = CortexConfig.config.get<string>('ollama.model') || 'deepseek-coder:latest';
 
-    // Always available if configured, no secret key needed typically
-    return new OllamaModelAdapter(modelId || configuredModel || 'deepseek-coder:latest', configuredUrl);
+    // Verify connectivity before returning "valid" adapter for auto-mode
+    try {
+        // Quick 1s timeout check to local tags endpoint
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1000);
+
+        // Don't throw on fetch error, just return null
+        const response = await fetch(`${configuredUrl.replace(/\/$/, '')}/api/tags`, {
+            method: 'HEAD',
+            signal: controller.signal
+        }).catch(() => null);
+
+        clearTimeout(timeout);
+
+        if (!response || !response.ok) {
+            // Alternatively try a GET if HEAD fails
+             const resp2 = await fetch(`${configuredUrl.replace(/\/$/, '')}/api/tags`, {
+                method: 'GET',
+                signal: AbortSignal.timeout(1000)
+            }).catch(() => null);
+            if(!resp2 || !resp2.ok) return null;
+        }
+
+        return new OllamaModelAdapter(modelId || configuredModel, configuredUrl);
+    } catch {
+        return null;
+    }
   }
 }

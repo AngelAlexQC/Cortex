@@ -11,14 +11,18 @@ import { CortexConfig, AIProvider } from '../config';
 
 // Available Gemini models (January 2026)
 export const GEMINI_MODELS = {
-  // Gemini 3 Series (Latest - GA December 2025)
-  'gemini-3-pro-preview': { name: 'Gemini 3 Pro', maxTokens: 1000000 },
-  'gemini-2.0-flash-thinking-exp-1219': { name: 'Gemini 2.0 Flash Thinking', maxTokens: 1000000 },
-  'gemini-3-flash-preview': { name: 'Gemini 3 Flash', maxTokens: 1000000 },
-  // Gemini 2.5 Series (Stable - retire June 2026)
-  'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', maxTokens: 1000000 },
+  // Gemini 3 Series (Next Gen - Preview 2026)
+  'gemini-3-pro-preview': { name: 'Gemini 3 Pro (Preview)', maxTokens: 2000000 },
+  'gemini-3-flash-preview': { name: 'Gemini 3 Flash (Preview)', maxTokens: 2000000 },
+
+  // Gemini 2.5 Series (Current Stable 2026)
+  'gemini-2.5-ultra': { name: 'Gemini 2.5 Ultra', maxTokens: 1000000 },
+  'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', maxTokens: 2000000 }, // Contex Window Upgrade
   'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', maxTokens: 1000000 },
   'gemini-2.5-flash-lite': { name: 'Gemini 2.5 Flash Lite', maxTokens: 1000000 },
+
+  // Experimental / Specialized
+  'gemini-2.0-flash-thinking-exp-1219': { name: 'Gemini 2.0 Flash Thinking', maxTokens: 1000000 },
 } as const;
 
 export type GeminiModelId = keyof typeof GEMINI_MODELS;
@@ -88,18 +92,19 @@ export class GeminiModelAdapter implements ModelAdapter {
          const errorMessage = err.message || String(error);
 
          // Check for network errors
+         const errAny = error as Record<string, unknown>;
          const isNetworkError =
            errorMessage.includes('fetch failed') ||
            errorMessage.includes('ECONNREFUSED') ||
            errorMessage.includes('ENOTFOUND') ||
            errorMessage.includes('network') ||
-           error.code === 'ECONNRESET';
+           errAny.code === 'ECONNRESET';
 
          // Check for 429 or Quota Exceeded
          const isQuotaError =
            errorMessage.includes('429') ||
            errorMessage.includes('Quota exceeded') ||
-           error.status === 429;
+           errAny.status === 429;
 
          // Check for 403 Forbidden (model access issues)
          const isAccessError =

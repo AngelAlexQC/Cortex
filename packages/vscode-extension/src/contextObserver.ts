@@ -232,8 +232,9 @@ export class ContextObserver implements vscode.CodeLensProvider {
           );
           const cmd: vscode.Command = {
               title: '⚡ Tech Debt Detected',
-              command: 'cortex.openDashboard',
-              tooltip: 'Complexity Spike detected by Cortex'
+              command: 'cortex.showDashboardItem',
+              arguments: [{ type: 'debt', line: match.index }],
+              tooltip: 'Click to analyze Technical Debt in Dashboard'
           };
           lenses.push(new vscode.CodeLens(range, cmd));
       }
@@ -249,8 +250,9 @@ export class ContextObserver implements vscode.CodeLensProvider {
            );
             const cmd: vscode.Command = {
               title: '🛡️ Security Guardian Active',
-              command: 'cortex.openDashboard',
-              arguments: ['security']
+              command: 'cortex.showDashboardItem',
+              arguments: [{ type: 'security', line: secMatch.index }],
+              tooltip: 'Click to view Security Insights'
           };
           lenses.push(new vscode.CodeLens(range, cmd));
       }

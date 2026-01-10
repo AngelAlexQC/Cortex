@@ -8,9 +8,11 @@ import type { ModelAdapter } from './index';
 import { CortexConfig, AIProvider } from '../config';
 
 export const DEEPSEEK_MODELS = {
+  'deepseek-v4': { name: 'DeepSeek V4 (2026)', maxTokens: 128000 },
+  'deepseek-v3.2': { name: 'DeepSeek V3.2 Agentic', maxTokens: 128000 },
   'deepseek-coder-v4': { name: 'DeepSeek Coder V4', maxTokens: 128000 },
+  'deepseek-coder-v3': { name: 'DeepSeek Coder V3', maxTokens: 128000 },
   'deepseek-v3': { name: 'DeepSeek V3', maxTokens: 64000 },
-  'deepseek-coder-v2': { name: 'DeepSeek Coder V2', maxTokens: 64000 },
 } as const;
 
 export type DeepSeekModelId = keyof typeof DEEPSEEK_MODELS;

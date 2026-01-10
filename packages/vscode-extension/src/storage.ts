@@ -14,6 +14,13 @@ export class MemoryStore implements IMemoryStore {
   private _onDidAdd = new vscode.EventEmitter<Memory>();
   public readonly onDidAdd = this._onDidAdd.event;
 
+  public isInitialized(): { ready: boolean; error: string | null } {
+    return {
+      ready: this.db !== null,
+      error: this.initError ? this.initError.message : null,
+    };
+  }
+
   constructor(dbPath?: string, extensionPath?: string) {
     const defaultPath = join(homedir(), '.cortex', 'memories.db');
     const dir = join(homedir(), '.cortex');
@@ -266,15 +273,26 @@ export class MemoryStore implements IMemoryStore {
     return result[0].values.map((row: SqlValue[]) => this.rowToMemory(result[0].columns, row));
   }
 
-  async list(options?: { type?: string; limit?: number }): Promise<Memory[]> {
+  async list(options?: { type?: string; tag?: string; limit?: number }): Promise<Memory[]> {
     await this.ensureInitialized();
 
     let sql = 'SELECT * FROM memories';
     const params: (number | string)[] = [];
+    const conditions: string[] = [];
 
     if (options?.type) {
-      sql += ' WHERE type = ?';
+      conditions.push('type = ?');
       params.push(options.type);
+    }
+
+    if (options?.tag) {
+        // Simple string matching for JSON array or text
+        conditions.push('tags LIKE ?');
+        params.push(`%${options.tag}%`);
+    }
+
+    if (conditions.length > 0) {
+        sql += ' WHERE ' + conditions.join(' AND ');
     }
 
     sql += ' ORDER BY created_at DESC';

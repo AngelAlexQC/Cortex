@@ -8,10 +8,11 @@ import type { ModelAdapter } from './index';
 import { CortexConfig, AIProvider } from '../config';
 
 export const MISTRAL_MODELS = {
-  'mistral-large-latest': { name: 'Mistral Large', maxTokens: 32000 },
-  'codestral-latest': { name: 'Codestral', maxTokens: 32000 },
-  'mistral-medium': { name: 'Mistral Medium', maxTokens: 32000 },
-  'mistral-small': { name: 'Mistral Small', maxTokens: 32000 },
+  'mistral-large-3': { name: 'Mistral Large 3 (2026)', maxTokens: 128000 },
+  'mistral-large-latest': { name: 'Mistral Large (Auto)', maxTokens: 32000 },
+  'codestral-25.08': { name: 'Codestral 25.08', maxTokens: 32000 },
+  'codestral-latest': { name: 'Codestral (Latest)', maxTokens: 32000 },
+  'ministral-3': { name: 'Ministral 3B', maxTokens: 32000 },
 } as const;
 
 export type MistralModelId = keyof typeof MISTRAL_MODELS;

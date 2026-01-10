@@ -11,8 +11,8 @@ Become the universal context layer for AI — the HTTP of AI memory.
 ### ✅ Completed
 - [x] Core 5 primitives (store, get, route, guard, fuse)
 - [x] SQLite storage with FTS5
-- [x] MCP Server (6 tools)
-- [x] VS Code Extension v0.4.0 (Hierarchical Scanner)
+- [x] MCP Server (13 tools)
+- [x] VS Code Extension v0.8.0 (AI Dashboard & Scanner)
 - [x] CLI tool with Universal Auto-Config
 - [x] Always-On Memory Rules (.cursorrules, CLAUDE.md)
 - [x] Gemini Code Assist (Antigravity) Support
@@ -20,10 +20,11 @@ Become the universal context layer for AI — the HTTP of AI memory.
 - [x] GitHub labels, templates, topics
 
 ### 🔄 In Progress
-- [ ] Semantic search with embeddings (sqlite-vec)
-- [ ] Embed integration in router
-- [ ] Documentation site (VitePress)
-- [ ] Python SDK (Early draft)
+- [ ] **Cortex Spotlight (Desktop)**: Beta (Awaiting logic integration).
+- [ ] **CLI UX Polish**: Interactive TUI (ink/prompts).
+- [/] **Enterprise Telemetry**: Token ROI tracking in `ctx/fuse`.
+- [ ] Semantic search native integration (`sqlite-vec`).
+- [ ] Documentation site (Starlight Portal).
 
 ### 📋 Planned
 - [ ] Python SDK

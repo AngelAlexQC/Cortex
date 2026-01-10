@@ -88,16 +88,32 @@ export class ContextFuser implements IContextFuser {
     // Combine and truncate to respect token limit
     const combined = this.combineChunks(dedupedChunks, maxTokens, format);
 
-    // Calculate source contributions
+    // Calculate source contributions and original token count
     const sourceCounts: Record<string, number> = {};
+    let originalTokenCount = 0;
+
+    for (const chunk of chunks) {
+       originalTokenCount += estimateTokens(chunk.content);
+    }
+
+    // Calculate final tokens
+    const finalTokenCount = estimateTokens(combined);
+    const savedTokens = Math.max(0, originalTokenCount - finalTokenCount);
+    const savingsPercentage = originalTokenCount > 0
+      ? Math.round((savedTokens / originalTokenCount) * 100)
+      : 0;
+
     for (const chunk of dedupedChunks) {
       sourceCounts[chunk.type] = (sourceCounts[chunk.type] || 0) + 1;
     }
 
     return {
       content: combined,
-      tokenCount: estimateTokens(combined),
+      tokenCount: finalTokenCount,
       sources: Object.entries(sourceCounts).map(([type, count]) => ({ type, count })),
+      originalTokenCount,
+      savedTokens,
+      savingsPercentage,
     };
   }
 

@@ -103,6 +103,14 @@ export class AIScanWebview {
 
   private setupPanel(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     this.panel = panel;
+    this.panel.webview.onDidReceiveMessage(
+      (message) => {
+        this._onDidReceiveMessage.fire(message);
+      },
+      null,
+      context.subscriptions
+    );
+
     this.panel.webview.html = this.getHtml();
 
     this.panel.onDidDispose(
@@ -113,20 +121,12 @@ export class AIScanWebview {
       context.subscriptions
     );
 
-    this.panel.webview.onDidReceiveMessage(
-      (message) => {
-        this._onDidReceiveMessage.fire(message);
-      },
-      null,
-      context.subscriptions
-    );
-
     // Initial hydration
     this.hydrate();
   }
 
   // Restore state to the webview
-  private hydrate() {
+  public hydrate() {
     if (!this.panel) return;
 
     this.postMessage({
@@ -203,6 +203,10 @@ export class AIScanWebview {
     this.postMessage({ type: 'chunk', chunk });
   }
 
+  getMemories(): AIMemory[] {
+    return this.memories;
+  }
+
   addMemory(memory: AIMemory) {
     this.memories.push(memory);
     this.savePersistence();
@@ -244,6 +248,10 @@ export class AIScanWebview {
       --color-warning: var(--vscode-inputValidation-warningBorder, #d29922);
       --color-purple: var(--vscode-charts-purple, #bc8cff);
 
+      /* Holographic Gradients */
+      --gradient-shiny: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 20%, transparent), transparent 60%);
+      --gradient-pro: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+
       /* Text colors */
       --text-main: var(--vscode-foreground);
       --text-muted: var(--vscode-descriptionForeground);
@@ -276,6 +284,8 @@ export class AIScanWebview {
     .flex-center { display: flex; align-items: center; justify-content: center; }
     .justify-between { justify-content: space-between; }
 
+    .cursor-pointer { cursor: pointer; }
+
     .badge {
       background: color-mix(in srgb, var(--color-primary) 15%, transparent);
       color: var(--color-primary);
@@ -284,6 +294,18 @@ export class AIScanWebview {
       font-size: 11px;
       font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
       border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: all 0.2s;
+    }
+    .badge.clickable:hover {
+        background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+        cursor: pointer;
+    }
+
+    .badge-local {
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
+        border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
     }
 
     /* === CARDS with GLASSMORPHISM + SPOTLIGHT === */
@@ -296,11 +318,15 @@ export class AIScanWebview {
       padding: 16px;
       position: relative;
       overflow: hidden;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     }
-    .card:hover {
+    .card.interactive {
+        cursor: pointer;
+    }
+    .card.interactive:hover {
       border-color: var(--text-muted);
       box-shadow: 0 4px 20px color-mix(in srgb, var(--color-primary) 10%, transparent);
+      transform: translateY(-2px);
     }
     /* Spotlight Effect */
     .card::before {
@@ -328,6 +354,18 @@ export class AIScanWebview {
       display: flex; align-items: center; justify-content: center;
       font-size: 22px; color: white;
       box-shadow: 0 4px 16px color-mix(in srgb, var(--color-primary) 40%, transparent);
+    }
+
+    .tier-badge {
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: var(--bg-app);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
     }
 
     /* === STATS GRID === */
@@ -361,6 +399,10 @@ export class AIScanWebview {
       top: 14px; right: 14px;
       font-size: 18px;
       color: var(--border);
+      transition: color 0.2s;
+    }
+    .card.interactive:hover .stat-icon {
+        color: var(--color-primary);
     }
 
     /* === MAIN CONTENT AREA === */
@@ -382,15 +424,20 @@ export class AIScanWebview {
       padding-right: 4px;
     }
     .area-item {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; flex-direction: column;
       padding: 10px 12px;
       background: color-mix(in srgb, var(--text-main) 3%, transparent);
       border-radius: 6px;
       border-left: 3px solid transparent;
       transition: all 0.2s;
+      cursor: pointer;
     }
     .area-item:hover {
       background: color-mix(in srgb, var(--text-main) 6%, transparent);
+    }
+    .area-item.expanded {
+        background: color-mix(in srgb, var(--text-main) 5%, transparent);
+        border-left-color: var(--color-primary);
     }
     .area-item.status-analyzing {
       border-color: var(--color-warning);
@@ -398,6 +445,15 @@ export class AIScanWebview {
     }
     .area-item.status-complete { border-color: var(--color-success); }
     .area-item.status-error { border-color: var(--color-danger); }
+
+    .area-details {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        display: none; /* Hidden by default */
+    }
+    .expanded .area-details { display: block; animation: slideDown 0.2s ease; }
 
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
@@ -448,12 +504,14 @@ export class AIScanWebview {
       display: flex; gap: 8px;
       position: relative;
       z-index: 1;
+      cursor: pointer;
     }
+    .log-entry:hover { background: rgba(255,255,255,0.05); }
     .log-time { color: var(--text-muted); min-width: 55px; font-size: 10px; }
     .log-content { color: var(--text-main); }
     .log-tag {
-      color: var(--color-primary);
-      text-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 50%, transparent);
+      font-weight: bold;
+      font-size: 10px;
     }
 
     /* === BUTTON (Native Style) === */
@@ -479,6 +537,15 @@ export class AIScanWebview {
       cursor: not-allowed;
     }
 
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 10px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-main);
+    }
+    .btn-sm:hover { background: var(--bg-card-hover); }
+
     /* === ANIMATIONS === */
     @keyframes pulse {
       0% { opacity: 1; transform: scale(1); }
@@ -489,13 +556,13 @@ export class AIScanWebview {
       from { opacity: 0; transform: translateX(-5px); }
       to { opacity: 1; transform: translateX(0); }
     }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-5px); height: 0; }
+        to { opacity: 1; transform: translateY(0); height: auto; }
+    }
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
-    }
-    @keyframes glow {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
     }
 
     /* === SCROLLBAR (Theme-aware) === */
@@ -521,14 +588,17 @@ export class AIScanWebview {
       </div>
       <div>
         <h2 style="margin: 0; color: var(--text-main);">Cortex AI</h2>
-        <div style="font-size: 12px; color: var(--text-muted);">Project Analysis Directory</div>
+        <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+            <span id="project-name">Project Analysis Directory</span>
+            <span class="tier-badge" id="mode-badge"><i class="ph-fill ph-hard-drives"></i> Local Mode</span>
+        </div>
       </div>
     </div>
 
     <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 50%;">
-      <span class="badge">Gemini Flash 2.5</span>
-      <span class="badge" id="project-badge">...</span>
-      <span class="badge" style="border-style: dashed; opacity: 0.7;">Auto-Discovery Mode</span>
+      <span class="badge" id="status-mcp" style="border-style: dotted; opacity: 0.8; font-family: var(--font-family);"><i class="ph-bold ph-circle"></i> MCP: OFF</span>
+      <span class="badge" id="status-db" style="border-style: dotted; opacity: 0.8; font-family: var(--font-family);"><i class="ph-bold ph-circle"></i> DB: OFF</span>
+      <span class="badge clickable" onclick="postMsg('selectModel')"><i class="ph-bold ph-lightning"></i> <span id="model-name">Gemini Flash 2.5</span></span>
     </div>
 
     <button id="btn-analyze" class="btn-primary">
@@ -540,7 +610,7 @@ export class AIScanWebview {
   <div class="stats-grid">
 
     <!-- 1. Coverage / Radar -->
-    <div class="card stat-card">
+    <div class="card interactive stat-card" onclick="postMsg('filter', 'coverage')">
       <div class="stat-icon"><i class="ph-bold ph-chart-pie-slice"></i></div>
       <div class="stat-label">Coverage</div>
       <div style="display: flex; align-items: flex-end; justify-content: space-between;">
@@ -555,7 +625,7 @@ export class AIScanWebview {
     </div>
 
     <!-- 2. Memories -->
-    <div class="card stat-card">
+    <div class="card interactive stat-card" onclick="postMsg('filter', 'memories')">
       <div class="stat-icon"><i class="ph-bold ph-brain"></i></div>
       <div class="stat-label">Memories Extracted</div>
       <div class="stat-value" id="val-memories">0</div>
@@ -565,7 +635,7 @@ export class AIScanWebview {
     </div>
 
     <!-- 3. Context Files -->
-    <div class="card stat-card">
+    <div class="card interactive stat-card" onclick="postMsg('filter', 'files')">
       <div class="stat-icon"><i class="ph-bold ph-files"></i></div>
       <div class="stat-label">Context Files</div>
       <div class="stat-value" id="val-files">0</div>
@@ -573,7 +643,7 @@ export class AIScanWebview {
     </div>
 
     <!-- 4. Active Intelligence (Guardian) -->
-    <div class="card stat-card" style="border-color: rgba(63, 185, 80, 0.3);">
+    <div class="card interactive stat-card" style="border-color: rgba(63, 185, 80, 0.3);" onclick="postMsg('filter', 'security')">
       <div class="stat-icon"><i class="ph-bold ph-shield-check" style="color: var(--color-success);"></i></div>
       <div class="stat-label" style="color: var(--color-success);">Guardian Active</div>
       <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
@@ -615,7 +685,7 @@ export class AIScanWebview {
          <span class="badge" id="memory-count-badge">0</span>
       </div>
       <div class="feed-container" id="feed">
-         <div class="log-entry">
+         <div class="log-entry" id="initial-log">
             <span class="log-time">SYS</span>
             <span class="log-content">Dashboard ready. Waiting for input...</span>
          </div>
@@ -628,8 +698,8 @@ export class AIScanWebview {
     const vscode = acquireVsCodeApi();
 
     // State
+    const memoryIds = new Set();
     let totalAreas = 0;
-    let completedAreas = 0;
     let totalMemories = 0;
 
     // Elements
@@ -638,19 +708,27 @@ export class AIScanWebview {
     const feed = document.getElementById('feed');
     const valCoverage = document.getElementById('val-coverage');
     const valMemories = document.getElementById('val-memories');
+    const valFiles = document.getElementById('val-files');
     const radarPath = document.getElementById('mini-radar');
+    const statusMcp = document.getElementById('status-mcp');
+    const statusDb = document.getElementById('status-db');
+
+    // Helper for sending messages
+    window.postMsg = (type, data) => {
+        vscode.postMessage({ type, data });
+    };
 
     // Mouse Tracking for Spotlight
     document.addEventListener('mousemove', e => {
         document.querySelectorAll('.card').forEach(card => {
             const rect = card.getBoundingClientRect();
-            card.style.setProperty('--mouse-x', \`\${e.clientX - rect.left}px\`);
-            card.style.setProperty('--mouse-y', \`\${e.clientY - rect.top}px\`);
+            card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+            card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
         });
     });
 
     btnAnalyze.addEventListener('click', () => {
-        vscode.postMessage({ type: 'startScan' });
+        postMsg('startScan');
         btnAnalyze.innerHTML = '<i class="ph-bold ph-spinner" style="animation: spin 1s infinite;"></i> Scanning...';
         btnAnalyze.style.opacity = '0.7';
     });
@@ -661,27 +739,58 @@ export class AIScanWebview {
         if (msg.type === 'hydrate' || msg.type === 'projectContext') {
             if (msg.context || msg.state?.projectContext) {
                 const ctx = msg.context || msg.state.projectContext;
-                document.getElementById('project-badge').innerText = ctx.name;
+                let cleanName = ctx.name.replace(/\(cloud Edition\)/gi, '').trim();
+                cleanName = cleanName.replace(/\(.*?edition\)/gi, '').trim();
+                document.getElementById('project-name').innerText = cleanName;
+
+                if (ctx.techStack?.includes('cloud-sync-enabled') || ctx.techStack?.includes('cloud')) {
+                    document.getElementById('mode-badge').innerHTML = '<i class="ph-fill ph-cloud"></i> Cloud Synced';
+                    document.getElementById('mode-badge').style.borderColor = 'var(--color-primary)';
+                    document.getElementById('mode-badge').style.color = 'var(--color-primary)';
+                } else {
+                     document.getElementById('mode-badge').innerHTML = '<i class="ph-fill ph-hard-drives"></i> Local Mode';
+                     document.getElementById('mode-badge').style.borderColor = '';
+                     document.getElementById('mode-badge').style.color = '';
+                }
             }
         }
 
         if (msg.type === 'areas' || (msg.type === 'hydrate' && msg.state?.areas)) {
             const areas = msg.areas || msg.state.areas;
             renderAreas(areas);
-            updateStats(areas);
         }
 
         if (msg.type === 'areaStatus') {
-            updateAreaStatus(msg.areaName, msg.status);
+            updateAreaStatus(msg.areaName, msg.status, msg.memoryCount);
         }
 
         if (msg.type === 'memory' || (msg.type === 'hydrate' && msg.state?.memories)) {
-            // If hydrate array
-            if (Array.isArray(msg.state?.memories)) {
+            if (msg.type === 'hydrate' && Array.isArray(msg.state?.memories)) {
+                memoryIds.clear();
+                totalMemories = 0;
+                feed.innerHTML = '';
                 msg.state.memories.forEach(m => addLog(m));
             } else if (msg.memory) {
                 addLog(msg.memory);
             }
+        }
+
+        if (msg.type === 'summary') {
+            if (msg.files) valFiles.innerText = msg.files;
+            if (msg.model) document.getElementById('model-name').innerText = msg.model;
+        }
+
+        if (msg.type === 'systemStatus') {
+             if (msg.mcp !== undefined) {
+                 statusMcp.innerHTML = msg.mcp === 'ready' ? '<i class="ph-fill ph-check-circle" style="color: var(--color-success)"></i> MCP: OK' : '<i class="ph-bold ph-warning-circle" style="color: var(--color-danger)"></i> MCP: FAIL';
+                 statusMcp.style.opacity = '1';
+                 statusMcp.style.borderStyle = 'solid';
+             }
+             if (msg.db !== undefined) {
+                 statusDb.innerHTML = msg.db === 'ready' ? '<i class="ph-fill ph-check-circle" style="color: var(--color-success)"></i> DB: OK' : '<i class="ph-bold ph-warning-circle" style="color: var(--color-danger)"></i> DB: FAIL';
+                 statusDb.style.opacity = '1';
+                 statusDb.style.borderStyle = 'solid';
+             }
         }
 
         if (msg.type === 'status' && msg.status === 'complete') {
@@ -689,103 +798,155 @@ export class AIScanWebview {
             btnAnalyze.style.background = 'var(--color-success)';
         }
 
-        // Handle state clear when database is empty
+        // Signal Readiness to Backend
+        postMsg('ready');
+
+        if (msg.type === 'highlightItem') {
+             if (msg.data.type === 'debt') {
+                 addLog({ content: 'Focused on Technical Debt', tags: ['debt'], type: 'filter' });
+             }
+        }
+
         if (msg.type === 'clearState') {
-            totalAreas = 0;
-            completedAreas = 0;
+            memoryIds.clear();
             totalMemories = 0;
             valMemories.innerText = '0';
             valCoverage.innerText = '0%';
+            valFiles.innerText = '0';
             document.getElementById('memory-count-badge').innerText = '0';
             document.getElementById('area-count').innerText = '0';
-            document.getElementById('project-badge').innerText = '...';
+            document.getElementById('project-name').innerText = 'Project Analysis Directory';
             document.getElementById('bar-memories').style.width = '0%';
             areaList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">Click "Start Analysis" to map project...</div>';
             feed.innerHTML = '<div class="log-entry"><span class="log-time">SYS</span><span class="log-content">Dashboard ready. Waiting for input...</span></div>';
             btnAnalyze.innerHTML = '<i class="ph-bold ph-play"></i> Start Analysis';
             btnAnalyze.style.background = '';
+            btnAnalyze.style.opacity = '1';
         }
     });
 
+    const currentAreas = [];
+
     function renderAreas(areas) {
         if (!areas || areas.length === 0) return;
+        currentAreas.length = 0;
+        currentAreas.push(...areas);
+
         areaList.innerHTML = '';
         totalAreas = areas.length;
         document.getElementById('area-count').innerText = totalAreas;
 
         areas.forEach(area => {
             const div = document.createElement('div');
-            div.className = \`area-item status-\${area.status || 'pending'}\`;
-            div.id = \`area-\${area.name}\`;
-            div.innerHTML = \`
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span class="status-dot"></span>
-                    <span style="font-weight: 500;">\${area.name}</span>
-                </div>
-                <div style="font-size: 10px; color: var(--text-muted);">\${area.memoryCount || 0} mems</div>
-            \`;
+            div.className = 'area-item status-' + (area.status || 'pending');
+            div.id = 'area-' + area.name;
+
+            div.onclick = (e) => {
+                if (e.target.closest('button')) return;
+                div.classList.toggle('expanded');
+            };
+
+            div.innerHTML = ' \
+                <div style="display: flex; align-items: center; justify-content: space-between;"> \
+                    <div style="display: flex; align-items: center; gap: 12px;"> \
+                        <span class="status-dot"></span> \
+                        <span style="font-weight: 500;">' + area.name + '</span> \
+                    </div> \
+                    <i class="ph-bold ph-caret-down" style="font-size: 10px; opacity: 0.5;"></i> \
+                </div> \
+                <div style="font-size: 10px; color: var(--text-muted); padding-left: 20px;" class="area-mems-count">' + (area.memoryCount || 0) + ' mems</div> \
+ \
+                <div class="area-details"> \
+                    <p style="margin: 0 0 8px 0; opacity: 0.8;">' + (area.rationale || 'No details available.') + '</p> \
+                    <div style="display: flex; gap: 8px;"> \
+                         <button class="btn-sm" onclick="postMsg(\'analyzeArea\', { areaName: \'' + area.name + '\' })"> \
+                            <i class="ph-bold ph-arrows-clockwise"></i> Re-Scan \
+                         </button> \
+                         <button class="btn-sm" onclick="postMsg(\'filter\', { area: \'' + area.name + '\' })"> \
+                            <i class="ph-bold ph-magnifying-glass"></i> View Memories \
+                         </button> \
+                    </div> \
+                </div> \
+            ';
             areaList.appendChild(div);
         });
-        updateStats(areas);
+        updateStats();
     }
 
-    function updateAreaStatus(name, status) {
-        const el = document.getElementById(\`area-\${name}\`);
+    function updateAreaStatus(name, status, memoryCount) {
+        const area = currentAreas.find(a => a.name === name);
+        if (area) {
+            area.status = status;
+            if (memoryCount !== undefined) area.memoryCount = memoryCount;
+        }
+
+        const el = document.getElementById('area-' + name);
         if (el) {
-            el.className = \`area-item status-\${status}\`;
-            // Trigger stats update
-             if (status === 'complete') {
-                completedAreas++;
-                updateCoverage();
+            el.className = 'area-item status-' + status;
+            if (el.classList.contains('expanded')) el.classList.add('expanded');
+            if (memoryCount !== undefined) {
+                const countEl = el.querySelector('.area-mems-count');
+                if (countEl) countEl.innerText = memoryCount + ' mems';
             }
+            updateStats();
         }
     }
 
     function addLog(memory) {
+        // Simple deduplication by content hash or ID
+        const memId = memory.id || memory.content;
+        if (memoryIds.has(memId)) return;
+        memoryIds.add(memId);
+
         totalMemories++;
         valMemories.innerText = totalMemories;
         document.getElementById('memory-count-badge').innerText = totalMemories;
 
-        // Update bar
         const width = Math.min(totalMemories * 2, 100);
-        document.getElementById('bar-memories').style.width = \`\${width}%\`;
+        const barEl = document.getElementById('bar-memories');
+        if (barEl) barEl.style.width = width + '%';
 
         const div = document.createElement('div');
         div.className = 'log-entry';
+        div.onclick = () => {
+             postMsg('showMemory', { id: memory.id || memory.content });
+        };
+
         const time = new Date().toLocaleTimeString().split(' ')[0];
-
-        // Tag Logic
         let tag = 'INFO';
-        if (memory.tags?.includes('debt')) tag = 'DEBT';
-        if (memory.tags?.includes('security')) tag = 'SEC';
+        let color = 'var(--text-muted)';
+        const tags = memory.tags || [];
 
-        div.innerHTML = \`
-            <span class="log-time">\${time}</span>
-            <span class="log-tag">[\${tag}]</span>
-            <span class="log-content">\${memory.content}</span>
-        \`;
+        if (tags.includes('debt')) { tag = 'DEBT'; color = 'var(--color-warning)'; }
+        if (tags.includes('security')) { tag = 'SEC'; color = 'var(--color-danger)'; }
+        if (memory.type === 'decision') { tag = 'DEC'; color = 'var(--color-purple)'; }
+        if (memory.type === 'code') { tag = 'CODE'; color = 'var(--color-primary)'; }
+
+        div.innerHTML = ' \
+            <span class="log-time">' + time + '</span> \
+            <span class="log-tag" style="color: ' + color + '">[' + tag + ']</span> \
+            <span class="log-content">' + memory.content + '</span> \
+        ';
         feed.prepend(div);
 
-        // Animate radar on update
-        radarPath.style.transform = \`scale(\${1 + (Math.random() * 0.2)})\`;
-        setTimeout(() => radarPath.style.transform = 'scale(1)', 200);
+        if (radarPath) {
+            radarPath.style.transform = 'scale(' + (1 + (Math.random() * 0.2)) + ')';
+            setTimeout(() => radarPath.style.transform = 'scale(1)', 200);
+        }
     }
 
-    function updateStats(areas) {
-        // Simple mock calc
-        const done = areas.filter(a => a.status === 'complete').length;
-        completedAreas = done;
-        updateCoverage();
+    function updateStats() {
+        const done = currentAreas.filter(a => a.status === 'complete').length;
+        if (totalAreas === 0) {
+            valCoverage.innerText = '0%';
+            return;
+        }
+        const pct = Math.round((done / totalAreas) * 100);
+        valCoverage.innerText = pct + '%';
     }
 
-    function updateCoverage() {
-        if (totalAreas === 0) return;
-        const pct = Math.round((completedAreas / totalAreas) * 100);
-        valCoverage.innerText = \`\${pct}%\`;
-        // Update simple radar wedge angle (mock)
-        // A full implementation would calculate d path based on angle.
-        // For now, just opacity/pulse indicating activity.
-    }
+    // Signal ready to extension to initiate hydration
+    postMsg('ready');
 
   </script>
 </body>

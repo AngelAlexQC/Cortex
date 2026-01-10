@@ -1,6 +1,6 @@
 {
   "name": "cortex-monorepo",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Cortex - The Universal Context Layer for AI",
   "private": true,
   "workspaces": [

@@ -89,7 +89,10 @@ export class Logger {
   public error(message: string, error?: unknown) {
     this.write('ERROR', message, error);
     if (error && typeof error === 'object' && 'stack' in error) {
-        this.write('STACK', (error as { stack: unknown }).stack);
+        const err = error as { stack: unknown };
+        if (typeof err.stack === 'string') {
+            this.write('STACK', err.stack);
+        }
     }
   }
 

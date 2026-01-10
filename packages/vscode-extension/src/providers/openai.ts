@@ -11,15 +11,19 @@ import { CortexConfig, AIProvider } from '../config';
 
 // Available OpenAI models (January 2026)
 export const OPENAI_MODELS = {
-  // GPT-5 Series (2025/2026)
+  // GPT-5 Series (Flagship 2026)
+  'gpt-5': { name: 'GPT-5', maxTokens: 128000 },
   'gpt-5.2-codex': { name: 'GPT-5.2 Codex', maxTokens: 128000 },
   'gpt-5-turbo': { name: 'GPT-5 Turbo', maxTokens: 128000 },
+
+  // Legacy / Transitional
+  'gpt-4.5-preview': { name: 'GPT-4.5 Preview (Legacy)', maxTokens: 128000 },
   'gpt-4o': { name: 'GPT-4o', maxTokens: 128000 },
-  'gpt-4o-mini': { name: 'GPT-4o Mini', maxTokens: 128000 },
-  // Reasoning
-  'o1-pro': { name: 'o1 Pro', maxTokens: 128000 },
-  'o1-preview': { name: 'o1 Preview', maxTokens: 128000 },
-  'o1-mini': { name: 'o1 Mini', maxTokens: 128000 },
+
+  // Reasoning Tech (o3 Series)
+  'o3-high': { name: 'o3 High Reasoning', maxTokens: 128000 },
+  'o3-pro': { name: 'o3 Pro', maxTokens: 128000 },
+  'o3-mini': { name: 'o3 Mini', maxTokens: 128000 },
 } as const;
 
 export type OpenAIModelId = keyof typeof OPENAI_MODELS;

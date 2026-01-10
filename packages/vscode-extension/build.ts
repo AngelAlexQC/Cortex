@@ -46,8 +46,33 @@ async function buildExtension() {
   }
 }
 
+
+async function buildMcpServer() {
+  console.log('🔨 Building Bundled MCP Server...');
+  const result = await Bun.build({
+    entrypoints: ['./src/bundledMcpServer.ts'],
+    outdir: './dist',
+    naming: {
+       entry: 'mcp-server.js'
+    },
+    target: 'node',
+    format: 'cjs',
+    external: ['vscode'], // Just in case, though bundledMcpServer imports storage-node which is clean
+    minify: false,
+  });
+
+  if (result.success) {
+    console.log('✅ bundled MCP server built successfully');
+  } else {
+    console.error('❌ MCP server build failed:');
+    result.logs.forEach(l => console.error(l));
+    if (!isWatch) process.exit(1);
+  }
+}
+
 // Initial build
 await buildExtension();
+await buildMcpServer();
 
 // Watch mode
 if (isWatch) {
@@ -56,6 +81,8 @@ if (isWatch) {
     if (filename?.endsWith('.ts')) {
       console.log(`\n📝 File changed: ${filename}`);
       await buildExtension();
+      await buildMcpServer();
     }
   });
 }
+

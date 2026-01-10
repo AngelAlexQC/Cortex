@@ -1,5 +1,6 @@
 // Set default timeout for IPv4/IPv6 family auto-selection to avoid long delays
 import { exec } from 'node:child_process';
+import { join } from 'node:path';
 import { promisify } from 'node:util';
 import type { Memory } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
@@ -17,23 +18,46 @@ const execAsync = promisify(exec);
 
 export async function activate(context: vscode.ExtensionContext) {
   try {
-    console.log('[Cortex] Extension activation started');
+    console.log('[Cortex] Private Context Infrastructure initializing...');
 
-    // --- Auto-Configuration Logic ---
+    // --- MCP Configuration & Onboarding ---
+    const serverPath = context.asAbsolutePath(join('dist', 'mcp-server.js'));
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.configureMcp', async () => {
+        try {
+          const config = vscode.workspace.getConfiguration('mcp.servers');
+          await config.update(
+            'cortex',
+            { command: 'node', args: [serverPath] },
+            vscode.ConfigurationTarget.Global
+          );
+          vscode.window.showInformationMessage('✅ Cortex MCP Server configured (Local Bundle)! Please reload window.');
+        } catch (error) {
+          vscode.window.showErrorMessage(`Failed to configure MCP: ${error}`);
+        }
+      })
+    );
+
+    // Auto-repair: Configure if missing or path incorrect
+    const mcpConfig = vscode.workspace.getConfiguration('mcp.servers');
+    const existingConfig = mcpConfig.get<any>('cortex');
+    // We check if it exists AND if it points to the correct bundled file (handle updates)
+    if (!existingConfig || existingConfig.args?.[0] !== serverPath) {
+        // We only auto-update if it's missing or looks like an old auto-config.
+        // User might have custom config, so be careful.
+        // But for "npx" vs "bundled", we want to force bundled for reliability?
+        // Let's assume if command is 'npx', we overwrite. If command is 'node' and diff path, we overwrite.
+        // If command is other, maybe user custom?
+        if (!existingConfig || existingConfig.command === 'npx' || (existingConfig.command === 'node' && existingConfig.args?.[0] !== serverPath)) {
+             vscode.commands.executeCommand('cortex.configureMcp');
+        }
+    }
+
+    // --- Onboarding Logic ---
     const isConfigured = context.globalState.get<boolean>('cortex.configured');
     if (!isConfigured) {
-      // 1. Configure VS Code itself (MCP)
-      const config = vscode.workspace.getConfiguration('mcp.servers');
-      const cortex = config.get('cortex');
-      if (!cortex) {
-        console.log('[Cortex] Auto-configuring VS Code MCP server...');
-        await config.update(
-          'cortex',
-          { command: 'npx', args: ['-y', '@ecuabyte/cortex-mcp-server'] },
-          vscode.ConfigurationTarget.Global
-        );
-        vscode.window.showInformationMessage('✅ Cortex configured for VS Code Copilot');
-      }
+
 
       // 2. Offer to configure other editors
       const selection = await vscode.window.showInformationMessage(
@@ -455,7 +479,8 @@ export async function activate(context: vscode.ExtensionContext) {
         // Use existing dashboard webview
         dashboardWebview.show(context);
 
-        // Clear any previous state if needed or set to analyzing
+        // Clear any previous state to prevent duplication and show analyzing status
+        dashboardWebview.clearState();
         dashboardWebview.setStatus('analyzing', 'Starting new analysis session...');
 
         // Update tree status
@@ -509,12 +534,55 @@ export async function activate(context: vscode.ExtensionContext) {
     // Listen for dashboard messages (Start Scan button)
     // biome-ignore lint/suspicious/noExplicitAny: Message payload is loosely typed
     dashboardWebview.onDidReceiveMessage(async (message: any) => {
+      // Normalize payload (support 'data' wrapper from new webview)
+      const payload = message.data || message;
+
+      if (message.type === 'ready') {
+        try {
+            console.log('[Cortex] Dashboard ready, initiating hydration...');
+
+            // Initial hydration
+            dashboardWebview.hydrate();
+
+            // Push system status
+            const dbStatus = store.isInitialized();
+            console.log(`[Cortex] DB Status: ${JSON.stringify(dbStatus)}`);
+
+            dashboardWebview.postMessage({
+                type: 'systemStatus',
+                mcp: 'ready',
+                db: dbStatus.ready ? 'ready' : 'error'
+            });
+
+            // If dashboard has no memories but DB does, fetch and populate
+            const stats = await store.stats();
+            if (stats.total > 0 && dashboardWebview.getMemories().length === 0) {
+                console.log(`[Cortex] Dashboard empty but DB has ${stats.total} memories. Loading initial batch...`);
+                const memories = await store.list({ limit: 50 });
+                for (const m of memories.reverse()) {
+                    dashboardWebview.addMemory({ ...m, tags: m.tags || [] });
+                }
+            }
+        } catch (e) {
+            console.error('[Cortex] Error processing dashboard ready:', e);
+            dashboardWebview.postMessage({
+                type: 'systemStatus',
+                mcp: 'error',
+                db: 'error'
+            });
+        }
+      }
+
       if (message.type === 'startScan') {
         startProjectAnalysis();
       }
-      if (message.type === 'analyzeArea' && message.areaName) {
+
+      if (message.type === 'analyzeArea') {
+        const areaName = payload.areaName || message.areaName;
+        if (!areaName) return;
+
         // Find the area
-        const area = dashboardWebview.getArea(message.areaName);
+        const area = dashboardWebview.getArea(areaName);
         if (!area) {
           vscode.window.showErrorMessage(`Area not found: ${message.areaName}`);
           return;
@@ -591,7 +659,55 @@ export async function activate(context: vscode.ExtensionContext) {
           }
         );
       }
+
+      // Handle "Show Memory" from dashboard
+      if (message.type === 'showMemory' && payload.id) {
+          const memory = await store.get(payload.id);
+          if (memory) {
+              webviewProvider.showMemory(memory);
+          }
+      }
+
+      // Handle "Filter" from dashboard
+      if (message.type === 'filter') {
+          console.log('[Cortex] Dashboard filter requested:', payload);
+          vscode.commands.executeCommand('cortex.memoryTree.focus');
+
+          if (typeof payload === 'object') {
+             if (payload.area) {
+                 // Filter by tag matching the area name (slugified as in aiScanner.ts)
+                 const areaTag = payload.area.toLowerCase().replace(/\s+/g, '-');
+                 webviewProvider.setFilter({ tag: areaTag });
+                 vscode.window.setStatusBarMessage(`Dashboard: Filtering by Area: ${payload.area} (tag: ${areaTag})`, 3000);
+             } else if (payload.type) {
+                 webviewProvider.setFilter({ type: payload.type });
+                 vscode.window.setStatusBarMessage(`Dashboard: Filtering by ${payload.type}`, 3000);
+             }
+          } else if (typeof payload === 'string') {
+              const filterType = payload;
+              webviewProvider.setFilter({ type: filterType });
+              vscode.window.setStatusBarMessage(`Dashboard: Filtering by ${filterType}`, 3000);
+          }
+      }
     });
+
+    // Command to clear filter
+    context.subscriptions.push(
+        vscode.commands.registerCommand('cortex.clearFilter', () => {
+             webviewProvider.setFilter(undefined);
+        })
+    );
+
+    // Command to show specific item in dashboard (from CodeLens)
+    context.subscriptions.push(
+      vscode.commands.registerCommand('cortex.showDashboardItem', async (args: { type: string; id?: string }) => {
+        dashboardWebview.show(context);
+        // Wait a bit for hydrate
+        setTimeout(() => {
+             dashboardWebview.postMessage({ type: 'highlightItem', data: args });
+        }, 500);
+      })
+    );
 
     // Reset Extension - Clear all API keys and settings
     context.subscriptions.push(

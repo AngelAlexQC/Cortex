@@ -65,7 +65,8 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
-    "sql.js": "^1.13.0"
+    "sql.js": "^1.13.0",
+    "@modelcontextprotocol/sdk": "^1.0.4"
   },
   "contributes": {
     "taskDefinitions": [

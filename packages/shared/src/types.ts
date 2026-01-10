@@ -195,6 +195,12 @@ export interface FuseResult {
   tokenCount: number;
   /** Sources that contributed to the result */
   sources: { type: string; count: number }[];
+  /** Total tokens if all context was sent raw */
+  originalTokenCount?: number;
+  /** Tokens saved by deduplication and optimization */
+  savedTokens?: number;
+  /** Percentage of tokens saved (0-100) */
+  savingsPercentage?: number;
 }
 
 /**
