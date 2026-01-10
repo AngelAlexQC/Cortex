@@ -8,6 +8,7 @@ import type {
   SemanticSearchOptions,
   SemanticSearchResult,
 } from '@ecuabyte/cortex-shared';
+import { MEMORY_TYPES } from '@ecuabyte/cortex-shared';
 import { getProjectId } from './context';
 import { decrypt, encrypt } from './crypto';
 import {
@@ -25,7 +26,7 @@ interface DatabaseRow {
   id: number;
   project_id: string | null;
   content: string;
-  type: 'fact' | 'decision' | 'code' | 'config' | 'note';
+  type: Memory['type'];
   source: string;
   tags: string | null;
   metadata: string | null;
@@ -39,14 +40,15 @@ interface DatabaseRow {
  * Valid memory types supported by Cortex.
  * @public
  */
-export const MEMORY_TYPES = ['fact', 'decision', 'code', 'config', 'note'] as const;
+export { MEMORY_TYPES };
 
 /**
  * Type guard to check if a string is a valid memory type.
  * @public
  */
 export function isValidMemoryType(type: string): type is Memory['type'] {
-  return MEMORY_TYPES.includes(type as Memory['type']);
+  // biome-ignore lint/suspicious/noExplicitAny: Check if string exists in enum values
+  return Object.values(MEMORY_TYPES).includes(type as any);
 }
 
 /**
@@ -56,7 +58,9 @@ export function isValidMemoryType(type: string): type is Memory['type'] {
  */
 export function validateMemoryType(type: string): asserts type is Memory['type'] {
   if (!isValidMemoryType(type)) {
-    throw new Error(`Invalid memory type: "${type}". Must be one of: ${MEMORY_TYPES.join(', ')}`);
+    throw new Error(
+      `Invalid memory type: "${type}". Must be one of: ${Object.values(MEMORY_TYPES).join(', ')}`
+    );
   }
 }
 

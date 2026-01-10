@@ -123,6 +123,8 @@ export class CortexRecallTool implements vscode.LanguageModelTool<RecallParams> 
 
 // === Registration ===
 
+import { TOOL_NAMES } from '@ecuabyte/cortex-shared';
+
 export function registerCortexTools(
   context: vscode.ExtensionContext,
   store: MemoryStore,
@@ -135,9 +137,11 @@ export function registerCortexTools(
   }
 
   context.subscriptions.push(
-    vscode.lm.registerTool('cortex_remember', new CortexRememberTool(store, onMemoryAdded)),
-    vscode.lm.registerTool('cortex_recall', new CortexRecallTool(store))
+    vscode.lm.registerTool(TOOL_NAMES.REMEMBER, new CortexRememberTool(store, onMemoryAdded)),
+    vscode.lm.registerTool(TOOL_NAMES.RECALL, new CortexRecallTool(store))
   );
 
-  console.log('[Cortex] Registered Language Model Tools: cortex_remember, cortex_recall');
+  console.log(
+    `[Cortex] Registered Language Model Tools: ${TOOL_NAMES.REMEMBER}, ${TOOL_NAMES.RECALL}`
+  );
 }

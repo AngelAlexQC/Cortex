@@ -101,7 +101,9 @@ export class MemoryStore implements IMemoryStore {
           console.log(`[Cortex] Loaded database from ${this.dbPath}`);
         } catch (error) {
           console.error('[Cortex] Failed to load existing database:', error);
-          throw new Error(`Failed to load database: ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(
+            `Failed to load database: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       } else {
         console.log(`[Cortex] Creating new database at ${this.dbPath}`);
@@ -232,7 +234,7 @@ export class MemoryStore implements IMemoryStore {
       tags: memory.tags,
       metadata: memory.metadata,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
 
     return id;
@@ -286,13 +288,13 @@ export class MemoryStore implements IMemoryStore {
     }
 
     if (options?.tag) {
-        // Simple string matching for JSON array or text
-        conditions.push('tags LIKE ?');
-        params.push(`%${options.tag}%`);
+      // Simple string matching for JSON array or text
+      conditions.push('tags LIKE ?');
+      params.push(`%${options.tag}%`);
     }
 
     if (conditions.length > 0) {
-        sql += ' WHERE ' + conditions.join(' AND ');
+      sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
     sql += ' ORDER BY created_at DESC';

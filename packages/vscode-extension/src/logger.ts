@@ -1,12 +1,12 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
 }
 
 export class Logger {
@@ -37,7 +37,7 @@ export class Logger {
         // Timestamped log file for each session
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         this.logFilePath = path.join(logsDir, `cortex-${timestamp}.log`);
-        this.info('Logger initialized. Writing logs to: ' + this.logFilePath);
+        this.info(`Logger initialized. Writing logs to: ${this.logFilePath}`);
       } catch (e) {
         this.outputChannel.appendLine(`Failed to create log file: ${e}`);
       }
@@ -49,7 +49,8 @@ export class Logger {
     let formattedData = '';
     if (data) {
       try {
-        formattedData = typeof data === 'object' ? `\n${JSON.stringify(data, null, 2)}` : ` ${data}`;
+        formattedData =
+          typeof data === 'object' ? `\n${JSON.stringify(data, null, 2)}` : ` ${data}`;
       } catch (_e) {
         formattedData = ' [Circular/Unserializable Data]';
       }
@@ -66,7 +67,7 @@ export class Logger {
     // Write to file if available
     if (this.logFilePath) {
       try {
-        fs.appendFileSync(this.logFilePath, logMessage + '\n');
+        fs.appendFileSync(this.logFilePath, `${logMessage}\n`);
       } catch (e) {
         // Fallback to console if file write fails
         console.error('Failed to write to log file', e);
@@ -89,10 +90,10 @@ export class Logger {
   public error(message: string, error?: unknown) {
     this.write('ERROR', message, error);
     if (error && typeof error === 'object' && 'stack' in error) {
-        const err = error as { stack: unknown };
-        if (typeof err.stack === 'string') {
-            this.write('STACK', err.stack);
-        }
+      const err = error as { stack: unknown };
+      if (typeof err.stack === 'string') {
+        this.write('STACK', err.stack);
+      }
     }
   }
 

@@ -1,4 +1,3 @@
-
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
@@ -8,16 +7,24 @@ import initSqlJs, { type Database, type SqlValue } from 'sql.js';
 
 // Simple Event Emitter replacement for vscode.EventEmitter
 class Emitter<T> {
-  private listeners: ((e: T) => any)[] = [];
+  private listeners: ((e: T) => void)[] = [];
   public get event() {
-    return (listener: (e: T) => any) => {
+    return (listener: (e: T) => void) => {
       this.listeners.push(listener);
-      return { dispose: () => { this.listeners = this.listeners.filter(l => l !== listener); } };
+      return {
+        dispose: () => {
+          this.listeners = this.listeners.filter((l) => l !== listener);
+        },
+      };
     };
   }
   public fire(e: T) {
-    this.listeners.forEach(l => {
-      try { l(e); } catch (err) { console.error('Error in event listener', err); }
+    this.listeners.forEach((l) => {
+      try {
+        l(e);
+      } catch (err) {
+        console.error('Error in event listener', err);
+      }
     });
   }
 }
@@ -65,7 +72,9 @@ export class MemoryStore implements IMemoryStore {
         const require = createRequire(import.meta.url);
         const sqlJsPath = require.resolve('sql.js');
         possiblePaths.push(join(sqlJsPath, '..', 'sql-wasm.wasm'));
-      } catch {}
+      } catch {
+        // ignore
+      }
 
       let wasmPath: string | null = null;
       for (const path of possiblePaths) {
@@ -110,7 +119,11 @@ export class MemoryStore implements IMemoryStore {
         )
       `);
 
-      try { this.db.run('ALTER TABLE memories ADD COLUMN project_id TEXT'); } catch {}
+      try {
+        this.db.run('ALTER TABLE memories ADD COLUMN project_id TEXT');
+      } catch {
+        // ignore column exists error
+      }
 
       // Indexes and triggers...
       this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)');
@@ -125,7 +138,8 @@ export class MemoryStore implements IMemoryStore {
   }
 
   private async ensureInitialized() {
-    if (this.initError) throw new Error(`Database initialization failed: ${this.initError.message}`);
+    if (this.initError)
+      throw new Error(`Database initialization failed: ${this.initError.message}`);
     await this.initPromise;
     if (!this.db) throw new Error('Database not available.');
   }
@@ -142,7 +156,14 @@ export class MemoryStore implements IMemoryStore {
     await this.ensureInitialized();
     this.db?.run(
       `INSERT INTO memories (content, type, source, project_id, tags, metadata) values (?, ?, ?, ?, ?, ?)`,
-      [memory.content, memory.type, memory.source, memory.projectId||null, JSON.stringify(memory.tags), JSON.stringify(memory.metadata)]
+      [
+        memory.content,
+        memory.type,
+        memory.source,
+        memory.projectId || null,
+        JSON.stringify(memory.tags),
+        JSON.stringify(memory.metadata),
+      ]
     );
     const result = this.db?.exec('SELECT last_insert_rowid() as id');
     if (!result) throw new Error('Insert failed');
@@ -150,7 +171,12 @@ export class MemoryStore implements IMemoryStore {
     this.saveToFile();
 
     // Fire event (no-op in server usually, but good for completeness)
-    this._onDidAdd.fire({ ...memory, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    this._onDidAdd.fire({
+      ...memory,
+      id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
     return id;
   }
@@ -165,35 +191,53 @@ export class MemoryStore implements IMemoryStore {
   async search(query: string, options?: { type?: string; limit?: number }) {
     await this.ensureInitialized();
     let sql = 'SELECT * FROM memories WHERE content LIKE ?';
-    const params: any[] = [`%${query}%`];
-    if (options?.type) { sql += ' AND type = ?'; params.push(options.type); }
+    const params: (string | number | boolean | null)[] = [`%${query}%`];
+    if (options?.type) {
+      sql += ' AND type = ?';
+      params.push(options.type);
+    }
     sql += ' ORDER BY created_at DESC';
-    if (options?.limit) { sql += ' LIMIT ?'; params.push(options.limit); }
+    if (options?.limit) {
+      sql += ' LIMIT ?';
+      params.push(options.limit);
+    }
     const res = this.db?.exec(sql, params);
     if (!res || !res.length) return [];
-    return res[0].values.map(row => this.rowToMemory(res[0].columns, row));
+    return res[0].values.map((row) => this.rowToMemory(res[0].columns, row));
   }
 
   async list(options?: { type?: string; limit?: number }) {
     await this.ensureInitialized();
     let sql = 'SELECT * FROM memories';
-    const params: any[] = [];
-    if (options?.type) { sql += ' WHERE type = ?'; params.push(options.type); }
+    const params: (string | number | boolean | null)[] = [];
+    if (options?.type) {
+      sql += ' WHERE type = ?';
+      params.push(options.type);
+    }
     sql += ' ORDER BY created_at DESC';
-    if (options?.limit) { sql += ' LIMIT ?'; params.push(options.limit); }
+    if (options?.limit) {
+      sql += ' LIMIT ?';
+      params.push(options.limit);
+    }
     const res = this.db?.exec(sql, params);
     if (!res || !res.length) return [];
-    return res[0].values.map(row => this.rowToMemory(res[0].columns, row));
+    return res[0].values.map((row) => this.rowToMemory(res[0].columns, row));
   }
 
-  async update(id: number, memory: any) {
+  async update(id: number, memory: Record<string, unknown>) {
     await this.ensureInitialized();
     // Simplified update... (omitted detailed field building for complexity, assuming full file is needed)
     // Actually I should implement update properly.
     const updates = [];
     const params = [];
-    if (memory.content) { updates.push('content=?'); params.push(memory.content); }
-    if (memory.type) { updates.push('type=?'); params.push(memory.type); }
+    if (memory.content) {
+      updates.push('content=?');
+      params.push(memory.content);
+    }
+    if (memory.type) {
+      updates.push('type=?');
+      params.push(memory.type);
+    }
     if (updates.length === 0) return false;
     params.push(id);
     this.db?.run(`UPDATE memories SET ${updates.join(',')} WHERE id=?`, params);
@@ -209,53 +253,65 @@ export class MemoryStore implements IMemoryStore {
   }
 
   async clear() {
-      await this.ensureInitialized();
-      this.db?.run('DELETE FROM memories');
-      this.saveToFile();
-      return 0; // count not tracked
+    await this.ensureInitialized();
+    this.db?.run('DELETE FROM memories');
+    this.saveToFile();
+    return 0; // count not tracked
   }
 
   async stats() {
-      await this.ensureInitialized();
-      // Simple stats
-      return { total: 0, byType: {} };
+    await this.ensureInitialized();
+    // Simple stats
+    return { total: 0, byType: {} };
   }
 
   // Helpers
   private rowToMemory(cols: string[], vals: SqlValue[]): Memory {
-     const row: any = {};
-     cols.forEach((c, i) => row[c] = vals[i]);
-     return {
-        id: row.id,
-        content: row.content,
-        type: row.type || 'note',
-        source: row.source || 'unknown',
-        tags: row.tags ? JSON.parse(row.tags) : undefined,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        projectId: row.project_id
-     };
+    // biome-ignore lint/suspicious/noExplicitAny: Intermediate row construction
+    const row: any = {};
+    for (let i = 0; i < cols.length; i++) {
+      row[cols[i]] = vals[i];
+    }
+    return {
+      id: row.id,
+      content: row.content,
+      type: row.type || 'note',
+      source: row.source || 'unknown',
+      tags: row.tags ? JSON.parse(row.tags) : undefined,
+      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      projectId: row.project_id,
+    };
   }
 
   // --- Compatibility Methods ---
 
-  setEmbeddingProvider(provider: IEmbeddingProvider) {
-      // Embedding provider not supported in WASM node store yet
-      // console.warn('setEmbeddingProvider not implemented in bundled store');
+  setEmbeddingProvider(_provider: IEmbeddingProvider) {
+    // Embedding provider not supported in WASM node store yet
+    // console.warn('setEmbeddingProvider not implemented in bundled store');
   }
 
-  async searchSemantic(query: string, options: { type?: string; limit?: number; minScore?: number }) {
-      // Fallback to keyword search since WASM store doesn't have vector support yet
-      return this.search(query, { type: options.type, limit: options.limit });
+  async searchSemantic(
+    query: string,
+    options: { type?: string; limit?: number; minScore?: number }
+  ) {
+    // Fallback to keyword search since WASM store doesn't have vector support yet
+    return this.search(query, { type: options.type, limit: options.limit });
   }
 
-  close() { if (this.db) { this.saveToFile(); this.db.close(); this.db = null; } }
+  close() {
+    if (this.db) {
+      this.saveToFile();
+      this.db.close();
+      this.db = null;
+    }
+  }
 }
 
 interface IEmbeddingProvider {
-    embed(text: string): Promise<number[]>;
-    embedBatch(texts: string[]): Promise<number[][]>;
-    readonly model: string;
-    readonly dimensions: number;
+  embed(text: string): Promise<number[]>;
+  embedBatch(texts: string[]): Promise<number[][]>;
+  readonly model: string;
+  readonly dimensions: number;
 }

@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      checks: write
+      pull-requests: write
 
     strategy:
       fail-fast: true
@@ -82,19 +84,29 @@ jobs:
         if: matrix.task == 'test'
         run: bun run build
 
-      - name: Run tests with coverage
+      - name: Run tests with reporting
         if: matrix.task == 'test'
-        run: |
-          # Run isolated tests first (uses mock.module which contaminates process)
-          bun test packages/cli/src/installer.test.ts --coverage
-          # Run remaining tests
-          bun test packages/core packages/vscode-extension --coverage --coverage-reporter=lcov
+        run: bun run test:report
+
+      - name: Publish Test Results
+        if: matrix.task == 'test' && (success() || failure())
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "reports/junit.xml"
+
+      - name: Upload coverage artifact
+        if: matrix.task == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: reports/coverage
+          retention-days: 14
 
       - name: Upload coverage to Codecov
         if: matrix.task == 'test'
         uses: codecov/codecov-action@v5
         with:
-          files: ./coverage/lcov.info
+          files: ./reports/coverage/lcov.info
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 

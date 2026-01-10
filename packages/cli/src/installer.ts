@@ -192,17 +192,22 @@ export function installForEditor(
 
       let current = existingConfig;
       for (let i = 0; i < parts.length - 1; i++) {
-        if (!current[parts[i]]) {
-          current[parts[i]] = {};
+        const part = parts[i];
+        if (!part) continue; // Should not happen with split('.'), but satisfies TS
+
+        if (!current[part]) {
+          current[part] = {};
         }
-        current = current[parts[i]] as Record<string, unknown>;
+        current = current[part] as Record<string, unknown>;
       }
 
       const lastKey = parts[parts.length - 1];
-      if (!current[lastKey]) {
-        current[lastKey] = {};
+      if (lastKey) {
+        if (!current[lastKey]) {
+          current[lastKey] = {};
+        }
+        (current[lastKey] as Record<string, unknown>)['cortex'] = cortexConfig;
       }
-      (current[lastKey] as Record<string, unknown>)['cortex'] = cortexConfig;
     }
 
     writeConfigFile(configPath, existingConfig);

@@ -1,21 +1,90 @@
+// =============================================================================
+// CORE TYPE UTILITIES & PATTERNS
+// =============================================================================
+
+/**
+ * Branded Type Utility
+ * Creates a "nominal" type that is distinguishable from its base type at compile time.
+ * @example type UserId = Brand<string, 'UserId'>;
+ */
+export type Brand<K, T> = K & { readonly __brand: T };
+
+/**
+ * Result Pattern
+ * Handling success/failure without throwing exceptions for predictable control flow.
+ */
+export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
+
+/**
+ * Generic Tool Response Pattern for MCP
+ */
+export interface ToolResponse<T = unknown> {
+  content: { type: 'text'; text: string }[];
+  data?: T;
+  isError?: boolean;
+}
+
+// =============================================================================
+// DOMAIN PRIMITIVES
+// =============================================================================
+
+/**
+ * Base Entity Interface
+ * All domain entities should extend this to ensure consistent identity and audit traits.
+ */
+export interface Entity<ID = string> {
+  id?: ID; // Optional on creation, required after persistence
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// =============================================================================
+// GENERIC ARCHITECTURE PATTERNS
+// =============================================================================
+
+/**
+ * Generic Repository Interface
+ * Standardizes data access operations across domain entities.
+ */
+export interface Repository<T extends Entity<ID>, ID> {
+  save(entity: T): Promise<Result<T>>;
+  findById(id: ID): Promise<Result<T | null>>;
+  delete(id: ID): Promise<Result<boolean>>;
+  findAll(criteria?: Partial<T>): Promise<Result<T[]>>;
+}
+
+/**
+ * Generic Service Interface
+ * Standardizes business logic execution units.
+ */
+export interface Service<Req, Res> {
+  execute(request: Req): Promise<Result<Res>>;
+}
+
+// =============================================================================
+// CORTEX DOMAIN MODELS
+// =============================================================================
+
 /**
  * Common memory types used throughout Cortex.
  */
 export type MemoryType = 'fact' | 'decision' | 'code' | 'config' | 'note';
 
 /**
+ * Unique identifier for a Memory
+ */
+export type MemoryId = Brand<number, 'MemoryId'>;
+
+/**
  * Represents a single piece of context / memory.
  */
-export interface Memory {
-  id?: number;
+export interface Memory extends Entity<number> {
   content: string;
   type: MemoryType;
   source: string;
   projectId?: string;
   tags?: string[];
   metadata?: Record<string, unknown>;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 /**
@@ -30,6 +99,7 @@ export interface MemoryStoreOptions {
 
 /**
  * Common interface for storage providers (ctx/store + ctx/get).
+ * Adapts the generic Repository pattern for Memory specific needs.
  */
 export interface IMemoryStore {
   add(memory: Omit<Memory, 'id' | 'createdAt' | 'updatedAt'>): Promise<number>;

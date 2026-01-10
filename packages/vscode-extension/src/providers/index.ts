@@ -21,7 +21,14 @@ import * as vscode from 'vscode';
  */
 export interface ModelAdapter {
   readonly name: string;
-  readonly provider: 'vscode' | 'gemini' | 'openai' | 'anthropic' | 'mistral' | 'deepseek' | 'ollama';
+  readonly provider:
+    | 'vscode'
+    | 'gemini'
+    | 'openai'
+    | 'anthropic'
+    | 'mistral'
+    | 'deepseek'
+    | 'ollama';
   sendRequest(
     messages: Array<{ role: 'user' | 'assistant'; content: string }>,
     token: vscode.CancellationToken
@@ -74,7 +81,7 @@ export const PROVIDERS = {
     defaultModel: 'auto',
     topModel: 'auto',
     freeApiUrl: '',
-  }
+  },
 } as const;
 
 export type ProviderName = keyof typeof PROVIDERS;
@@ -137,8 +144,8 @@ export class VSCodeModelAdapter implements ModelAdapter {
 }
 
 export { ANTHROPIC_MODELS, AnthropicModelAdapter, type AnthropicModelId } from './anthropic';
-export { GEMINI_MODELS, GeminiModelAdapter, type GeminiModelId } from './gemini';
-export { OPENAI_MODELS, OpenAIModelAdapter, type OpenAIModelId } from './openai';
-export { MISTRAL_MODELS, MistralModelAdapter, type MistralModelId } from './mistral';
 export { DEEPSEEK_MODELS, DeepSeekModelAdapter, type DeepSeekModelId } from './deepseek';
+export { GEMINI_MODELS, GeminiModelAdapter, type GeminiModelId } from './gemini';
+export { MISTRAL_MODELS, MistralModelAdapter, type MistralModelId } from './mistral';
 export { OllamaModelAdapter } from './ollama';
+export { OPENAI_MODELS, OpenAIModelAdapter, type OpenAIModelId } from './openai';

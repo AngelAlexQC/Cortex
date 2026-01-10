@@ -6,8 +6,8 @@
 
 import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import * as vscode from 'vscode';
+import { AIProvider, CortexConfig } from '../config';
 import type { ModelAdapter } from './index';
-import { CortexConfig, AIProvider } from '../config';
 
 // Available Gemini models (January 2026)
 export const GEMINI_MODELS = {
@@ -35,9 +35,9 @@ export const DEFAULT_GEMINI_MODEL: GeminiModelId = 'gemini-2.5-flash';
  * All models here are available in Gemini API free tier (Jan 2026)
  */
 export const GEMINI_MODEL_FALLBACK_CHAIN: GeminiModelId[] = [
-  'gemini-2.5-flash',      // Primary: Fast, 250 req/day free
+  'gemini-2.5-flash', // Primary: Fast, 250 req/day free
   'gemini-2.5-flash-lite', // Fallback 1: Economy, high rate limits
-  'gemini-2.5-pro',        // Fallback 2: Powerful, 100 req/day free
+  'gemini-2.5-pro', // Fallback 2: Powerful, 100 req/day free
 ];
 
 const SECRET_KEY = 'cortex.geminiApiKey';
@@ -86,72 +86,74 @@ export class GeminiModelAdapter implements ModelAdapter {
         }
         break; // Success, exit loop
       } catch (error: unknown) {
-         if (token.isCancellationRequested) break;
+        if (token.isCancellationRequested) break;
 
-         const err = error as any;
-         const errorMessage = err.message || String(error);
+        const err = error as Error;
+        const errorMessage = err.message || String(error);
 
-         // Check for network errors
-         const errAny = error as Record<string, unknown>;
-         const isNetworkError =
-           errorMessage.includes('fetch failed') ||
-           errorMessage.includes('ECONNREFUSED') ||
-           errorMessage.includes('ENOTFOUND') ||
-           errorMessage.includes('network') ||
-           errAny.code === 'ECONNRESET';
+        // Check for network errors
+        const errAny = error as Record<string, unknown>;
+        const isNetworkError =
+          errorMessage.includes('fetch failed') ||
+          errorMessage.includes('ECONNREFUSED') ||
+          errorMessage.includes('ENOTFOUND') ||
+          errorMessage.includes('network') ||
+          errAny.code === 'ECONNRESET';
 
-         // Check for 429 or Quota Exceeded
-         const isQuotaError =
-           errorMessage.includes('429') ||
-           errorMessage.includes('Quota exceeded') ||
-           errAny.status === 429;
+        // Check for 429 or Quota Exceeded
+        const isQuotaError =
+          errorMessage.includes('429') ||
+          errorMessage.includes('Quota exceeded') ||
+          errAny.status === 429;
 
-         // Check for 403 Forbidden (model access issues)
-         const isAccessError =
-           errorMessage.includes('403') ||
-           errorMessage.includes('Forbidden') ||
-           errorMessage.includes('unregistered callers');
+        // Check for 403 Forbidden (model access issues)
+        const isAccessError =
+          errorMessage.includes('403') ||
+          errorMessage.includes('Forbidden') ||
+          errorMessage.includes('unregistered callers');
 
-         if ((isQuotaError || isNetworkError) && retries < MAX_RETRIES) {
-           retries++;
-           let delayMs = INITIAL_BACKOFF_MS * Math.pow(2, retries - 1);
+        if ((isQuotaError || isNetworkError) && retries < MAX_RETRIES) {
+          retries++;
+          let delayMs = INITIAL_BACKOFF_MS * 2 ** (retries - 1);
 
-           // Parse retry delay from error message if available
-           const match = errorMessage.match(/retry in (\d+(\.\d+)?)s/);
-           if (match && match[1]) {
-             delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 1000;
-           }
+          // Parse retry delay from error message if available
+          const match = errorMessage.match(/retry in (\d+(\.\d+)?)s/);
+          if (match?.[1]) {
+            delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 1000;
+          }
 
-           delayMs = Math.min(delayMs, 60000);
+          delayMs = Math.min(delayMs, 60000);
 
-           const errorType = isNetworkError ? 'Network error' : 'Rate limit';
-           console.warn(`[Gemini] ${errorType}. Retrying in ${delayMs}ms (Attempt ${retries}/${MAX_RETRIES})`);
+          const errorType = isNetworkError ? 'Network error' : 'Rate limit';
+          console.warn(
+            `[Gemini] ${errorType}. Retrying in ${delayMs}ms (Attempt ${retries}/${MAX_RETRIES})`
+          );
 
-           await new Promise(resolve => setTimeout(resolve, delayMs));
-           continue;
-         }
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
 
-         // For 403/access errors, throw with helpful message
-         if (isAccessError) {
-           throw new Error(
-             `Gemini API access denied. Please check:\n` +
-             `1. Your API key is valid (get free key at aistudio.google.com)\n` +
-             `2. The Generative Language API is enabled in Google Cloud Console\n` +
-             `3. The model '${this.modelId}' is available for your account`
-           );
-         }
+        // For 403/access errors, throw with helpful message
+        if (isAccessError) {
+          throw new Error(
+            `Gemini API access denied. Please check:\n` +
+              `1. Your API key is valid (get free key at aistudio.google.com)\n` +
+              `2. The Generative Language API is enabled in Google Cloud Console\n` +
+              `3. The model '${this.modelId}' is available for your account`
+          );
+        }
 
-         // For persistent network errors, throw with helpful message
-         if (isNetworkError) {
-           throw new Error(
-             `Network error connecting to Gemini API. Please check:\n` +
-             `1. Your internet connection\n` +
-             `2. Firewall/proxy settings\n` +
-             `3. Try again in a few moments`
-           );
-         }
+        // For persistent network errors, throw with helpful message
+        if (isNetworkError) {
+          throw new Error(
+            `Network error connecting to Gemini API. Please check:\n` +
+              `1. Your internet connection\n` +
+              `2. Firewall/proxy settings\n` +
+              `3. Try again in a few moments`
+          );
+        }
 
-         throw error;
+        throw error;
       }
     }
   }
@@ -167,7 +169,7 @@ export class GeminiModelAdapter implements ModelAdapter {
     let apiKey = CortexConfig.getApiKey(AIProvider.Gemini);
 
     if (!apiKey) {
-        apiKey = await secrets.get(SECRET_KEY) || '';
+      apiKey = (await secrets.get(SECRET_KEY)) || '';
     }
 
     if (!apiKey) return null;

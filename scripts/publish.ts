@@ -99,7 +99,7 @@ async function resolveWorkspaceDeps(
   }
 
   if (modified) {
-    await Bun.write(pkgJsonPath, JSON.stringify(pkg, null, 2) + '\n');
+    await Bun.write(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
   return original;

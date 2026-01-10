@@ -19,6 +19,7 @@
     "test:core": "bun --cwd packages/core test",
     "test:watch": "bun test --watch --recursive",
     "test:coverage": "bun test --coverage --recursive",
+    "test:report": "bun test --recursive --reporter=junit --reporter-outfile=reports/junit.xml --coverage --coverage-reporter=lcov --coverage-dir=reports/coverage",
     "typecheck": "bunx tsc --noEmit",
     "format": "biome format --write .",
     "format:check": "biome format .",

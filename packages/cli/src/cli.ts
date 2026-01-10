@@ -7,6 +7,7 @@ import {
   MemoryStore,
   type SemanticSearchResult,
 } from '@ecuabyte/cortex-core';
+import { MEMORY_TYPES } from '@ecuabyte/cortex-shared';
 import { Command } from 'commander';
 
 const program = new Command();
@@ -44,7 +45,7 @@ program
   .command('add')
   .description('Add a new memory')
   .requiredOption('-c, --content <text>', 'Memory content')
-  .requiredOption('-t, --type <type>', 'Memory type (fact|decision|code|config|note)')
+  .requiredOption(`-t, --type <type>', 'Memory type (${Object.values(MEMORY_TYPES).join('|')})`)
   .requiredOption('-s, --source <source>', 'Source (file, url, conversation, etc)')
   .option('--tags <tags>', 'Comma-separated tags')
   .action(async (options) => {

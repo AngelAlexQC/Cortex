@@ -5,9 +5,9 @@
  */
 
 import * as vscode from 'vscode';
+import { AIProvider, CortexConfig } from '../config';
 // import * as vscode from 'vscode';
 import type { ModelAdapter } from './index';
-import { CortexConfig, AIProvider } from '../config';
 
 // Available OpenAI models (January 2026)
 export const OPENAI_MODELS = {
@@ -124,7 +124,7 @@ export class OpenAIModelAdapter implements ModelAdapter {
     let apiKey = CortexConfig.getApiKey(AIProvider.OpenAI);
 
     if (!apiKey) {
-        apiKey = await secrets.get(SECRET_KEY) || '';
+      apiKey = (await secrets.get(SECRET_KEY)) || '';
     }
 
     if (!apiKey) return null;

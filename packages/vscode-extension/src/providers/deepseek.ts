@@ -3,9 +3,9 @@
  * OpenAI-compatible integration
  */
 
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
+import { AIProvider, CortexConfig } from '../config';
 import type { ModelAdapter } from './index';
-import { CortexConfig, AIProvider } from '../config';
 
 export const DEEPSEEK_MODELS = {
   'deepseek-v4': { name: 'DeepSeek V4 (2026)', maxTokens: 128000 },
@@ -54,21 +54,21 @@ export class DeepSeekModelAdapter implements ModelAdapter {
 
     const decoder = new TextDecoder();
     while (true) {
-        if (token.isCancellationRequested) break;
-        const { done, value } = await reader.read();
-        if (done) break;
+      if (token.isCancellationRequested) break;
+      const { done, value } = await reader.read();
+      if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                try {
-                    const json = JSON.parse(line.substring(6));
-                    const content = json.choices[0]?.delta?.content;
-                    if (content) yield content;
-                } catch {}
-            }
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const json = JSON.parse(line.substring(6));
+            const content = json.choices[0]?.delta?.content;
+            if (content) yield content;
+          } catch {}
         }
+      }
     }
   }
 
@@ -77,7 +77,7 @@ export class DeepSeekModelAdapter implements ModelAdapter {
     modelId?: DeepSeekModelId
   ): Promise<DeepSeekModelAdapter | null> {
     let apiKey = CortexConfig.getApiKey(AIProvider.DeepSeek);
-    if (!apiKey) apiKey = await secrets.get(SECRET_KEY) || '';
+    if (!apiKey) apiKey = (await secrets.get(SECRET_KEY)) || '';
     if (!apiKey) return null;
 
     const configuredModel = CortexConfig.getModel(AIProvider.DeepSeek) as DeepSeekModelId;

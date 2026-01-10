@@ -15,23 +15,23 @@
 
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { basename, dirname, extname, join } from 'path';
+import { basename, join } from 'node:path';
 import type { Memory, MemoryType } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
-// import { AIScanResult, AIMemory, ProjectContext, ProjectArea } from './types';
-import { ModelAdapter } from './providers';
-import { CortexConfig, AIProvider } from './config';
 import type { AIScanWebview } from './aiScanWebview';
+import { AIProvider, CortexConfig } from './config';
+// import { AIScanResult, AIMemory, ProjectContext, ProjectArea } from './types';
 import {
   AnthropicModelAdapter,
-  GeminiModelAdapter,
-  OpenAIModelAdapter,
-  MistralModelAdapter,
+  type AnthropicModelId,
   DeepSeekModelAdapter,
-  OllamaModelAdapter,
+  GeminiModelAdapter,
   type GeminiModelId,
+  MistralModelAdapter,
+  type ModelAdapter,
+  OllamaModelAdapter,
+  OpenAIModelAdapter,
   type OpenAIModelId,
-  type AnthropicModelId
 } from './providers';
 import type { MemoryStore } from './storage';
 
@@ -242,11 +242,11 @@ async function selectBestModel(
 ): Promise<{ adapter: ModelAdapter; nativeModel?: vscode.LanguageModelChat }> {
   // Helper to detect current editor
   const detectEditor = (): 'Cursor' | 'Windsurf' | 'Antigravity' | 'VS Code' => {
-      const appName = vscode.env.appName || '';
-      if (appName.includes('Cursor')) return 'Cursor';
-      if (appName.includes('Windsurf')) return 'Windsurf';
-      if (appName.includes('Antigravity') || appName.includes('Google')) return 'Antigravity';
-      return 'VS Code';
+    const appName = vscode.env.appName || '';
+    if (appName.includes('Cursor')) return 'Cursor';
+    if (appName.includes('Windsurf')) return 'Windsurf';
+    if (appName.includes('Antigravity') || appName.includes('Google')) return 'Antigravity';
+    return 'VS Code';
   };
 
   const editor = detectEditor();
@@ -272,7 +272,7 @@ async function selectBestModel(
         'gemini-2.5-ultra',
         'deepseek-v4',
         'mistral-large-3',
-         // Antigravity Native Models
+        // Antigravity Native Models
         'gemini-3-pro',
         'gemini-ultra',
         'o3-high',
@@ -320,47 +320,51 @@ async function selectBestModel(
       };
     }
   } else if (editor === 'Cursor') {
-      channel.appendLine(`⚠️ Cursor detectado: La API nativa (vscode.lm) no está soportada oficialmente.`);
-      channel.appendLine(`   Se requiere configurar una API Key manual para Gemini/OpenAI/Anthropic.`);
+    channel.appendLine(
+      `⚠️ Cursor detectado: La API nativa (vscode.lm) no está soportada oficialmente.`
+    );
+    channel.appendLine(
+      `   Se requiere configurar una API Key manual para Gemini/OpenAI/Anthropic.`
+    );
   }
 
   // 2. Check for configured provider
   const configuredProvider = CortexConfig.provider;
 
   if (configuredProvider !== AIProvider.Auto) {
-      channel.appendLine(`\n⚙️ Proveedor configurado: ${configuredProvider}`);
+    channel.appendLine(`\n⚙️ Proveedor configurado: ${configuredProvider}`);
 
-      let adapter: ModelAdapter | null = null;
+    let adapter: ModelAdapter | null = null;
 
-      if (secrets) {
-        switch (configuredProvider) {
-            case AIProvider.Gemini:
-                adapter = await GeminiModelAdapter.fromSecrets(secrets);
-                break;
-            case AIProvider.OpenAI:
-                adapter = await OpenAIModelAdapter.fromSecrets(secrets);
-                break;
-            case AIProvider.Anthropic:
-                adapter = await AnthropicModelAdapter.fromSecrets(secrets);
-                break;
-            case AIProvider.Mistral:
-                adapter = await MistralModelAdapter.fromSecrets(secrets);
-                break;
-            case AIProvider.DeepSeek:
-                adapter = await DeepSeekModelAdapter.fromSecrets(secrets);
-                break;
-            case AIProvider.Ollama:
-                adapter = await OllamaModelAdapter.fromSecrets(secrets);
-                break;
-        }
+    if (secrets) {
+      switch (configuredProvider) {
+        case AIProvider.Gemini:
+          adapter = await GeminiModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.OpenAI:
+          adapter = await OpenAIModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.Anthropic:
+          adapter = await AnthropicModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.Mistral:
+          adapter = await MistralModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.DeepSeek:
+          adapter = await DeepSeekModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.Ollama:
+          adapter = await OllamaModelAdapter.fromSecrets(secrets);
+          break;
       }
+    }
 
-      if (adapter) {
-          channel.appendLine(`✓ Usando ${adapter.name}`);
-          return { adapter };
-      } else {
-        channel.appendLine(`⚠️ Error: No se pudo configurar ${configuredProvider}. Revise API Key.`);
-      }
+    if (adapter) {
+      channel.appendLine(`✓ Usando ${adapter.name}`);
+      return { adapter };
+    } else {
+      channel.appendLine(`⚠️ Error: No se pudo configurar ${configuredProvider}. Revise API Key.`);
+    }
   }
 
   // 3. Fallback: Check for any stored keys (Auto Mode logic)
@@ -370,22 +374,34 @@ async function selectBestModel(
   const autoOrder = CortexConfig.autoProviderOrder; // Claude > OpenAI > Gemini etc
 
   for (const provider of autoOrder) {
-      let adapter: ModelAdapter | null = null;
-      if (secrets) {
-          switch (provider) {
-              case AIProvider.Anthropic: adapter = await AnthropicModelAdapter.fromSecrets(secrets); break;
-              case AIProvider.OpenAI: adapter = await OpenAIModelAdapter.fromSecrets(secrets); break;
-              case AIProvider.Gemini: adapter = await GeminiModelAdapter.fromSecrets(secrets); break;
-              case AIProvider.DeepSeek: adapter = await DeepSeekModelAdapter.fromSecrets(secrets); break;
-              case AIProvider.Mistral: adapter = await MistralModelAdapter.fromSecrets(secrets); break;
-              case AIProvider.Ollama: adapter = await OllamaModelAdapter.fromSecrets(secrets); break;
-          }
+    let adapter: ModelAdapter | null = null;
+    if (secrets) {
+      switch (provider) {
+        case AIProvider.Anthropic:
+          adapter = await AnthropicModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.OpenAI:
+          adapter = await OpenAIModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.Gemini:
+          adapter = await GeminiModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.DeepSeek:
+          adapter = await DeepSeekModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.Mistral:
+          adapter = await MistralModelAdapter.fromSecrets(secrets);
+          break;
+        case AIProvider.Ollama:
+          adapter = await OllamaModelAdapter.fromSecrets(secrets);
+          break;
       }
+    }
 
-      if (adapter) {
-          channel.appendLine(`✓ Auto-detectado: ${adapter.name}`);
-          return { adapter };
-      }
+    if (adapter) {
+      channel.appendLine(`✓ Auto-detectado: ${adapter.name}`);
+      return { adapter };
+    }
   }
 
   // 4. Prompt User
@@ -393,11 +409,26 @@ async function selectBestModel(
 
   const selected = await vscode.window.showQuickPick(
     [
-      { label: '$(sparkle) Google Gemini', description: 'FREE (Recommended)', detail: 'gemini-3-pro / 2.5-ultra - Free Tier', value: AIProvider.Gemini },
+      {
+        label: '$(sparkle) Google Gemini',
+        description: 'FREE (Recommended)',
+        detail: 'gemini-3-pro / 2.5-ultra - Free Tier',
+        value: AIProvider.Gemini,
+      },
       { label: '$(beaker) OpenAI', description: 'GPT-5 / o3-pro', value: AIProvider.OpenAI },
-      { label: '$(robot) Anthropic', description: 'Claude 4.5 Opus / 3.7', value: AIProvider.Anthropic },
+      {
+        label: '$(robot) Anthropic',
+        description: 'Claude 4.5 Opus / 3.7',
+        value: AIProvider.Anthropic,
+      },
       { label: '$(server) Ollama', description: 'Local Models', value: AIProvider.Ollama },
-      { label: '$(clippy) Copy Prompt to Clipboard', description: 'Use your own AI', detail: `Paste in ${editor}, or any AI chat`, value: 'clipboard' as any },
+      {
+        label: '$(clippy) Copy Prompt to Clipboard',
+        description: 'Use your own AI',
+        detail: `Paste in ${editor}, or any AI chat`,
+        // biome-ignore lint/suspicious/noExplicitAny: Clipboard type not fully exposed
+        value: 'clipboard' as any,
+      },
     ],
     { title: 'Select AI Provider', placeHolder: 'Choose a provider to analyze this project' }
   );
@@ -411,102 +442,128 @@ async function selectBestModel(
 
   // Helper to define 2026 models per provider
   const getModelsForProvider = (p: AIProvider) => {
-      switch(p) {
-          case AIProvider.Gemini: return [
-              'gemini-2.5-flash',
-              'gemini-2.5-pro',
-              'gemini-2.5-ultra',
-              'gemini-3-pro-preview',
-              'gemini-3-flash-preview',
-              'gemini-2.0-flash-thinking-exp-1219'
-          ];
-          case AIProvider.OpenAI: return ['gpt-5', 'gpt-5-turbo', 'gpt-5.2-codex', 'o3-high', 'o3-pro', 'gpt-4o'];
-          case AIProvider.Anthropic: return ['claude-4.5-opus', 'claude-4.5-sonnet', 'claude-3-7-sonnet', 'claude-3-5-haiku'];
-          case AIProvider.Mistral: return ['mistral-large-3', 'codestral-25.08', 'ministral-3'];
-          case AIProvider.DeepSeek: return ['deepseek-v4', 'deepseek-v3.2', 'deepseek-coder-v4'];
-          case AIProvider.Ollama: return ['deepseek-coder:latest', 'llama3', 'phi3', 'mistral'];
-          default: return [];
-      }
+    switch (p) {
+      case AIProvider.Gemini:
+        return [
+          'gemini-2.5-flash',
+          'gemini-2.5-pro',
+          'gemini-2.5-ultra',
+          'gemini-3-pro-preview',
+          'gemini-3-flash-preview',
+          'gemini-2.0-flash-thinking-exp-1219',
+        ];
+      case AIProvider.OpenAI:
+        return ['gpt-5', 'gpt-5-turbo', 'gpt-5.2-codex', 'o3-high', 'o3-pro', 'gpt-4o'];
+      case AIProvider.Anthropic:
+        return ['claude-4.5-opus', 'claude-4.5-sonnet', 'claude-3-7-sonnet', 'claude-3-5-haiku'];
+      case AIProvider.Mistral:
+        return ['mistral-large-3', 'codestral-25.08', 'ministral-3'];
+      case AIProvider.DeepSeek:
+        return ['deepseek-v4', 'deepseek-v3.2', 'deepseek-coder-v4'];
+      case AIProvider.Ollama:
+        return ['deepseek-coder:latest', 'llama3', 'phi3', 'mistral'];
+      default:
+        return [];
+    }
   };
 
   // Helper to open API key URL
   const openApiKeyUrl = async (provider: AIProvider) => {
-      let url = '';
-      switch (provider) {
-          case AIProvider.Gemini: url = 'https://aistudio.google.com/app/apikey'; break;
-          case AIProvider.OpenAI: url = 'https://platform.openai.com/api-keys'; break;
-          case AIProvider.Anthropic: url = 'https://console.anthropic.com/settings/keys'; break;
-          case AIProvider.Mistral: url = 'https://console.mistral.ai/api-keys'; break;
-          case AIProvider.DeepSeek: url = 'https://platform.deepseek.com/api_keys'; break;
-      }
-      if (url) {
-          await vscode.env.openExternal(vscode.Uri.parse(url));
-          channel.appendLine(`🌐 Abriendo navegador para obtener API Key: ${url}`);
-      }
+    let url = '';
+    switch (provider) {
+      case AIProvider.Gemini:
+        url = 'https://aistudio.google.com/app/apikey';
+        break;
+      case AIProvider.OpenAI:
+        url = 'https://platform.openai.com/api-keys';
+        break;
+      case AIProvider.Anthropic:
+        url = 'https://console.anthropic.com/settings/keys';
+        break;
+      case AIProvider.Mistral:
+        url = 'https://console.mistral.ai/api-keys';
+        break;
+      case AIProvider.DeepSeek:
+        url = 'https://platform.deepseek.com/api_keys';
+        break;
+    }
+    if (url) {
+      await vscode.env.openExternal(vscode.Uri.parse(url));
+      channel.appendLine(`🌐 Abriendo navegador para obtener API Key: ${url}`);
+    }
   };
 
   // Trigger setup flow for selected provider
   if (secrets) {
-      const provider = selected.value as AIProvider;
-      let key: string | undefined;
+    const provider = selected.value as AIProvider;
+    let key: string | undefined;
 
-      // 1. Ask for API Key (if needed)
-      if (provider === AIProvider.Ollama) {
-          key = 'skipped'; // Ollama normally doesn't need a key
-      } else {
-          // Open URL first
-          await openApiKeyUrl(provider);
+    // 1. Ask for API Key (if needed)
+    if (provider === AIProvider.Ollama) {
+      key = 'skipped'; // Ollama normally doesn't need a key
+    } else {
+      // Open URL first
+      await openApiKeyUrl(provider);
 
-          if (provider === AIProvider.Gemini) {
-              key = await GeminiModelAdapter.promptForApiKey(secrets);
-          } else if (provider === AIProvider.OpenAI) {
-              key = await OpenAIModelAdapter.promptForApiKey(secrets);
-          } else if (provider === AIProvider.Anthropic) {
-              key = await AnthropicModelAdapter.promptForApiKey(secrets);
-          }
+      if (provider === AIProvider.Gemini) {
+        key = await GeminiModelAdapter.promptForApiKey(secrets);
+      } else if (provider === AIProvider.OpenAI) {
+        key = await OpenAIModelAdapter.promptForApiKey(secrets);
+      } else if (provider === AIProvider.Anthropic) {
+        key = await AnthropicModelAdapter.promptForApiKey(secrets);
+      }
+    }
+
+    if (key) {
+      // 2. Ask for Modelpreference
+      const modelOptions = getModelsForProvider(provider);
+      const selectedModel = await vscode.window.showQuickPick(modelOptions, {
+        title: `Select Model for ${provider}`,
+        placeHolder: 'Select the specific model version to use',
+      });
+
+      // 3. Save Configuration Globaly (so we don't ask again)
+      try {
+        const config = vscode.workspace.getConfiguration('cortex');
+        await config.update('provider', provider, vscode.ConfigurationTarget.Global);
+        if (selectedModel) {
+          await config.update(
+            `${provider}.model`,
+            selectedModel,
+            vscode.ConfigurationTarget.Global
+          );
+          console.log(`Saved preference: ${provider} -> ${selectedModel}`);
+        }
+        channel.appendLine(
+          `✅ Configuración guardada: ${provider} / ${selectedModel || 'default'}`
+        );
+      } catch (e) {
+        console.error('Failed to save settings', e);
       }
 
-      if (key) {
-        // 2. Ask for Modelpreference
-        const modelOptions = getModelsForProvider(provider);
-        const selectedModel = await vscode.window.showQuickPick(modelOptions, {
-            title: `Select Model for ${provider}`,
-            placeHolder: 'Select the specific model version to use'
-        });
-
-        // 3. Save Configuration Globaly (so we don't ask again)
-        try {
-            const config = vscode.workspace.getConfiguration('cortex');
-            await config.update('provider', provider, vscode.ConfigurationTarget.Global);
-            if (selectedModel) {
-                await config.update(`${provider}.model`, selectedModel, vscode.ConfigurationTarget.Global);
-                console.log(`Saved preference: ${provider} -> ${selectedModel}`);
-            }
-            channel.appendLine(`✅ Configuración guardada: ${provider} / ${selectedModel || 'default'}`);
-        } catch (e) {
-            console.error('Failed to save settings', e);
-        }
-
-        // 4. Return Adapter
-        if (provider === AIProvider.Gemini) {
-            const { GoogleGenerativeAI } = await import('@google/generative-ai');
-            return { adapter: new GeminiModelAdapter(new GoogleGenerativeAI(key), selectedModel as GeminiModelId) };
-        } else if (provider === AIProvider.OpenAI) {
-            return { adapter: new OpenAIModelAdapter(key, selectedModel as OpenAIModelId) };
-        } else if (provider === AIProvider.Anthropic) {
-            return { adapter: new AnthropicModelAdapter(key, selectedModel as AnthropicModelId) };
-        } else if (provider === AIProvider.Ollama) {
-             return { adapter: new OllamaModelAdapter(selectedModel || 'deepseek-coder:latest') };
-        }
+      // 4. Return Adapter
+      if (provider === AIProvider.Gemini) {
+        const { GoogleGenerativeAI } = await import('@google/generative-ai');
+        return {
+          adapter: new GeminiModelAdapter(
+            new GoogleGenerativeAI(key),
+            selectedModel as GeminiModelId
+          ),
+        };
+      } else if (provider === AIProvider.OpenAI) {
+        return { adapter: new OpenAIModelAdapter(key, selectedModel as OpenAIModelId) };
+      } else if (provider === AIProvider.Anthropic) {
+        return { adapter: new AnthropicModelAdapter(key, selectedModel as AnthropicModelId) };
+      } else if (provider === AIProvider.Ollama) {
+        return { adapter: new OllamaModelAdapter(selectedModel || 'deepseek-coder:latest') };
       }
+    }
   } else {
-     throw new Error('Secret storage not available');
+    throw new Error('Secret storage not available');
   }
 
   throw new Error('AI Provider setup cancelled.');
 }
-
-
 
 // ============================================================================
 // PHASE 1: Build Project Context
@@ -664,20 +721,22 @@ export async function scanProjectWithAI(
     const result = await selectBestModel(channel, secrets);
     adapter = result.adapter;
     nativeModel = result.nativeModel;
-  } catch (error: any) {
-    logger.error('Model selection failed', error);
+  } catch (error: unknown) {
+    // biome-ignore lint/suspicious/noExplicitAny: Error object is loosely typed
+    const err = error as any;
+    logger.error('Model selection failed', err);
 
     // Handle connection refused/network errors specifically
-    if (error.message?.includes('fetch failed') || error.message?.includes('ECONNREFUSED')) {
-        log('\n❌ Error de conexión con el proveedor AI.');
-        log('   Posibles causas:');
-        log('   - Ollama no está corriendo (ejecute `ollama serve`)');
-        log('   - LM Studio/LocalAI no está escuchando en el puerto esperado');
-        log('   - Sin conexión a internet (para Gemini/OpenAI)');
+    if (err.message?.includes('fetch failed') || err.message?.includes('ECONNREFUSED')) {
+      log('\n❌ Error de conexión con el proveedor AI.');
+      log('   Posibles causas:');
+      log('   - Ollama no está corriendo (ejecute `ollama serve`)');
+      log('   - LM Studio/LocalAI no está escuchando en el puerto esperado');
+      log('   - Sin conexión a internet (para Gemini/OpenAI)');
 
-        webview?.setStatus('error', 'Error: AI Provider unreachable');
-        vscode.window.showErrorMessage('Cortex: Cannot connect to AI provider. Is Ollama running?');
-        return { memories: [], filesAnalyzed: 0, modelUsed: 'none', savedCount: 0 };
+      webview?.setStatus('error', 'Error: AI Provider unreachable');
+      vscode.window.showErrorMessage('Cortex: Cannot connect to AI provider. Is Ollama running?');
+      return { memories: [], filesAnalyzed: 0, modelUsed: 'none', savedCount: 0 };
     }
 
     // Handle clipboard fallback request
@@ -688,7 +747,9 @@ export async function scanProjectWithAI(
       // Generate tree structure for the prompt
       const treeStructure = generateTreeStructure(projectPath);
       const anchors = readAnchorFiles(projectPath);
-      const anchorContents = anchors.map(a => `\\n─── ${a.name} ───\\n${a.content}`).join('\\n\\n');
+      const anchorContents = anchors
+        .map((a) => `\\n─── ${a.name} ───\\n${a.content}`)
+        .join('\\n\\n');
 
       const clipboardPrompt = `You are a senior software architect. Analyze this project and extract key knowledge as memories.
 
@@ -731,7 +792,7 @@ Types: architecture, component, pattern, decision, api, config, workflow`;
   }
 
   const modelName = adapter.name;
-  const model = nativeModel; // For backward compatibility with existing code
+  const _model = nativeModel; // For backward compatibility with existing code
 
   // Get available models for webview display
   const allModels = vscode.lm?.selectChatModels ? await vscode.lm.selectChatModels({}) : [];
@@ -875,9 +936,8 @@ Types: architecture, component, pattern, decision, api, config, workflow`;
       // Defaults to 1000ms, effectively sequential processing
       const delay = CortexConfig.scan.delayMs;
       if (delay > 0) {
-          await new Promise(r => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, delay));
       }
-
     } catch (error) {
       log(`   ❌ Error en área ${area.name}: ${error}`);
       webview?.updateAreaStatus(area.name, 'error');
@@ -953,9 +1013,9 @@ export async function analyzeAreaWithRealTimeSave(
 
     // Check inside src/ if standard structure
     if (!content && area.path && !file.includes('src/')) {
-        const srcPath = join(rootPath, area.path, 'src', file);
-        content = readFileSafe(srcPath);
-        if (content) resolvedPath = join(area.path, 'src', file);
+      const srcPath = join(rootPath, area.path, 'src', file);
+      content = readFileSafe(srcPath);
+      if (content) resolvedPath = join(area.path, 'src', file);
     }
 
     if (content) {
@@ -967,8 +1027,6 @@ export async function analyzeAreaWithRealTimeSave(
       // Don't show scary warning, just log info as we have directory fallback
       // log(`   ⚠️ Not found: ${file}`);
     }
-
-
   }
 
   if (fileContents.length === 0 && area.path) {
@@ -1117,7 +1175,7 @@ async function synthesizeHighLevelMemoriesWithRealTimeSave(
   context: ProjectContext,
   collectedMemories: AIMemory[],
   channel: vscode.OutputChannel,
-  webview: AIScanWebview | undefined,
+  _webview: AIScanWebview | undefined,
   token: vscode.CancellationToken,
   saveMemory: (memory: AIMemory) => Promise<void>
 ): Promise<AIMemory[]> {

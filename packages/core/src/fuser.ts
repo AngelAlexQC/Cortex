@@ -93,15 +93,14 @@ export class ContextFuser implements IContextFuser {
     let originalTokenCount = 0;
 
     for (const chunk of chunks) {
-       originalTokenCount += estimateTokens(chunk.content);
+      originalTokenCount += estimateTokens(chunk.content);
     }
 
     // Calculate final tokens
     const finalTokenCount = estimateTokens(combined);
     const savedTokens = Math.max(0, originalTokenCount - finalTokenCount);
-    const savingsPercentage = originalTokenCount > 0
-      ? Math.round((savedTokens / originalTokenCount) * 100)
-      : 0;
+    const savingsPercentage =
+      originalTokenCount > 0 ? Math.round((savedTokens / originalTokenCount) * 100) : 0;
 
     for (const chunk of dedupedChunks) {
       sourceCounts[chunk.type] = (sourceCounts[chunk.type] || 0) + 1;

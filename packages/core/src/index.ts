@@ -11,9 +11,11 @@
 
 // Re-export types from shared
 export type {
+  Brand,
   // Fuse types
   ContextSource,
   EmbeddingProviderConfig,
+  Entity,
   FuseOptions,
   FuseResult,
   // Guard types
@@ -30,11 +32,16 @@ export type {
   MemoryStoreOptions,
   MemoryType,
   MemoryWithEmbedding,
+  Repository,
+  // Generic Patterns
+  Result,
   // Context routing types
   RouteOptions,
   ScoredMemory,
   SemanticSearchOptions,
   SemanticSearchResult,
+  Service,
+  ToolResponse,
 } from '@ecuabyte/cortex-shared';
 // Project context utilities
 export { clearProjectCache, getProjectId, getProjectName } from './context';

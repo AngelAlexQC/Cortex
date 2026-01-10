@@ -35,25 +35,37 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
     if (!element) {
       // If filtering, show flat list of matches
       if (this.currentFilter) {
-          const type = this.currentFilter.type === 'all' ? undefined : this.currentFilter.type;
-          const tag = this.currentFilter.tag;
+        const type = this.currentFilter.type === 'all' ? undefined : this.currentFilter.type;
+        const tag = this.currentFilter.tag;
 
-          // Use store filtering
-          const memories = await this.store.list({ type, tag, limit: 100 });
+        // Use store filtering
+        const memories = await this.store.list({ type, tag, limit: 100 });
 
-          if (memories.length === 0) {
-              return [new MemoryTreeItem('No matches found', '', vscode.TreeItemCollapsibleState.None, 'info')];
-          }
+        if (memories.length === 0) {
+          return [
+            new MemoryTreeItem(
+              'No matches found',
+              '',
+              vscode.TreeItemCollapsibleState.None,
+              'info'
+            ),
+          ];
+        }
 
-          const items = memories.map((m) => this.createMemoryItem(m));
-          // Add a "Clear Filter" item at the top
-          const filterLabel = tag ? `Tag: ${tag}` : (type || 'Custom');
-          const clearItem = new MemoryTreeItem('running_filter', `Filter: ${filterLabel}`, vscode.TreeItemCollapsibleState.None, 'dashboard_running');
-          clearItem.label = 'Clear Filter';
-          clearItem.description = `Showing ${memories.length} results`;
-          clearItem.command = { command: 'cortex.clearFilter', title: 'Clear Filter' };
+        const items = memories.map((m) => this.createMemoryItem(m));
+        // Add a "Clear Filter" item at the top
+        const filterLabel = tag ? `Tag: ${tag}` : type || 'Custom';
+        const clearItem = new MemoryTreeItem(
+          'running_filter',
+          `Filter: ${filterLabel}`,
+          vscode.TreeItemCollapsibleState.None,
+          'dashboard_running'
+        );
+        clearItem.label = 'Clear Filter';
+        clearItem.description = `Showing ${memories.length} results`;
+        clearItem.command = { command: 'cortex.clearFilter', title: 'Clear Filter' };
 
-          return [clearItem, ...items];
+        return [clearItem, ...items];
       }
 
       // Root level - show dashboard link and categories
@@ -114,26 +126,26 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<MemoryTreeIte
       // Show memories for category
       const type = element.category === 'all' ? undefined : element.category;
       const memories = await this.store.list({ type, limit: 100 });
-      const items = memories.map(m => this.createMemoryItem(m));
+      const items = memories.map((m) => this.createMemoryItem(m));
       return items;
     }
   }
 
   private createMemoryItem(m: Memory): MemoryTreeItem {
-      const item = new MemoryTreeItem(
-        m.content.substring(0, 60) + (m.content.length > 60 ? '...' : ''),
-        m.source,
-        vscode.TreeItemCollapsibleState.None,
-        'memory'
-      );
-      item.memory = m;
-      item.contextValue = 'memory';
-      item.command = {
-        command: 'cortex.viewMemory',
-        title: 'View Memory',
-        arguments: [item],
-      };
-      return item;
+    const item = new MemoryTreeItem(
+      m.content.substring(0, 60) + (m.content.length > 60 ? '...' : ''),
+      m.source,
+      vscode.TreeItemCollapsibleState.None,
+      'memory'
+    );
+    item.memory = m;
+    item.contextValue = 'memory';
+    item.command = {
+      command: 'cortex.viewMemory',
+      title: 'View Memory',
+      arguments: [item],
+    };
+    return item;
   }
 }
 

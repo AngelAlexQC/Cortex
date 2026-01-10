@@ -16,7 +16,6 @@ export class AIScanWebview {
   private statusMessage: string = '';
   private modelName: string = '';
   private summary: { memories: number; files: number; model?: string } | undefined;
-  private logStream: string = '';
 
   // biome-ignore lint/suspicious/noExplicitAny: Generic payload
   private _onDidReceiveMessage = new vscode.EventEmitter<any>();
@@ -739,8 +738,8 @@ export class AIScanWebview {
         if (msg.type === 'hydrate' || msg.type === 'projectContext') {
             if (msg.context || msg.state?.projectContext) {
                 const ctx = msg.context || msg.state.projectContext;
-                let cleanName = ctx.name.replace(/\(cloud Edition\)/gi, '').trim();
-                cleanName = cleanName.replace(/\(.*?edition\)/gi, '').trim();
+                let cleanName = ctx.name.replace(/(cloud Edition)/gi, '').trim();
+                cleanName = cleanName.replace(/(.*?edition)/gi, '').trim();
                 document.getElementById('project-name').innerText = cleanName;
 
                 if (ctx.techStack?.includes('cloud-sync-enabled') || ctx.techStack?.includes('cloud')) {
@@ -859,10 +858,10 @@ export class AIScanWebview {
                 <div class="area-details"> \
                     <p style="margin: 0 0 8px 0; opacity: 0.8;">' + (area.rationale || 'No details available.') + '</p> \
                     <div style="display: flex; gap: 8px;"> \
-                         <button class="btn-sm" onclick="postMsg(\'analyzeArea\', { areaName: \'' + area.name + '\' })"> \
+                         <button class="btn-sm" onclick="postMsg('analyzeArea', { areaName: '' + area.name + '' })"> \
                             <i class="ph-bold ph-arrows-clockwise"></i> Re-Scan \
                          </button> \
-                         <button class="btn-sm" onclick="postMsg(\'filter\', { area: \'' + area.name + '\' })"> \
+                         <button class="btn-sm" onclick="postMsg('filter', { area: '' + area.name + '' })"> \
                             <i class="ph-bold ph-magnifying-glass"></i> View Memories \
                          </button> \
                     </div> \

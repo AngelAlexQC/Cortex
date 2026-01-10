@@ -2,83 +2,95 @@ import * as vscode from 'vscode';
 
 // Enums must match package.json
 export enum AIProvider {
-    Auto = 'auto',
-    Gemini = 'gemini',
-    OpenAI = 'openai',
-    Anthropic = 'anthropic',
-    Mistral = 'mistral',
-    DeepSeek = 'deepseek',
-    Ollama = 'ollama',
+  Auto = 'auto',
+  Gemini = 'gemini',
+  OpenAI = 'openai',
+  Anthropic = 'anthropic',
+  Mistral = 'mistral',
+  DeepSeek = 'deepseek',
+  Ollama = 'ollama',
 }
 
 export class CortexConfig {
-    static get config() {
-        return vscode.workspace.getConfiguration('cortex');
-    }
+  static get config() {
+    return vscode.workspace.getConfiguration('cortex');
+  }
 
-    /**
-     * Get the configured AI Provider
-     */
-    static get provider(): AIProvider {
-        return this.config.get<AIProvider>('provider') || AIProvider.Auto;
-    }
+  /**
+   * Get the configured AI Provider
+   */
+  static get provider(): AIProvider {
+    return CortexConfig.config.get<AIProvider>('provider') || AIProvider.Auto;
+  }
 
-    /**
-     * Get custom model override if set
-     */
-    static get customModel(): string {
-        return this.config.get<string>('model.custom') || '';
-    }
+  /**
+   * Get custom model override if set
+   */
+  static get customModel(): string {
+    return CortexConfig.config.get<string>('model.custom') || '';
+  }
 
-    /**
-     * Get API Key for a provider (checks settings first, then secrets)
-     * Note: Secrets must be retrieved asynchronously via SecretStorage
-     */
-    static getApiKey(provider: AIProvider): string {
-        // Only returns the declarative setting. Secrets are handled by the caller or specialized method.
-        return this.config.get<string>(`${provider}.apiKey`) || '';
-    }
+  /**
+   * Get API Key for a provider (checks settings first, then secrets)
+   * Note: Secrets must be retrieved asynchronously via SecretStorage
+   */
+  static getApiKey(provider: AIProvider): string {
+    // Only returns the declarative setting. Secrets are handled by the caller or specialized method.
+    return CortexConfig.config.get<string>(`${provider}.apiKey`) || '';
+  }
 
-    /**
-     * Get Model ID for a provider
-     */
-    static getModel(provider: AIProvider): string {
-        const custom = this.customModel;
-        if (custom) return custom;
+  /**
+   * Get Model ID for a provider
+   */
+  static getModel(provider: AIProvider): string {
+    const custom = CortexConfig.customModel;
+    if (custom) return custom;
 
-        return this.config.get<string>(`${provider}.model`) || '';
-    }
+    return CortexConfig.config.get<string>(`${provider}.model`) || '';
+  }
 
-    /**
-     * Analysis Settings
-     */
-    static get scan() {
-        return {
-            sequential: this.config.get<boolean>('scan.sequential') ?? true,
-            delayMs: this.config.get<number>('scan.delayMs') || 1000,
-            depth: this.config.get<number>('analysis.depth') || 5,
-            maxFiles: this.config.get<number>('analysis.maxFiles') || 100,
-            chunkSize: this.config.get<number>('analysis.chunkSize') || 50000,
-            exclude: this.config.get<string[]>('analysis.exclude') || ['**/node_modules/**', '**/dist/**', '**/coverage/**', '**/.git/**'],
-        };
-    }
+  /**
+   * Analysis Settings
+   */
+  static get scan() {
+    return {
+      sequential: CortexConfig.config.get<boolean>('scan.sequential') ?? true,
+      delayMs: CortexConfig.config.get<number>('scan.delayMs') || 1000,
+      depth: CortexConfig.config.get<number>('analysis.depth') || 5,
+      maxFiles: CortexConfig.config.get<number>('analysis.maxFiles') || 100,
+      chunkSize: CortexConfig.config.get<number>('analysis.chunkSize') || 50000,
+      exclude: CortexConfig.config.get<string[]>('analysis.exclude') || [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/coverage/**',
+        '**/.git/**',
+      ],
+    };
+  }
 
-    /**
-     * Proactive Settings
-     */
-    static get proactive() {
-        return {
-            enabled: this.config.get<boolean>('proactiveCapture.enabled') ?? true,
-            autoScan: this.config.get<boolean>('autoScanOnStartup') ?? true,
-        };
-    }
+  /**
+   * Proactive Settings
+   */
+  static get proactive() {
+    return {
+      enabled: CortexConfig.config.get<boolean>('proactiveCapture.enabled') ?? true,
+      autoScan: CortexConfig.config.get<boolean>('autoScanOnStartup') ?? true,
+    };
+  }
 
-    /**
-     * Determine best provider if 'auto' is selected
-     * Logic: Claude > OpenAI > Gemini > Ollama
-     * (Simulated logic, caller needs to verify keys)
-     */
-    static get autoProviderOrder(): AIProvider[] {
-        return [AIProvider.Anthropic, AIProvider.OpenAI, AIProvider.Gemini, AIProvider.DeepSeek, AIProvider.Mistral, AIProvider.Ollama];
-    }
+  /**
+   * Determine best provider if 'auto' is selected
+   * Logic: Claude > OpenAI > Gemini > Ollama
+   * (Simulated logic, caller needs to verify keys)
+   */
+  static get autoProviderOrder(): AIProvider[] {
+    return [
+      AIProvider.Anthropic,
+      AIProvider.OpenAI,
+      AIProvider.Gemini,
+      AIProvider.DeepSeek,
+      AIProvider.Mistral,
+      AIProvider.Ollama,
+    ];
+  }
 }

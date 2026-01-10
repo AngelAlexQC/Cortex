@@ -6,6 +6,28 @@ import {
   MemoryStore,
   ProjectScanner,
 } from '@ecuabyte/cortex-core';
+import {
+  MEMORY_TYPES,
+  SENSITIVE_DATA_FILTERS,
+  SERVER_CONFIG,
+  TOOL_NAMES,
+  WORKFLOW_PHASES,
+} from '@ecuabyte/cortex-shared';
+
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
+// Helper to format success response using the generic ToolResponse pattern
+function formatOutput(text: string): CallToolResult {
+  return {
+    content: [
+      {
+        type: 'text',
+        text,
+      },
+    ],
+  };
+}
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -25,7 +47,9 @@ if (process.argv.includes('--auto-save')) {
       const input = await new Promise<string>((resolve) => {
         let data = '';
         process.stdin.setEncoding('utf8');
-        process.stdin.on('data', (chunk) => { data += chunk; });
+        process.stdin.on('data', (chunk) => {
+          data += chunk;
+        });
         process.stdin.on('end', () => resolve(data));
       });
 
@@ -43,17 +67,17 @@ if (process.argv.includes('--auto-save')) {
         console.error(`[Cortex] Auto-saving ${memories.length} memories...`);
         let count = 0;
         for (const m of memories) {
-            try {
-               await store.add({
-                 content: m.content,
-                 type: m.type || 'note',
-                 source: 'auto-save',
-                 tags: m.tags || ['auto-saved']
-               });
-               count++;
-            } catch (err) {
-               console.error('[Cortex] Failed to save memory:', err);
-            }
+          try {
+            await store.add({
+              content: m.content,
+              type: m.type || 'note',
+              source: 'auto-save',
+              tags: m.tags || ['auto-saved'],
+            });
+            count++;
+          } catch (err) {
+            console.error('[Cortex] Failed to save memory:', err);
+          }
         }
         console.log(`Saved ${count} memories.`);
       } else {
@@ -76,20 +100,50 @@ try {
         target: {
           type: 'string',
         },
+        local: {
+          type: 'boolean',
+        },
       },
-      strict: false, // allow params we don't know yet (though we should know them)
+      strict: false,
     });
 
     const target = values.target as string | undefined;
+    const isLocal = values.local as boolean | undefined;
     const targets = ['claude', 'claude-desktop', 'cursor', 'windsurf', 'vscode', 'zed', 'goose'];
 
     if (!target || !targets.includes(target)) {
-      console.error(`Usage: cortex-mcp generate-config --target <${targets.join('|')}>`);
+      console.error(`Usage: cortex-mcp generate-config --target <${targets.join('|')}> [--local]`);
       process.exit(1);
     }
 
-    const command = 'npx';
-    const cmdArgs = ['-y', '@ecuabyte/cortex-mcp-server'];
+    let command = 'npx';
+    let cmdArgs = ['-y', '@ecuabyte/cortex-mcp-server'];
+
+    if (isLocal) {
+      // Use current absolute path involved in running this script
+      // We assume we are running from the built dist file or via bun run
+      // Best bet for local dev is to point to the current file's location if possible,
+      // or assume standard repo structure if running from source.
+
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+
+      // Resolve absolute path to dist/mcp-server.js
+      // If we are running from src (via bun), we need to point to dist
+      const projectRoot = path.resolve(__dirname, '..');
+      const distPath = path.join(projectRoot, 'dist', 'mcp-server.js');
+
+      if (fs.existsSync(distPath)) {
+        command = 'bun';
+        cmdArgs = ['run', distPath];
+      } else {
+        console.error(
+          'Warning: Could not find local dist/mcp-server.js. Make sure to build first.'
+        );
+        // Fallback to npx but warn
+      }
+    }
+
     let config: Record<string, unknown> = {};
 
     switch (target) {
@@ -158,8 +212,8 @@ let embeddingInitialized = false;
 
 const server = new Server(
   {
-    name: 'cortex-memory',
-    version: '0.3.0',
+    name: SERVER_CONFIG.NAME,
+    version: SERVER_CONFIG.VERSION,
   },
   {
     capabilities: {
@@ -173,7 +227,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: 'cortex_search',
+        name: TOOL_NAMES.SEARCH,
         description: 'Search through project memories (facts, decisions, code patterns, configs)',
         inputSchema: {
           type: 'object',
@@ -184,7 +238,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             type: {
               type: 'string',
-              enum: ['fact', 'decision', 'code', 'config', 'note'],
+              enum: Object.values(MEMORY_TYPES),
               description: 'Filter by memory type (optional)',
             },
             limit: {
@@ -203,7 +257,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_add',
+        name: TOOL_NAMES.ADD,
         description: 'Add a new memory to the knowledge base',
         inputSchema: {
           type: 'object',
@@ -214,7 +268,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             type: {
               type: 'string',
-              enum: ['fact', 'decision', 'code', 'config', 'note'],
+              enum: Object.values(MEMORY_TYPES),
               description: 'Type of memory',
             },
             source: {
@@ -231,14 +285,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_list',
+        name: TOOL_NAMES.LIST,
         description: 'List recent memories, optionally filtered by type',
         inputSchema: {
           type: 'object',
           properties: {
             type: {
               type: 'string',
-              enum: ['fact', 'decision', 'code', 'config', 'note'],
+              enum: Object.values(MEMORY_TYPES),
               description: 'Filter by memory type (optional)',
             },
             limit: {
@@ -250,7 +304,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_stats',
+        name: TOOL_NAMES.STATS,
         description: 'Get statistics about stored memories',
         inputSchema: {
           type: 'object',
@@ -258,7 +312,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_context',
+        name: TOOL_NAMES.CONTEXT,
         description:
           'Get intelligent, task-relevant context. Uses AI-powered routing to find the most useful memories for your current task.',
         inputSchema: {
@@ -279,7 +333,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             type: {
               type: 'string',
-              enum: ['fact', 'decision', 'code', 'config', 'note'],
+              enum: Object.values(MEMORY_TYPES),
               description: 'Filter by memory type (optional)',
             },
             limit: {
@@ -292,7 +346,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_guard',
+        name: TOOL_NAMES.GUARD,
         description:
           'Check content for sensitive data (API keys, secrets, PII) before sharing. Returns filtered content or warnings.',
         inputSchema: {
@@ -306,16 +360,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'array',
               items: {
                 type: 'string',
-                enum: [
-                  'api_keys',
-                  'secrets',
-                  'emails',
-                  'urls_auth',
-                  'credit_cards',
-                  'phone_numbers',
-                  'ip_addresses',
-                  'pii',
-                ],
+                enum: SENSITIVE_DATA_FILTERS,
               },
               description: 'Types of sensitive data to filter (default: all)',
             },
@@ -331,7 +376,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_scan',
+        name: TOOL_NAMES.SCAN,
         description:
           'Scan a project directory to extract and store context automatically. Finds TODOs, README info, configs, architecture decisions. Returns extracted data for AI analysis.',
         inputSchema: {
@@ -350,7 +395,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_auto_save',
+        name: TOOL_NAMES.AUTO_SAVE,
         description:
           'ALWAYS call this at the end of conversations where important decisions, patterns, or facts were discussed. Automatically analyzes and saves relevant memories. Use this to build persistent context across sessions.',
         inputSchema: {
@@ -371,7 +416,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   },
                   type: {
                     type: 'string',
-                    enum: ['fact', 'decision', 'code', 'config', 'note'],
+                    enum: Object.values(MEMORY_TYPES),
                     description: 'Type of memory',
                   },
                   tags: {
@@ -390,7 +435,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_remember',
+        name: TOOL_NAMES.REMEMBER,
         description:
           'Quick way to save a single important piece of information. Use when the user says something like "remember this" or when you encounter an important decision.',
         inputSchema: {
@@ -402,7 +447,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             type: {
               type: 'string',
-              enum: ['fact', 'decision', 'code', 'config', 'note'],
+              enum: Object.values(MEMORY_TYPES),
               description: 'Type of memory (default: note)',
               default: 'note',
             },
@@ -416,7 +461,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_recall',
+        name: TOOL_NAMES.RECALL,
         description:
           'Quickly recall relevant context for the current task. Call this at the START of conversations to load context from previous sessions.',
         inputSchema: {
@@ -436,7 +481,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_workflow',
+        name: TOOL_NAMES.WORKFLOW,
         description:
           'Manage the development workflow state (EXPLORE → PLAN → CODE → VERIFY → COMMIT). Use this to track progress and ensure all steps are followed.',
         inputSchema: {
@@ -449,7 +494,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             phase: {
               type: 'string',
-              enum: ['explore', 'plan', 'code', 'verify', 'commit'],
+              enum: Object.values(WORKFLOW_PHASES),
               description: 'Phase to jump to (only for "jump" action)',
             },
           },
@@ -457,7 +502,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_constitution',
+        name: TOOL_NAMES.CONSTITUTION,
         description:
           'Retrieve the Constitutional Principles that guide agent behavior. Consult this when you are unsure about the ethical or architectural correctness of an action.',
         inputSchema: {
@@ -471,7 +516,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'cortex_think',
+        name: TOOL_NAMES.THINK,
         description:
           'Log a deep reasoning process into persistent memory. Use this for "think hard" or "ultrathink" moments to document your decision path for future reference.',
         inputSchema: {
@@ -500,7 +545,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'cortex_search': {
+      case TOOL_NAMES.SEARCH: {
         if (!args) throw new Error('Missing arguments');
         const query = args['query'] as string;
         const type = args['type'] as string | undefined;
@@ -543,7 +588,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_add': {
+      case TOOL_NAMES.ADD: {
         if (!args) throw new Error('Missing arguments');
         const content = args['content'] as string;
         const type = args['type'] as Memory['type'];
@@ -552,60 +597,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const id = await store.add({ content, type, source, tags });
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `✓ Memory added successfully (ID: ${id})`,
-            },
-          ],
-        };
+        return formatOutput(`✓ Memory added successfully (ID: ${id})`);
       }
 
-      case 'cortex_list': {
+      case TOOL_NAMES.LIST: {
         const type = args?.['type'] as string | undefined;
         const limit = (args?.['limit'] as number) || 20;
 
         const memories = await store.list({ type, limit });
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text:
-                memories.length > 0
-                  ? `${memories.length} memories:\n\n` +
-                    memories
-                      .map(
-                        (m: Memory, i: number) =>
-                          `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}`
-                      )
-                      .join('\n\n')
-                  : 'No memories stored yet.',
-            },
-          ],
-        };
+        return formatOutput(
+          memories.length > 0
+            ? `${memories.length} memories:\n\n` +
+                memories
+                  .map(
+                    (m: Memory, i: number) =>
+                      `${i + 1}. [${m.type}] ${m.content}\n   Source: ${m.source}`
+                  )
+                  .join('\n\n')
+            : 'No memories stored yet.'
+        );
       }
 
-      case 'cortex_stats': {
+      case TOOL_NAMES.STATS: {
         const stats = await store.stats();
         const typeBreakdown = Object.entries(stats.byType)
           .map(([type, count]) => `  ${type}: ${count}`)
           .join('\n');
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `📊 Cortex Memory Statistics\n\nTotal memories: ${stats.total}\n\nBy type:\n${
-                typeBreakdown || '  (none yet)'
-              }`,
-            },
-          ],
-        };
+        return formatOutput(
+          `📊 Cortex Memory Statistics\n\nTotal memories: ${stats.total}\n\nBy type:\n${
+            typeBreakdown || '  (none yet)'
+          }`
+        );
       }
 
-      case 'cortex_context': {
+      case TOOL_NAMES.CONTEXT: {
         if (!args) throw new Error('Missing arguments');
         const task = args['task'] as string;
         const currentFile = args['currentFile'] as string | undefined;
@@ -616,14 +643,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const results = await router.routeWithScores({ task, currentFile, tags, type, limit });
 
         if (results.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: 'No relevant context found for your task. Try adding some memories first with cortex_add.',
-              },
-            ],
-          };
+          return formatOutput(
+            'No relevant context found for your task. Try adding some memories first with cortex_add.'
+          );
         }
 
         const contextText = results
@@ -643,34 +665,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_guard': {
+      case TOOL_NAMES.GUARD: {
         if (!args) throw new Error('Missing arguments');
         const content = args['content'] as string;
-        const defaultFilters = [
-          'api_keys',
-          'secrets',
-          'emails',
-          'urls_auth',
-          'credit_cards',
-          'phone_numbers',
-          'ip_addresses',
-          'pii',
-        ] as const;
-        type FilterType = (typeof defaultFilters)[number];
-        const filters = (args['filters'] as FilterType[]) || [...defaultFilters];
+
+        type FilterType = (typeof SENSITIVE_DATA_FILTERS)[number];
+        const filters = (args['filters'] as FilterType[]) || [...SENSITIVE_DATA_FILTERS];
         const mode = (args['mode'] as 'redact' | 'block' | 'warn') || 'redact';
 
         const result = guard.guard(content, { filters, mode });
 
         if (!result.wasFiltered) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: '✅ No sensitive data detected. Content is safe to share.',
-              },
-            ],
-          };
+          return formatOutput(`✅ No sensitive data detected. Content is safe to share.`);
         }
 
         const detailsText = result.filterDetails
@@ -709,7 +715,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_scan': {
+      case TOOL_NAMES.SCAN: {
         const scanPath = (args?.['path'] as string) || process.cwd();
         const shouldSave = args?.['save'] !== false;
 
@@ -762,7 +768,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_auto_save': {
+      case TOOL_NAMES.AUTO_SAVE: {
         if (!args) throw new Error('Missing arguments');
         const summary = args['conversation_summary'] as string;
         const memories = args['memories'] as Array<{
@@ -814,7 +820,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_remember': {
+      case TOOL_NAMES.REMEMBER: {
         if (!args) throw new Error('Missing arguments');
         const content = args['content'] as string;
         const type = (args['type'] as Memory['type']) || 'note';
@@ -837,7 +843,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_recall': {
+      case TOOL_NAMES.RECALL: {
         if (!args) throw new Error('Missing arguments');
         const query = args['query'] as string;
         const limit = (args['limit'] as number) || 5;
@@ -875,12 +881,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_workflow': {
+      case TOOL_NAMES.WORKFLOW: {
         if (!args) throw new Error('Missing arguments');
         const action = args['action'] as 'start' | 'next' | 'jump' | 'status';
         const phase = args['phase'] as string | undefined;
-
-        const phases = ['EXPLORE', 'PLAN', 'CODE', 'VERIFY', 'COMMIT'];
 
         return {
           content: [
@@ -888,7 +892,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: 'text',
               text: `🔄 Workflow Action: ${action.toUpperCase()}\n\nCurrent Phase: ${
                 phase ? phase.toUpperCase() : 'Determined by User'
-              }\n\nStandard Cycle:\n${phases.join(
+              }\n\nStandard Cycle:\n${Object.values(WORKFLOW_PHASES).join(
                 ' → '
               )}\n\nInstructions:\n1. EXPLORE: Read files, query memory\n2. PLAN: Design approach\n3. CODE: Implement changes\n4. VERIFY: Run tests\n5. COMMIT: Save changes`,
             },
@@ -896,7 +900,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_constitution': {
+      case TOOL_NAMES.CONSTITUTION: {
         const query = args?.['query'] as string | undefined;
 
         const principles = [
@@ -923,7 +927,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'cortex_think': {
+      case TOOL_NAMES.THINK: {
         if (!args) throw new Error('Missing arguments');
         const thought = args['thought'] as string;
         const mode = (args['mode'] as string) || 'think';

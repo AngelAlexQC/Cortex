@@ -3,6 +3,8 @@ import type { ChildProcess } from 'node:child_process';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 
+import { SERVER_CONFIG } from '@ecuabyte/cortex-shared';
+
 describe('MCP Server Smoke Test', () => {
   let serverProcess: ChildProcess;
   let serverPath: string;
@@ -56,7 +58,7 @@ describe('MCP Server Smoke Test', () => {
             expect(response.jsonrpc).toBe('2.0');
             expect(response.id).toBe(1);
             expect(response.result).toBeDefined();
-            expect(response.result.serverInfo.name).toBe('cortex-memory');
+            expect(response.result.serverInfo.name).toBe(SERVER_CONFIG.NAME);
             resolve();
           } catch (e) {
             reject(e);

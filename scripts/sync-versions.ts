@@ -33,7 +33,7 @@ async function readPackageJson(path: string): Promise<PackageJson> {
 }
 
 async function writePackageJson(path: string, pkg: PackageJson): Promise<void> {
-  await Bun.write(path, JSON.stringify(pkg, null, 2) + '\n');
+  await Bun.write(path, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
 async function getCurrentVersions(): Promise<

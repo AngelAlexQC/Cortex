@@ -46,14 +46,13 @@ async function buildExtension() {
   }
 }
 
-
 async function buildMcpServer() {
   console.log('🔨 Building Bundled MCP Server...');
   const result = await Bun.build({
     entrypoints: ['./src/bundledMcpServer.ts'],
     outdir: './dist',
     naming: {
-       entry: 'mcp-server.js'
+      entry: 'mcp-server.js',
     },
     target: 'node',
     format: 'cjs',
@@ -65,7 +64,7 @@ async function buildMcpServer() {
     console.log('✅ bundled MCP server built successfully');
   } else {
     console.error('❌ MCP server build failed:');
-    result.logs.forEach(l => console.error(l));
+    result.logs.forEach((l) => console.error(l));
     if (!isWatch) process.exit(1);
   }
 }
@@ -85,4 +84,3 @@ if (isWatch) {
     }
   });
 }
-

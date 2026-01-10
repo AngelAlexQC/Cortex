@@ -3,9 +3,9 @@
  * Direct integration with Mistral API
  */
 
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
+import { AIProvider, CortexConfig } from '../config';
 import type { ModelAdapter } from './index';
-import { CortexConfig, AIProvider } from '../config';
 
 export const MISTRAL_MODELS = {
   'mistral-large-3': { name: 'Mistral Large 3 (2026)', maxTokens: 128000 },
@@ -53,21 +53,24 @@ export class MistralModelAdapter implements ModelAdapter {
 
     const decoder = new TextDecoder();
     while (true) {
-        if (token.isCancellationRequested) break;
-        const { done, value } = await reader.read();
-        if (done) break;
+      if (token.isCancellationRequested) break;
+      const { done, value } = await reader.read();
+      if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                try {
-                    const json = JSON.parse(line.substring(6));
-                    const content = json.choices[0]?.delta?.content;
-                    if (content) yield content;
-                } catch {}
-            }
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const json = JSON.parse(line.substring(6));
+            const content = json.choices[0]?.delta?.content;
+            if (content) yield content;
+            if (content) yield content;
+          } catch {
+            // ignore
+          }
         }
+      }
     }
   }
 
@@ -76,7 +79,7 @@ export class MistralModelAdapter implements ModelAdapter {
     modelId?: MistralModelId
   ): Promise<MistralModelAdapter | null> {
     let apiKey = CortexConfig.getApiKey(AIProvider.Mistral);
-    if (!apiKey) apiKey = await secrets.get(SECRET_KEY) || '';
+    if (!apiKey) apiKey = (await secrets.get(SECRET_KEY)) || '';
     if (!apiKey) return null;
 
     const configuredModel = CortexConfig.getModel(AIProvider.Mistral) as MistralModelId;

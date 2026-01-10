@@ -8,11 +8,11 @@ import { ContextObserver } from './contextObserver';
 import { registerCortexTools } from './cortexTools';
 import { MemoryTreeProvider } from './memoryTreeProvider';
 import { MemoryWebviewProvider } from './memoryWebviewProvider';
+import { VSCodeModelAdapter } from './providers';
 import { MemoryStore } from './storage';
 import { CortexTaskProvider } from './taskProvider';
 import type { Tool } from './toolScanner';
 import { ToolTreeProvider } from './toolTreeProvider';
-import { VSCodeModelAdapter } from './providers';
 
 const execAsync = promisify(exec);
 
@@ -32,7 +32,9 @@ export async function activate(context: vscode.ExtensionContext) {
             { command: 'node', args: [serverPath] },
             vscode.ConfigurationTarget.Global
           );
-          vscode.window.showInformationMessage('✅ Cortex MCP Server configured (Local Bundle)! Please reload window.');
+          vscode.window.showInformationMessage(
+            '✅ Cortex MCP Server configured (Local Bundle)! Please reload window.'
+          );
         } catch (error) {
           vscode.window.showErrorMessage(`Failed to configure MCP: ${error}`);
         }
@@ -40,25 +42,33 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     // Auto-repair: Configure if missing or path incorrect
+    // Auto-repair: Configure if missing or path incorrect
     const mcpConfig = vscode.workspace.getConfiguration('mcp.servers');
-    const existingConfig = mcpConfig.get<any>('cortex');
+    const existingConfig = mcpConfig.get<Record<string, unknown>>('cortex');
     // We check if it exists AND if it points to the correct bundled file (handle updates)
-    if (!existingConfig || existingConfig.args?.[0] !== serverPath) {
-        // We only auto-update if it's missing or looks like an old auto-config.
-        // User might have custom config, so be careful.
-        // But for "npx" vs "bundled", we want to force bundled for reliability?
-        // Let's assume if command is 'npx', we overwrite. If command is 'node' and diff path, we overwrite.
-        // If command is other, maybe user custom?
-        if (!existingConfig || existingConfig.command === 'npx' || (existingConfig.command === 'node' && existingConfig.args?.[0] !== serverPath)) {
-             vscode.commands.executeCommand('cortex.configureMcp');
-        }
+    if (
+      !existingConfig ||
+      (Array.isArray(existingConfig.args) && existingConfig.args[0] !== serverPath)
+    ) {
+      // We only auto-update if it's missing or looks like an old auto-config.
+      // User might have custom config, so be careful.
+      // But for "npx" vs "bundled", we want to force bundled for reliability?
+      // Let's assume if command is 'npx', we overwrite. If command is 'node' and diff path, we overwrite.
+      // If command is other, maybe user custom?
+      if (
+        !existingConfig ||
+        existingConfig.command === 'npx' ||
+        (existingConfig.command === 'node' &&
+          Array.isArray(existingConfig.args) &&
+          existingConfig.args[0] !== serverPath)
+      ) {
+        vscode.commands.executeCommand('cortex.configureMcp');
+      }
     }
 
     // --- Onboarding Logic ---
     const isConfigured = context.globalState.get<boolean>('cortex.configured');
     if (!isConfigured) {
-
-
       // 2. Offer to configure other editors
       const selection = await vscode.window.showInformationMessage(
         'Would you like to auto-configure Cortex for other editors (Cursor, Claude, Windsurf)?',
@@ -82,7 +92,7 @@ export async function activate(context: vscode.ExtensionContext) {
               vscode.window.showInformationMessage(
                 '🎉 Cortex configured for all detected editors!'
               );
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error('Failed to run global install:', error);
 
               // Second attempt without --global (might be permission issue)
@@ -177,7 +187,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register Webview Serializer for persistence
     vscode.window.registerWebviewPanelSerializer('cortexAIScan', {
-      async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: any) {
+      async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: unknown) {
         dashboardWebview.attach(webviewPanel, context);
       },
     });
@@ -539,37 +549,39 @@ export async function activate(context: vscode.ExtensionContext) {
 
       if (message.type === 'ready') {
         try {
-            console.log('[Cortex] Dashboard ready, initiating hydration...');
+          console.log('[Cortex] Dashboard ready, initiating hydration...');
 
-            // Initial hydration
-            dashboardWebview.hydrate();
+          // Initial hydration
+          dashboardWebview.hydrate();
 
-            // Push system status
-            const dbStatus = store.isInitialized();
-            console.log(`[Cortex] DB Status: ${JSON.stringify(dbStatus)}`);
+          // Push system status
+          const dbStatus = store.isInitialized();
+          console.log(`[Cortex] DB Status: ${JSON.stringify(dbStatus)}`);
 
-            dashboardWebview.postMessage({
-                type: 'systemStatus',
-                mcp: 'ready',
-                db: dbStatus.ready ? 'ready' : 'error'
-            });
+          dashboardWebview.postMessage({
+            type: 'systemStatus',
+            mcp: 'ready',
+            db: dbStatus.ready ? 'ready' : 'error',
+          });
 
-            // If dashboard has no memories but DB does, fetch and populate
-            const stats = await store.stats();
-            if (stats.total > 0 && dashboardWebview.getMemories().length === 0) {
-                console.log(`[Cortex] Dashboard empty but DB has ${stats.total} memories. Loading initial batch...`);
-                const memories = await store.list({ limit: 50 });
-                for (const m of memories.reverse()) {
-                    dashboardWebview.addMemory({ ...m, tags: m.tags || [] });
-                }
+          // If dashboard has no memories but DB does, fetch and populate
+          const stats = await store.stats();
+          if (stats.total > 0 && dashboardWebview.getMemories().length === 0) {
+            console.log(
+              `[Cortex] Dashboard empty but DB has ${stats.total} memories. Loading initial batch...`
+            );
+            const memories = await store.list({ limit: 50 });
+            for (const m of memories.reverse()) {
+              dashboardWebview.addMemory({ ...m, tags: m.tags || [] });
             }
+          }
         } catch (e) {
-            console.error('[Cortex] Error processing dashboard ready:', e);
-            dashboardWebview.postMessage({
-                type: 'systemStatus',
-                mcp: 'error',
-                db: 'error'
-            });
+          console.error('[Cortex] Error processing dashboard ready:', e);
+          dashboardWebview.postMessage({
+            type: 'systemStatus',
+            mcp: 'error',
+            db: 'error',
+          });
         }
       }
 
@@ -662,51 +674,57 @@ export async function activate(context: vscode.ExtensionContext) {
 
       // Handle "Show Memory" from dashboard
       if (message.type === 'showMemory' && payload.id) {
-          const memory = await store.get(payload.id);
-          if (memory) {
-              webviewProvider.showMemory(memory);
-          }
+        const memory = await store.get(payload.id);
+        if (memory) {
+          webviewProvider.showMemory(memory);
+        }
       }
 
       // Handle "Filter" from dashboard
       if (message.type === 'filter') {
-          console.log('[Cortex] Dashboard filter requested:', payload);
-          vscode.commands.executeCommand('cortex.memoryTree.focus');
+        console.log('[Cortex] Dashboard filter requested:', payload);
+        vscode.commands.executeCommand('cortex.memoryTree.focus');
 
-          if (typeof payload === 'object') {
-             if (payload.area) {
-                 // Filter by tag matching the area name (slugified as in aiScanner.ts)
-                 const areaTag = payload.area.toLowerCase().replace(/\s+/g, '-');
-                 webviewProvider.setFilter({ tag: areaTag });
-                 vscode.window.setStatusBarMessage(`Dashboard: Filtering by Area: ${payload.area} (tag: ${areaTag})`, 3000);
-             } else if (payload.type) {
-                 webviewProvider.setFilter({ type: payload.type });
-                 vscode.window.setStatusBarMessage(`Dashboard: Filtering by ${payload.type}`, 3000);
-             }
-          } else if (typeof payload === 'string') {
-              const filterType = payload;
-              webviewProvider.setFilter({ type: filterType });
-              vscode.window.setStatusBarMessage(`Dashboard: Filtering by ${filterType}`, 3000);
+        if (typeof payload === 'object') {
+          if (payload.area) {
+            // Filter by tag matching the area name (slugified as in aiScanner.ts)
+            const areaTag = payload.area.toLowerCase().replace(/\s+/g, '-');
+            webviewProvider.setFilter({ tag: areaTag });
+            vscode.window.setStatusBarMessage(
+              `Dashboard: Filtering by Area: ${payload.area} (tag: ${areaTag})`,
+              3000
+            );
+          } else if (payload.type) {
+            webviewProvider.setFilter({ type: payload.type });
+            vscode.window.setStatusBarMessage(`Dashboard: Filtering by ${payload.type}`, 3000);
           }
+        } else if (typeof payload === 'string') {
+          const filterType = payload;
+          webviewProvider.setFilter({ type: filterType });
+          vscode.window.setStatusBarMessage(`Dashboard: Filtering by ${filterType}`, 3000);
+        }
       }
     });
 
     // Command to clear filter
     context.subscriptions.push(
-        vscode.commands.registerCommand('cortex.clearFilter', () => {
-             webviewProvider.setFilter(undefined);
-        })
+      vscode.commands.registerCommand('cortex.clearFilter', () => {
+        webviewProvider.setFilter(undefined);
+      })
     );
 
     // Command to show specific item in dashboard (from CodeLens)
     context.subscriptions.push(
-      vscode.commands.registerCommand('cortex.showDashboardItem', async (args: { type: string; id?: string }) => {
-        dashboardWebview.show(context);
-        // Wait a bit for hydrate
-        setTimeout(() => {
-             dashboardWebview.postMessage({ type: 'highlightItem', data: args });
-        }, 500);
-      })
+      vscode.commands.registerCommand(
+        'cortex.showDashboardItem',
+        async (args: { type: string; id?: string }) => {
+          dashboardWebview.show(context);
+          // Wait a bit for hydrate
+          setTimeout(() => {
+            dashboardWebview.postMessage({ type: 'highlightItem', data: args });
+          }, 500);
+        }
+      )
     );
 
     // Reset Extension - Clear all API keys and settings
@@ -739,9 +757,17 @@ export async function activate(context: vscode.ExtensionContext) {
           const cortexConfig = vscode.workspace.getConfiguration('cortex');
           await cortexConfig.update('gemini.apiKey', undefined, vscode.ConfigurationTarget.Global);
           await cortexConfig.update('openai.apiKey', undefined, vscode.ConfigurationTarget.Global);
-          await cortexConfig.update('anthropic.apiKey', undefined, vscode.ConfigurationTarget.Global);
+          await cortexConfig.update(
+            'anthropic.apiKey',
+            undefined,
+            vscode.ConfigurationTarget.Global
+          );
           await cortexConfig.update('mistral.apiKey', undefined, vscode.ConfigurationTarget.Global);
-          await cortexConfig.update('deepseek.apiKey', undefined, vscode.ConfigurationTarget.Global);
+          await cortexConfig.update(
+            'deepseek.apiKey',
+            undefined,
+            vscode.ConfigurationTarget.Global
+          );
 
           // Reset global state
           await context.globalState.update('cortex.configured', undefined);
@@ -775,14 +801,16 @@ export async function activate(context: vscode.ExtensionContext) {
             {
               location: vscode.ProgressLocation.Notification,
               title: 'Cortex: Running network diagnostics...',
-              cancellable: false
+              cancellable: false,
             },
             async () => {
               await diagnostics.runDiagnostics();
             }
           );
 
-          vscode.window.showInformationMessage('Diagnostics complete. Check "Cortex Debug" output channel.');
+          vscode.window.showInformationMessage(
+            'Diagnostics complete. Check "Cortex Debug" output channel.'
+          );
         } catch (error) {
           vscode.window.showErrorMessage(`Diagnostics failed: ${error}`);
         }
@@ -794,12 +822,12 @@ export async function activate(context: vscode.ExtensionContext) {
       vscode.commands.registerCommand('cortex.installVSIX', async (uri: vscode.Uri) => {
         // If triggered from command palette, ask for file
         if (!uri) {
-           const selection = await vscode.window.showOpenDialog({
-             canSelectFiles: true,
-             filters: { 'VSIX': ['vsix'] },
-             title: 'Select VSIX to Install'
-           });
-           if (selection && selection[0]) uri = selection[0];
+          const selection = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            filters: { VSIX: ['vsix'] },
+            title: 'Select VSIX to Install',
+          });
+          if (selection?.[0]) uri = selection[0];
         }
 
         if (uri) {
@@ -813,7 +841,7 @@ export async function activate(context: vscode.ExtensionContext) {
             'Reload Window'
           );
           if (selection === 'Reload Window') {
-             vscode.commands.executeCommand('workbench.action.reloadWindow');
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
           }
         }
       })
@@ -823,25 +851,26 @@ export async function activate(context: vscode.ExtensionContext) {
     // Only verify if requested AND no memories exist (fresh start)
     const config = vscode.workspace.getConfiguration('cortex');
     if (config.get<boolean>('autoScanOnStartup', true)) {
-        setTimeout(async () => {
-            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-            if (workspaceFolder) {
-                // Check if we already have context
-                try {
-                  const stats = await store.stats();
-                  if (stats.total === 0) {
-                    console.log('[Cortex] No memories found. Triggering intelligent auto-scan on startup...');
-                    vscode.commands.executeCommand('cortex.scanWithAI');
-                  } else {
-                    console.log(`[Cortex] Startup scan skipped: ${stats.total} memories found.`);
-                  }
-                } catch (e) {
-                  console.error('[Cortex] Failed to check memory stats on startup:', e);
-                }
+      setTimeout(async () => {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (workspaceFolder) {
+          // Check if we already have context
+          try {
+            const stats = await store.stats();
+            if (stats.total === 0) {
+              console.log(
+                '[Cortex] No memories found. Triggering intelligent auto-scan on startup...'
+              );
+              vscode.commands.executeCommand('cortex.scanWithAI');
+            } else {
+              console.log(`[Cortex] Startup scan skipped: ${stats.total} memories found.`);
             }
-        }, 1500); // Small delay to let VS Code settle
+          } catch (e) {
+            console.error('[Cortex] Failed to check memory stats on startup:', e);
+          }
+        }
+      }, 1500); // Small delay to let VS Code settle
     }
-
   } catch (error) {
     console.error('Failed to activate Cortex extension:', error);
     vscode.window.showErrorMessage(
