@@ -84,9 +84,14 @@ jobs:
         if: matrix.task == 'test'
         run: bun run build
 
-      - name: Run tests with reporting
+      - name: Run Core & Extension tests (with coverage)
         if: matrix.task == 'test'
-        run: bun run test:report
+        run: bun test packages/core packages/vscode-extension packages/shared packages/mcp-server --reporter=junit --reporter-outfile=reports/junit.xml --coverage --coverage-reporter=lcov --coverage-dir=reports/coverage
+
+      - name: Run CLI tests (isolated)
+        if: matrix.task == 'test'
+        # Run CLI tests separately as they use aggressive filesystem mocking that can leak
+        run: bun test packages/cli
 
       - name: Publish Test Results
         if: matrix.task == 'test' && (success() || failure())
