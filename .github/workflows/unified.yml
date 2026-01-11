@@ -241,3 +241,23 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PARENT SYNC - Notify cortex-cloud to update submodule
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  sync-parent:
+    name: Sync Parent Repo
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [ci]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Parent Sync
+        if: ${{ vars.PARENT_REPOSITORY != '' }}
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GH_TOKEN || secrets.SUBMODULE_PAT }}
+          repository: ${{ vars.PARENT_REPOSITORY }}
+          event-type: submodule-update
+          client-payload: '{"submodule": "cortex"}'
+
+
