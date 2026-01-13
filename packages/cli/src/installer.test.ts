@@ -78,7 +78,7 @@ describe('Cortex Installer', () => {
 
       const parsed = JSON.parse(writtenContent);
       expect(parsed.mcpServers.cortex).toBeDefined();
-      expect(parsed.mcpServers.cortex.command).toBe('npx');
+      expect(parsed.mcpServers.cortex.command).toBe('bunx');
       expect(parsed.old).toBe('config'); // Preserves existing
     });
 
@@ -95,7 +95,7 @@ describe('Cortex Installer', () => {
       expect(result.success).toBe(true);
       const parsed = JSON.parse(writtenContent);
       expect(parsed.context_servers['cortex-memory']).toBeDefined();
-      expect(parsed.context_servers['cortex-memory'].command.path).toBe('npx');
+      expect(parsed.context_servers['cortex-memory'].command.path).toBe('bunx');
     });
 
     it('should handle malformed config file by creating new one', () => {
