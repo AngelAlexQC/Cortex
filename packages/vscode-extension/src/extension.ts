@@ -88,7 +88,7 @@ export async function activate(context: vscode.ExtensionContext) {
               // Try to run npx cortex-cli install --global
               // Using npx -y to avoid prompts and force install if needed
               // Adding --no-install to npx is NOT wanted here, we WANT it to install/run.
-              await execAsync('npx -y @ecuabyte/cortex-cli install --global');
+              await execAsync('bunx @ecuabyte/cortex-cli install --global');
               vscode.window.showInformationMessage(
                 '🎉 Cortex configured for all detected editors!'
               );
@@ -97,14 +97,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
               // Second attempt without --global (might be permission issue)
               try {
-                await execAsync('npx -y @ecuabyte/cortex-cli install');
+                await execAsync('bunx @ecuabyte/cortex-cli install');
                 vscode.window.showInformationMessage(
                   '✅ Cortex configured for your project editors.'
                 );
               } catch (fallbackError) {
                 console.error('Failed to run local install:', fallbackError);
                 vscode.window.showErrorMessage(
-                  `Failed to run global configuration: ${error.message || error}. Please run \`npx @ecuabyte/cortex-cli install\` manually in your terminal.`
+                  `Failed to run global configuration: ${error.message || error}. Please run \`bunx @ecuabyte/cortex-cli install\` manually in your terminal.`
                 );
               }
             }

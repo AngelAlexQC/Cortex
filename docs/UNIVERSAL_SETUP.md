@@ -6,11 +6,9 @@ Cortex is designed to work as a **Universal Memory Layer** for any AI-powered de
 
 We provide a utility to generate the configuration for your specific tool.
 
-1.  **Install Cortex MCP Server**:
+1.  **Prerequisites**: Install [Bun](https://bun.sh) runtime:
     ```bash
-    npm install -g @ecuabyte/cortex-mcp-server
-    # OR
-    bun add -g @ecuabyte/cortex-mcp-server
+    curl -fsSL https://bun.sh/install | bash
     ```
 
 2.  **Generate Config**:
@@ -50,10 +48,8 @@ If you want to use the MCP server directly (e.g., for Composer in Cursor):
 2.  Add a new server:
     *   **Name**: `cortex`
     *   **Type**: `command`
-    *   **Command**: `npx` (or full path to node)
-    *   **Args**: `-y @ecuabyte/cortex-mcp-server`
-
-    *   **Args**: `-y @ecuabyte/cortex-mcp-server`
+    *   **Command**: `bunx`
+    *   **Args**: `@ecuabyte/cortex-mcp-server`
     
 ### 2. Google IDX
 
@@ -84,11 +80,8 @@ To give Claude Desktop access to your project memories:
     {
       "mcpServers": {
         "cortex": {
-          "command": "npx",
-          "args": [
-            "-y",
-            "@ecuabyte/cortex-mcp-server"
-          ]
+          "command": "bunx",
+          "args": ["@ecuabyte/cortex-mcp-server"]
         }
       }
     }
@@ -101,8 +94,8 @@ JetBrains AI Assistant supports MCP (since 2025.2).
 1.  Open **Settings/Preferences** > **Tools** > **Model Context Protocol**.
 2.  Click **+** to add a server.
 3.  Select **stdio** transport.
-4.  **Command**: `npx`
-5.  **Args**: `-y @ecuabyte/cortex-mcp-server`
+4.  **Command**: `bunx`
+5.  **Args**: `@ecuabyte/cortex-mcp-server`
 6.  Restart the AI Assistant if necessary.
 
 ### 4. Neovim
@@ -117,8 +110,8 @@ Use [`avante.nvim`](https://github.com/yetone/avante.nvim) or similar AI plugins
     -- ... other config
     mcp_servers = {
       cortex = {
-        command = "npx",
-        args = { "-y", "@ecuabyte/cortex-mcp-server" },
+        command = "bunx",
+        args = { "@ecuabyte/cortex-mcp-server" },
       },
     },
   },
@@ -129,7 +122,7 @@ Use [`avante.nvim`](https://github.com/yetone/avante.nvim) or similar AI plugins
 
 **Goose:**
 ```bash
-goose configure mcp add cortex "npx -y @ecuabyte/cortex-mcp-server"
+goose configure mcp add cortex "bunx @ecuabyte/cortex-mcp-server"
 ```
 
 **Gemini Code Assist (Antigravity):**
@@ -144,8 +137,8 @@ Or manually add to `~/.gemini/settings.json`:
 {
   "mcpServers": {
     "cortex": {
-      "command": "npx",
-      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
+      "command": "bunx",
+      "args": ["@ecuabyte/cortex-mcp-server"]
     }
   }
 }

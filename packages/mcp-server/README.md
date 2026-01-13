@@ -12,7 +12,7 @@ For MCP tool descriptions, installation guides, and editor configuration, please
 
 ### Quick Start
 ```bash
-npx @ecuabyte/cortex setup
+bunx @ecuabyte/cortex-mcp-server generate-config --target claude
 ```
 
 ## License

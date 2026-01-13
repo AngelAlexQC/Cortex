@@ -116,8 +116,8 @@ try {
       process.exit(1);
     }
 
-    let command = 'npx';
-    let cmdArgs = ['-y', '@ecuabyte/cortex-mcp-server'];
+    let command = 'bunx';
+    let cmdArgs = ['@ecuabyte/cortex-mcp-server'];
 
     if (isLocal) {
       // Use current absolute path involved in running this script
@@ -974,7 +974,7 @@ async function main() {
     console.log('🚀 Delegating to Cortex CLI for setup...');
     const { execSync } = await import('node:child_process');
     try {
-      execSync('npx -y @ecuabyte/cortex-cli setup', { stdio: 'inherit' });
+      execSync('bunx @ecuabyte/cortex-cli setup', { stdio: 'inherit' });
       process.exit(0);
     } catch (e) {
       console.error('❌ Setup failed:', e);

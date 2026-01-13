@@ -15,7 +15,7 @@ Cortex allows you to compose 5 core primitives: `store`, `get`, `route`, `guard`
 
 ### Installation
 ```bash
-npx @ecuabyte/cortex setup
+bunx @ecuabyte/cortex-cli setup
 ```
 
 ## License

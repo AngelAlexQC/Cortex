@@ -12,7 +12,7 @@ For CLI usage, installation guides, and command references, please visit our doc
 
 ### Quick Setup
 ```bash
-npx @ecuabyte/cortex setup
+bunx @ecuabyte/cortex-cli setup
 ```
 
 ## License

@@ -103,8 +103,8 @@ export function getEditorConfigs(): EditorConfig[] {
 // Cortex MCP server configuration
 function getCortexConfig(format: EditorConfig['format']): Record<string, unknown> {
   const baseConfig = {
-    command: 'npx',
-    args: ['-y', '@ecuabyte/cortex-mcp-server'],
+    command: 'bunx',
+    args: ['@ecuabyte/cortex-mcp-server'],
   };
 
   switch (format) {
@@ -116,8 +116,8 @@ function getCortexConfig(format: EditorConfig['format']): Record<string, unknown
       // Zed uses a different format
       return {
         command: {
-          path: 'npx',
-          args: ['-y', '@ecuabyte/cortex-mcp-server'],
+          path: 'bunx',
+          args: ['@ecuabyte/cortex-mcp-server'],
         },
         settings: {},
       };
@@ -768,7 +768,7 @@ export function installClaudeHooks(
       postHooks.push({
         matcher: 'Write|Edit|Create|Bash',
         command:
-          'echo "Action completed: $TOOL_NAME" | npx -y @ecuabyte/cortex-mcp-server --auto-save 2>/dev/null || true',
+          'echo "Action completed: $TOOL_NAME" | bunx @ecuabyte/cortex-mcp-server --auto-save 2>/dev/null || true',
       });
     }
 
