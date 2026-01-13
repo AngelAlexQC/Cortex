@@ -1,5 +1,22 @@
 # @ecuabyte/cortex-mcp-server
 
+## 0.8.1
+
+### Patch Changes
+
+- [`74a0e4c`](https://github.com/EcuaByte-lat/Cortex/commit/74a0e4ca670b8e96081f171c378f1d7bc49f2709) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - chore: migrate from npx to bunx for Bun runtime compatibility
+
+  - Changed MCP server build target from `node` to `bun`
+  - Added `#!/usr/bin/env bun` shebang to bundled output
+  - Updated all configuration generators to output `bunx` commands
+  - Updated installer.ts to generate bunx configs for all editors
+  - Updated documentation (README, UNIVERSAL_SETUP.md) with bunx instructions
+
+  Users now need Bun installed to run: `bunx @ecuabyte/cortex-mcp-server`
+
+- Updated dependencies []:
+  - @ecuabyte/cortex-core@0.8.1
+
 ## 0.8.0
 
 ### Patch Changes
