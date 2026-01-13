@@ -1,5 +1,7 @@
 # @ecuabyte/cortex-shared
 
+## 0.8.1
+
 ## 0.8.0
 
 ## 0.6.2
