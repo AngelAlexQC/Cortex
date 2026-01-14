@@ -150,7 +150,7 @@ try {
         console.error(
           'Warning: Could not find local dist/mcp-server.js. Make sure to build first.'
         );
-        // Fallback to npx but warn
+        // Fallback to bunx but warn
       }
     }
 

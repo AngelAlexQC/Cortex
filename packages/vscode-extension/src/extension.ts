@@ -52,8 +52,8 @@ export async function activate(context: vscode.ExtensionContext) {
     ) {
       // We only auto-update if it's missing or looks like an old auto-config.
       // User might have custom config, so be careful.
-      // But for "npx" vs "bundled", we want to force bundled for reliability?
-      // Let's assume if command is 'npx', we overwrite. If command is 'node' and diff path, we overwrite.
+      // But for "bunx" vs "bundled", we want to force bundled for reliability?
+      // Let's assume if command is 'npx' or 'bunx', we overwrite. If command is 'node' and diff path, we overwrite.
       // If command is other, maybe user custom?
       if (
         !existingConfig ||
@@ -85,9 +85,9 @@ export async function activate(context: vscode.ExtensionContext) {
           },
           async () => {
             try {
-              // Try to run npx cortex-cli install --global
-              // Using npx -y to avoid prompts and force install if needed
-              // Adding --no-install to npx is NOT wanted here, we WANT it to install/run.
+              // Try to run bunx cortex-cli install --global
+              // Using bunx to avoid prompts and force install if needed
+              // we WANT it to install/run.
               await execAsync('bunx @ecuabyte/cortex-cli install --global');
               vscode.window.showInformationMessage(
                 '🎉 Cortex configured for all detected editors!'
