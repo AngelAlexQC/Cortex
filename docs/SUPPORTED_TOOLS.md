@@ -8,13 +8,14 @@ These editors are supported out-of-the-box by our **Auto-Installer**.
 
 | Editor | Support Level | Config Method |
 |--------|---------------|---------------|
-| **Cursor** | ⭐ Premium | `cortex install --editor cursor` |
-| **Windsurf** | ⭐ Premium | `cortex install --editor windsurf` |
-| **Gemini (Antigravity)** | ⭐ Premium | `cortex install --editor gemini` |
+| **Cursor** | ⭐ Premium | `bunx @ecuabyte/cortex-mcp-server generate-config --target cursor` |
+| **Windsurf** | ⭐ Premium | `bunx @ecuabyte/cortex-mcp-server generate-config --target windsurf` |
+| **Antigravity IDE** | ⭐ Premium | `bunx @ecuabyte/cortex-mcp-server generate-config --target antigravity` |
+| **Gemini CLI** | ⭐ Premium | `bunx @ecuabyte/cortex-mcp-server generate-config --target gemini` |
 | **VS Code** | ⭐ Native | [Extension](https://marketplace.visualstudio.com/items?itemName=EcuaByte.cortex-vscode) or MCP |
-| **Claude Desktop** | ⭐ Full | `cortex install --editor claude-desktop` |
-| **Claude Code** | ⭐ Experimental | `cortex install --editor claude` |
-| **Zed** | 🟢 Standard | `cortex install --editor zed` |
+| **Claude Desktop** | ⭐ Full | `bunx @ecuabyte/cortex-mcp-server generate-config --target claude-desktop` |
+| **Claude Code** | ⭐ Experimental | `bunx @ecuabyte/cortex-mcp-server generate-config --target claude` |
+| **Zed** | 🟢 Standard | `bunx @ecuabyte/cortex-mcp-server generate-config --target zed` |
 
 ## 🔌 Universal MCP Support
 
@@ -24,8 +25,8 @@ Any tool that supports the Model Context Protocol (MCP) can connect to Cortex ma
 {
   "mcpServers": {
     "cortex": {
-      "command": "npx",
-      "args": ["-y", "@ecuabyte/cortex-mcp-server"]
+      "command": "bunx",
+      "args": ["@ecuabyte/cortex-mcp-server"]
     }
   }
 }
