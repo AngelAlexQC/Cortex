@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import type { Memory } from '@ecuabyte/cortex-shared';
 import * as vscode from 'vscode';
+import { getProjectId } from './context';
 import { ContextObserver } from './contextObserver';
 import { registerCortexTools } from './cortexTools';
 import { MemoryTreeProvider } from './memoryTreeProvider';
@@ -119,7 +120,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Initialize memory store
     console.log('[Cortex] Initializing MemoryStore...');
-    const store = new MemoryStore(undefined, context.extensionPath);
+
+    // Get project ID for isolation
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    let projectId: string | undefined;
+
+    if (workspaceFolder) {
+      try {
+        projectId = await getProjectId(workspaceFolder.uri);
+        console.log(`[Cortex] Active Project ID: ${projectId}`);
+      } catch (e) {
+        console.error('[Cortex] Failed to get project ID:', e);
+      }
+    }
+
+    const store = new MemoryStore(undefined, context.extensionPath, projectId);
 
     // Initialize context observer
     console.log('[Cortex] Initializing ContextObserver...');

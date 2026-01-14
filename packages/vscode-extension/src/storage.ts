@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 export class MemoryStore implements IMemoryStore {
   private db: Database | null = null;
   private dbPath: string;
+  private projectId: string | null = null;
   private initPromise: Promise<void>;
   private initError: Error | null = null;
   private _onDidAdd = new vscode.EventEmitter<Memory>();
@@ -21,7 +22,7 @@ export class MemoryStore implements IMemoryStore {
     };
   }
 
-  constructor(dbPath?: string, extensionPath?: string) {
+  constructor(dbPath?: string, extensionPath?: string, projectId?: string) {
     const defaultPath = join(homedir(), '.cortex', 'memories.db');
     const dir = join(homedir(), '.cortex');
 
@@ -30,6 +31,7 @@ export class MemoryStore implements IMemoryStore {
     }
 
     this.dbPath = dbPath || defaultPath;
+    this.projectId = projectId || null;
     this.initPromise = this.initialize(extensionPath).catch((error) => {
       console.error('[Cortex] MemoryStore initialization failed:', error);
       this.initError = error instanceof Error ? error : new Error(String(error));
@@ -210,7 +212,7 @@ export class MemoryStore implements IMemoryStore {
         memory.content,
         memory.type,
         memory.source,
-        memory.projectId || null,
+        memory.projectId || this.projectId,
         memory.tags ? JSON.stringify(memory.tags) : null,
         memory.metadata ? JSON.stringify(memory.metadata) : null,
       ]
@@ -243,7 +245,15 @@ export class MemoryStore implements IMemoryStore {
   async get(id: number): Promise<Memory | null> {
     await this.ensureInitialized();
 
-    const result = this.db?.exec('SELECT * FROM memories WHERE id = ?', [id]);
+    let sql = 'SELECT * FROM memories WHERE id = ?';
+    const params: (number | string)[] = [id];
+
+    if (this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    const result = this.db?.exec(sql, params);
     if (!result || result.length === 0 || result[0].values.length === 0) {
       return null;
     }
@@ -281,6 +291,11 @@ export class MemoryStore implements IMemoryStore {
     let sql = 'SELECT * FROM memories';
     const params: (number | string)[] = [];
     const conditions: string[] = [];
+
+    if (this.projectId) {
+      conditions.push('project_id = ?');
+      params.push(this.projectId);
+    }
 
     if (options?.type) {
       conditions.push('type = ?');
@@ -347,7 +362,15 @@ export class MemoryStore implements IMemoryStore {
     if (updates.length === 0) return false;
 
     params.push(id);
-    this.db?.run(`UPDATE memories SET ${updates.join(', ')} WHERE id = ?`, params);
+
+    let sql = `UPDATE memories SET ${updates.join(', ')} WHERE id = ?`;
+
+    if (this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    this.db?.run(sql, params);
     this.saveToFile();
 
     return true;
@@ -356,7 +379,15 @@ export class MemoryStore implements IMemoryStore {
   async delete(id: number): Promise<boolean> {
     await this.ensureInitialized();
 
-    this.db?.run('DELETE FROM memories WHERE id = ?', [id]);
+    let sql = 'DELETE FROM memories WHERE id = ?';
+    const params: (number | string)[] = [id];
+
+    if (this.projectId) {
+      sql += ' AND project_id = ?';
+      params.push(this.projectId);
+    }
+
+    this.db?.run(sql, params);
     this.saveToFile();
     return true;
   }
@@ -364,10 +395,21 @@ export class MemoryStore implements IMemoryStore {
   async clear(): Promise<number> {
     await this.ensureInitialized();
 
-    const result = this.db?.exec('SELECT COUNT(*) as count FROM memories');
+    let sqlCount = 'SELECT COUNT(*) as count FROM memories';
+    let sqlDelete = 'DELETE FROM memories';
+    const params: (number | string)[] = [];
+
+    if (this.projectId) {
+      const where = ' WHERE project_id = ?';
+      sqlCount += where;
+      sqlDelete += where;
+      params.push(this.projectId);
+    }
+
+    const result = this.db?.exec(sqlCount, params);
     const count = (result?.[0]?.values[0]?.[0] as number) || 0;
 
-    this.db?.run('DELETE FROM memories');
+    this.db?.run(sqlDelete, params);
     this.saveToFile();
 
     return count;
@@ -378,12 +420,20 @@ export class MemoryStore implements IMemoryStore {
     try {
       await this.ensureInitialized();
 
-      const totalResult = this.db?.exec('SELECT COUNT(*) as count FROM memories');
+      const params: (string | number)[] = [];
+      let where = '';
+      if (this.projectId) {
+        where = ' WHERE project_id = ?';
+        params.push(this.projectId);
+      }
+
+      const totalResult = this.db?.exec(`SELECT COUNT(*) as count FROM memories${where}`, params);
       const total = (totalResult?.[0]?.values[0]?.[0] as number) || 0;
 
       const byTypeResult = this.db?.exec(`
         SELECT type, COUNT(*) as count
         FROM memories
+        ${this.projectId ? `WHERE project_id = '${this.projectId.replace(/'/g, "''")}'` : ''}
         GROUP BY type
       `);
 
@@ -396,7 +446,11 @@ export class MemoryStore implements IMemoryStore {
         });
       }
 
-      return { total, byType };
+      return {
+        total,
+        byType,
+        projectId: this.projectId || undefined,
+      };
     } catch (error) {
       console.error('[Cortex] Error getting stats:', error);
       // Re-throw if it's an initialization error so the UI can show it
