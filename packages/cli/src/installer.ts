@@ -33,8 +33,15 @@ const IS_MAC = platform() === 'darwin';
 export function getEditorConfigs(): EditorConfig[] {
   return [
     {
+      name: 'antigravity',
+      displayName: 'Antigravity IDE',
+      globalPath: join(HOME, '.gemini', 'antigravity', 'mcp_config.json'),
+      configKey: 'mcpServers',
+      format: 'gemini',
+    },
+    {
       name: 'gemini',
-      displayName: 'Gemini Code Assist',
+      displayName: 'Gemini CLI',
       globalPath: join(HOME, '.gemini', 'settings.json'),
       configKey: 'mcpServers',
       format: 'gemini',

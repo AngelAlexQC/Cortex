@@ -118,24 +118,23 @@ Use [`avante.nvim`](https://github.com/yetone/avante.nvim) or similar AI plugins
 }
 ```
 
-### 5. Goose / Gemini Code Assist
+### 5. Goose / Gemini CLI / Antigravity IDE
 
 **Goose:**
 ```bash
 goose configure mcp add cortex "bunx @ecuabyte/cortex-mcp-server"
 ```
 
-**Gemini Code Assist (Antigravity):**
-Gemini uses a global settings file located at `~/.gemini/settings.json`.
+**Antigravity IDE:**
+Antigravity uses `~/.gemini/antigravity/mcp_config.json`.
 ```bash
 # Fastest way:
-bunx @ecuabyte/cortex-mcp-server generate-config --target gemini
+bunx @ecuabyte/cortex-mcp-server generate-config --target antigravity
 ```
 
-Or manually add to `~/.gemini/settings.json`:
+Or manually add to `~/.gemini/antigravity/mcp_config.json`:
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/schemas/settings.schema.json",
   "mcpServers": {
     "cortex": {
       "command": "bunx",
@@ -145,4 +144,10 @@ Or manually add to `~/.gemini/settings.json`:
     }
   }
 }
+```
+
+**Gemini CLI:**
+Gemini CLI uses `~/.gemini/settings.json`.
+```bash
+bunx @ecuabyte/cortex-mcp-server generate-config --target gemini
 ```

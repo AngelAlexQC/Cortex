@@ -118,6 +118,7 @@ try {
       'zed',
       'goose',
       'gemini',
+      'antigravity',
     ];
 
     if (!target || !targets.includes(target)) {
@@ -184,6 +185,7 @@ try {
         };
         break;
       case 'gemini':
+      case 'antigravity':
         config = {
           $schema:
             'https://raw.githubusercontent.com/google-gemini/gemini-cli/main/schemas/settings.schema.json',
