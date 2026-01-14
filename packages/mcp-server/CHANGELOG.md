@@ -1,5 +1,25 @@
 # @ecuabyte/cortex-mcp-server
 
+## 0.8.2
+
+### Patch Changes
+
+- [`b3ebd1e`](https://github.com/EcuaByte-lat/Cortex/commit/b3ebd1e352b3eb6112006c7e8c5c9276b60d0e80) Thanks [@AngelAlexQC](https://github.com/AngelAlexQC)! - feat: add Gemini MCP config with official schema support
+
+  - Added `--target gemini` option to `generate-config` command
+  - Gemini config now includes `$schema`, `trust`, and `description` fields
+  - Updated `installer.ts` to generate proper Gemini settings.json
+  - Updated documentation with correct Gemini configuration format
+
+  Users can now run:
+
+  ```bash
+  bunx @ecuabyte/cortex-mcp-server generate-config --target gemini
+  ```
+
+- Updated dependencies []:
+  - @ecuabyte/cortex-core@0.8.2
+
 ## 0.8.1
 
 ### Patch Changes
