@@ -38,7 +38,7 @@ let embeddingAvailable = false;
 program
   .name('cortex')
   .description('🧠 Universal memory layer for AI coding tools')
-  .version('0.3.0');
+  .version('0.8.2');
 
 // Add memory
 program
@@ -317,7 +317,7 @@ program
     const dbPath = join(homedir(), '.cortex', 'memories.db');
     console.log('\n🧠 Cortex Information\n');
     console.log(`Database: ${dbPath}`);
-    console.log(`Version: 0.3.0`);
+    console.log(`Version: 0.8.2`);
     console.log('\nTo use with Claude Desktop:');
     console.log('Add this to your claude_desktop_config.json:\n');
     console.log(
@@ -325,8 +325,8 @@ program
         {
           mcpServers: {
             cortex: {
-              command: 'bun',
-              args: ['run', join(process.cwd(), 'packages', 'mcp-server', 'dist', 'mcp-server.js')],
+              command: 'bunx',
+              args: ['@ecuabyte/cortex-mcp-server'],
             },
           },
         },
