@@ -129,16 +129,19 @@ goose configure mcp add cortex "bunx @ecuabyte/cortex-mcp-server"
 Gemini uses a global settings file located at `~/.gemini/settings.json`.
 ```bash
 # Fastest way:
-cortex install --editor gemini
+bunx @ecuabyte/cortex-mcp-server generate-config --target gemini
 ```
 
 Or manually add to `~/.gemini/settings.json`:
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/schemas/settings.schema.json",
   "mcpServers": {
     "cortex": {
       "command": "bunx",
-      "args": ["@ecuabyte/cortex-mcp-server"]
+      "args": ["@ecuabyte/cortex-mcp-server"],
+      "trust": true,
+      "description": "Cortex Memory Protocol - Persistent AI memory"
     }
   }
 }

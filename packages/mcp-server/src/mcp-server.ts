@@ -109,7 +109,16 @@ try {
 
     const target = values.target as string | undefined;
     const isLocal = values.local as boolean | undefined;
-    const targets = ['claude', 'claude-desktop', 'cursor', 'windsurf', 'vscode', 'zed', 'goose'];
+    const targets = [
+      'claude',
+      'claude-desktop',
+      'cursor',
+      'windsurf',
+      'vscode',
+      'zed',
+      'goose',
+      'gemini',
+    ];
 
     if (!target || !targets.includes(target)) {
       console.error(`Usage: cortex-mcp generate-config --target <${targets.join('|')}> [--local]`);
@@ -170,6 +179,20 @@ try {
                 args: cmdArgs,
               },
               settings: {},
+            },
+          },
+        };
+        break;
+      case 'gemini':
+        config = {
+          $schema:
+            'https://raw.githubusercontent.com/google-gemini/gemini-cli/main/schemas/settings.schema.json',
+          mcpServers: {
+            cortex: {
+              command,
+              args: cmdArgs,
+              trust: true,
+              description: 'Cortex Memory Protocol - Persistent AI memory',
             },
           },
         };

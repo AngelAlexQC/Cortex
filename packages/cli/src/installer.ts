@@ -37,7 +37,7 @@ export function getEditorConfigs(): EditorConfig[] {
       displayName: 'Gemini Code Assist',
       globalPath: join(HOME, '.gemini', 'settings.json'),
       configKey: 'mcpServers',
-      format: 'mcp-servers',
+      format: 'gemini',
     },
     {
       name: 'cursor',
@@ -112,6 +112,13 @@ function getCortexConfig(format: EditorConfig['format']): Record<string, unknown
     case 'claude':
     case 'cascade':
       return baseConfig;
+    case 'gemini':
+      // Gemini uses extended config with schema, trust, and description
+      return {
+        ...baseConfig,
+        trust: true,
+        description: 'Cortex Memory Protocol - Persistent AI memory',
+      };
     case 'context-servers':
       // Zed uses a different format
       return {
@@ -207,6 +214,12 @@ export function installForEditor(
           current[lastKey] = {};
         }
         (current[lastKey] as Record<string, unknown>)['cortex'] = cortexConfig;
+      }
+
+      // Add $schema for Gemini settings.json
+      if (editor.format === 'gemini') {
+        existingConfig['$schema'] =
+          'https://raw.githubusercontent.com/google-gemini/gemini-cli/main/schemas/settings.schema.json';
       }
     }
 
